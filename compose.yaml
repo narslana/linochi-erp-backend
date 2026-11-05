@@ -1,0 +1,25 @@
+# Local development (NFK-16). The password is only valid on this machine.
+#
+# Keep the Postgres tag in step with the cluster and internal/platform/testdb:
+# the CNPG cluster runs ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie.
+#
+# RustFS is added together with the first feature that stores files.
+services:
+  postgres:
+    image: postgres:18.6-trixie
+    environment:
+      POSTGRES_USER: linochi
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: linochi_erp
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linochi -d linochi_erp"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:

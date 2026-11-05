@@ -1,0 +1,41 @@
+version: "2"
+
+run:
+  timeout: 5m
+  build-tags:
+    - integration
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - contextcheck
+    - errorlint
+    - forbidigo
+    - gosec
+    - noctx
+    - wrapcheck
+  settings:
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print(f|ln)?$
+          msg: use log/slog (AGENTS.md)
+        - pattern: ^log\.(Print|Fatal|Panic).*$
+          msg: use log/slog (AGENTS.md)
+    wrapcheck:
+      # Our own packages already return wrapped, typed errors.
+      ignore-package-globs:
+        - gitea.lab.internal/linochi/linochi-erp-backend/*
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [wrapcheck, gosec]
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - gitea.lab.internal/linochi/linochi-erp-backend
