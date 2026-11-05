@@ -6,6 +6,10 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 COMMIT  ?= $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo unknown)
 LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT)
 
+# Race detector. Off in CI on arm64: ThreadSanitizer aborts on the Pi 5 default
+# kernel (47-bit VMA). Runs locally and wherever the kernel supports it.
+RACE ?= -race
+
 GOLANGCI := go tool -modfile=tools/go.mod golangci-lint
 
 .PHONY: help dev gen build test test-int lint check
@@ -26,10 +30,10 @@ build: ## Build bin/api (static, with version and commit)
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/api ./cmd/api
 
 test: ## Unit tests
-	go test -race -cover ./...
+	go test $(RACE) -cover ./...
 
 test-int: ## Integration tests with testcontainers (needs Docker)
-	go test -race -tags=integration -count=1 ./...
+	go test $(RACE) -tags=integration -count=1 ./...
 
 lint: ## gofmt, go vet, golangci-lint and go mod tidy
 	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi

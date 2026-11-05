@@ -25,4 +25,4 @@ jobs:
           echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
 
       - name: Lint, unit tests and integration tests
-        run: make check
+        run: make check RACE=  # no race detector: ThreadSanitizer aborts on the Pi 5 kernel (47-bit VMA)
