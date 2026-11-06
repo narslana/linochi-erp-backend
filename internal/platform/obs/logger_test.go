@@ -78,8 +78,8 @@ func TestOBS_PersonalDataIsMaskedInLogs(t *testing.T) {
 			if strings.Contains(out, tt.leak) {
 				t.Errorf("clear text %q leaked: %s", tt.leak, out)
 			}
-			if !strings.Contains(out, "[maskerad]") {
-				t.Errorf("expected [maskerad] in %s", out)
+			if !strings.Contains(out, "[masked]") {
+				t.Errorf("expected [masked] in %s", out)
 			}
 		})
 	}

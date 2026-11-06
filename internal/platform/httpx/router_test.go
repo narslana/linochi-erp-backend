@@ -77,7 +77,7 @@ type conflictError struct{}
 
 func (conflictError) Error() string { return "version mismatch on item 7" }
 func (conflictError) Problem() httpx.Problem {
-	return httpx.Problem{Code: "version-conflict", Title: "Posten har ändrats av någon annan", Status: http.StatusConflict}
+	return httpx.Problem{Code: "version-conflict", Title: "The record was changed by someone else", Status: http.StatusConflict}
 }
 
 func TestAPI_ErrorsAreRFC9457ProblemDetails(t *testing.T) {
@@ -94,12 +94,13 @@ func TestAPI_ErrorsAreRFC9457ProblemDetails(t *testing.T) {
 		name, method, path string
 		status             int
 		code               string
+		title              string
 		allow              string
 	}{
-		{"not found", "GET", "/finns-inte", 404, "not-found", ""},
-		{"method not allowed", "POST", "/api/v1/ok", 405, "method-not-allowed", "GET"},
-		{"typed domain error", "GET", "/api/v1/conflict", 409, "version-conflict", ""},
-		{"untyped error is a generic 500", "GET", "/api/v1/untyped", 500, "internal", ""},
+		{"not found", "GET", "/does-not-exist", 404, "not-found", "Not found", ""},
+		{"method not allowed", "POST", "/api/v1/ok", 405, "method-not-allowed", "Method not allowed", "GET"},
+		{"typed domain error", "GET", "/api/v1/conflict", 409, "version-conflict", "The record was changed by someone else", ""},
+		{"untyped error is a generic 500", "GET", "/api/v1/untyped", 500, "internal", "Internal error", ""},
 	}
 	traceID := regexp.MustCompile(`^[0-9a-f]{32}$`)
 	for _, tt := range tests {
@@ -124,8 +125,8 @@ func TestAPI_ErrorsAreRFC9457ProblemDetails(t *testing.T) {
 			if p["type"] != "https://erp.lab.internal/problems/"+tt.code {
 				t.Errorf("type = %v", p["type"])
 			}
-			if s, _ := p["title"].(string); s == "" {
-				t.Error("title is empty")
+			if s, _ := p["title"].(string); s != tt.title {
+				t.Errorf("title = %q, want %q", s, tt.title)
 			}
 			if s, _ := p["trace_id"].(string); !traceID.MatchString(s) {
 				t.Errorf("trace_id = %v", p["trace_id"])
@@ -224,7 +225,7 @@ func TestOBS_MetricNamesFollowConvention(t *testing.T) {
 		}
 		seen++
 		if !name.MatchString(n) {
-			t.Errorf("%q does not follow linochi_<område>_<sak>_<enhet>", n)
+			t.Errorf("%q does not follow linochi_<area>_<thing>_<unit>", n)
 		}
 	}
 	if seen < 4 {
