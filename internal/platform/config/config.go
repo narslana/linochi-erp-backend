@@ -25,6 +25,15 @@ type Config struct {
 	LogLevel string
 	// ShutdownTimeout is how long in-flight requests get to finish on SIGTERM.
 	ShutdownTimeout time.Duration
+	// ShutdownDelay is how long the process keeps serving after /readyz has
+	// turned 503, so that Traefik and the endpoints controller stop sending
+	// traffic before the listeners close (NFK-02).
+	ShutdownDelay time.Duration
+	// OTLPEndpoint is the OTLP/HTTP base URL of Alloy. Empty means traces are
+	// created (so logs carry trace_id) but not exported.
+	OTLPEndpoint string
+	// PodName identifies the replica in traces. Optional.
+	PodName string
 }
 
 // Error says which environment variable is wrong. It never contains the value
@@ -47,6 +56,9 @@ func Load(getenv func(string) string) (Config, error) {
 		DatabaseURL:     getenv("DATABASE_URL"),
 		LogLevel:        orDefault(getenv("LOG_LEVEL"), "info"),
 		ShutdownTimeout: 20 * time.Second,
+		ShutdownDelay:   5 * time.Second,
+		OTLPEndpoint:    getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		PodName:         getenv("POD_NAME"),
 	}
 
 	if err := validateAddr("HTTP_ADDR", cfg.HTTPAddr); err != nil {
@@ -62,6 +74,24 @@ func Load(getenv func(string) string) (Config, error) {
 	var level slog.Level
 	if err := level.UnmarshalText([]byte(cfg.LogLevel)); err != nil {
 		return Config{}, &Error{Field: "LOG_LEVEL", Reason: "must be debug, info, warn or error"}
+	}
+
+	if cfg.OTLPEndpoint != "" {
+		u, err := url.Parse(cfg.OTLPEndpoint)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return Config{}, &Error{Field: "OTEL_EXPORTER_OTLP_ENDPOINT", Reason: "must be an http(s) URL such as http://alloy.alloy.svc.cluster.local:4318"}
+		}
+	}
+
+	if v := getenv("SHUTDOWN_DELAY"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return Config{}, &Error{Field: "SHUTDOWN_DELAY", Reason: "must be a duration such as 5s"}
+		}
+		if d < 0 {
+			return Config{}, &Error{Field: "SHUTDOWN_DELAY", Reason: "must not be negative"}
+		}
+		cfg.ShutdownDelay = d
 	}
 
 	if v := getenv("SHUTDOWN_TIMEOUT"); v != "" {
@@ -89,8 +119,8 @@ func (c Config) SlogLevel() slog.Level {
 // logged or printed without leaking secrets.
 func (c Config) String() string {
 	return fmt.Sprintf(
-		"Config{HTTPAddr:%s InternalAddr:%s DatabaseURL:%s LogLevel:%s ShutdownTimeout:%s}",
-		c.HTTPAddr, c.InternalAddr, maskDSN(c.DatabaseURL), c.LogLevel, c.ShutdownTimeout,
+		"Config{HTTPAddr:%s InternalAddr:%s DatabaseURL:%s LogLevel:%s ShutdownTimeout:%s ShutdownDelay:%s OTLPEndpoint:%s PodName:%s}",
+		c.HTTPAddr, c.InternalAddr, maskDSN(c.DatabaseURL), c.LogLevel, c.ShutdownTimeout, c.ShutdownDelay, c.OTLPEndpoint, c.PodName,
 	)
 }
 

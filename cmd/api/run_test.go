@@ -7,9 +7,15 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
 )
 
 func listen(t *testing.T) net.Listener {
@@ -147,5 +153,113 @@ func TestNFK02_RunFailsWithConfigErrorNamingTheField(t *testing.T) {
 	}
 	if !strings.Contains(errOut.String(), "DATABASE_URL") {
 		t.Errorf("stderr should name the field: %q", errOut.String())
+	}
+}
+
+func get(t *testing.T, url string) (int, string) {
+	t.Helper()
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("GET %s: %v", url, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	b, _ := io.ReadAll(resp.Body)
+	return resp.StatusCode, string(b)
+}
+
+func testHandlers(t *testing.T) (public, internal http.Handler, health *httpx.Health) {
+	t.Helper()
+	tp := sdktrace.NewTracerProvider()
+	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+	health = &httpx.Health{}
+	public, internal = newHandlers(discardLogger(), obs.NewMetrics("v0.1.0", "abc1234"), health, tp)
+	return public, internal, health
+}
+
+func TestNFK02_MetricsAndProbesOnlyOnInternalPort(t *testing.T) {
+	public, internal, _ := testHandlers(t)
+	pub, int_ := httptest.NewServer(public), httptest.NewServer(internal)
+	defer pub.Close()
+	defer int_.Close()
+
+	for _, path := range []string{"/metrics", "/healthz", "/readyz"} {
+		if code, _ := get(t, pub.URL+path); code != http.StatusNotFound {
+			t.Errorf("public %s = %d, want 404: it must not be reachable through the ingress", path, code)
+		}
+	}
+	if code, body := get(t, int_.URL+"/metrics"); code != 200 || !strings.Contains(body, "linochi_build_info") {
+		t.Errorf("internal /metrics = %d, build_info present: %v", code, strings.Contains(body, "linochi_build_info"))
+	}
+	for _, path := range []string{"/healthz", "/readyz"} {
+		if code, _ := get(t, int_.URL+path); code != 200 {
+			t.Errorf("internal %s = %d", path, code)
+		}
+	}
+}
+
+// On SIGTERM /readyz must turn 503 while the public port still answers, so that
+// Traefik stops sending traffic before the listeners close (NFK-02).
+func TestNFK02_ShutdownDrainsBeforeClosing(t *testing.T) {
+	public, internal, health := testHandlers(t)
+	pubLn, intLn := listen(t), listen(t)
+	pubURL, intURL := "http://"+pubLn.Addr().String(), "http://"+intLn.Addr().String()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() {
+		done <- runServers(ctx, discardLogger(), health, 400*time.Millisecond, 5*time.Second,
+			server{"public", pubLn, public}, server{"internal", intLn, internal})
+	}()
+
+	if code, _ := get(t, intURL+"/readyz"); code != 200 {
+		t.Fatalf("/readyz before shutdown = %d", code)
+	}
+	cancel() // SIGTERM
+	time.Sleep(100 * time.Millisecond)
+
+	if code, _ := get(t, intURL+"/readyz"); code != http.StatusServiceUnavailable {
+		t.Errorf("/readyz during the drain delay = %d, want 503", code)
+	}
+	if code, _ := get(t, pubURL+"/anything"); code != http.StatusNotFound {
+		t.Errorf("public port during the drain delay = %d, want it still serving (404 from the router)", code)
+	}
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("runServers: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("runServers did not return")
+	}
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, intURL+"/readyz", nil)
+	if resp, err := http.DefaultClient.Do(req); err == nil {
+		_ = resp.Body.Close()
+		t.Error("the internal port still accepts connections after shutdown")
+	}
+}
+
+func TestNFK02_OneServerFailingStopsTheOther(t *testing.T) {
+	public, internal, health := testHandlers(t)
+	pubLn, intLn := listen(t), listen(t)
+	_ = pubLn.Close() // Serve on a closed listener fails at once
+
+	done := make(chan error, 1)
+	go func() {
+		done <- runServers(context.Background(), discardLogger(), health, time.Hour, 2*time.Second,
+			server{"public", pubLn, public}, server{"internal", intLn, internal})
+	}()
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Error("expected the listener failure to be returned")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("a failing server did not stop the other one")
 	}
 }

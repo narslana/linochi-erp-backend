@@ -10,7 +10,11 @@ import (
 	"net/http"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/config"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
 )
 
 // run is main without the process globals, so that it can be tested. It
@@ -27,25 +31,109 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 		return 2
 	}
 
-	logger := slog.New(slog.NewJSONHandler(stderr, &slog.HandlerOptions{Level: cfg.SlogLevel()}))
+	logger := obs.NewLogger(stderr, cfg.SlogLevel())
 	logger.InfoContext(ctx, "starting", slog.String("version", version), slog.String("commit", commit), slog.String("config", cfg.String()))
 
+	tp, err := obs.NewTracerProvider(ctx, obs.TracingConfig{Endpoint: cfg.OTLPEndpoint, Version: version, PodName: cfg.PodName})
+	if err != nil {
+		logger.ErrorContext(ctx, "tracing setup failed", slog.Any("error", err))
+		return 1
+	}
+	defer func() {
+		// Flush buffered spans. The parent context is cancelled by now.
+		flushCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		if err := tp.Shutdown(flushCtx); err != nil {
+			logger.ErrorContext(flushCtx, "flushing traces failed", slog.Any("error", err))
+		}
+	}()
+
+	health := &httpx.Health{}
+	public, internal := newHandlers(logger, obs.NewMetrics(version, commit), health, tp)
+
 	var lc net.ListenConfig
-	ln, err := lc.Listen(ctx, "tcp", cfg.HTTPAddr)
+	pubLn, err := lc.Listen(ctx, "tcp", cfg.HTTPAddr)
 	if err != nil {
 		logger.ErrorContext(ctx, "listen failed", slog.String("addr", cfg.HTTPAddr), slog.Any("error", err))
 		return 1
 	}
+	intLn, err := lc.Listen(ctx, "tcp", cfg.InternalAddr)
+	if err != nil {
+		_ = pubLn.Close()
+		logger.ErrorContext(ctx, "listen failed", slog.String("addr", cfg.InternalAddr), slog.Any("error", err))
+		return 1
+	}
 
-	// Routes arrive with their steps: /healthz in B2, /auth and /api in B6.
-	mux := http.NewServeMux()
-
-	if err := serve(ctx, logger, ln, mux, cfg.ShutdownTimeout); err != nil {
+	err = runServers(ctx, logger, health, cfg.ShutdownDelay, cfg.ShutdownTimeout,
+		server{"public", pubLn, public}, server{"internal", intLn, internal})
+	if err != nil {
 		logger.ErrorContext(ctx, "server stopped with error", slog.Any("error", err))
 		return 1
 	}
 	logger.InfoContext(context.WithoutCancel(ctx), "stopped")
 	return 0
+}
+
+// newHandlers builds the two routers. The public one carries /api and /auth
+// (B6 and later); the internal one has no ingress route and carries the probes
+// and /metrics. API-key routes join it in phase 6.
+func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health, tp trace.TracerProvider) (public, internal http.Handler) {
+	pub := httpx.NewRouter(httpx.RouterOptions{Server: "public", Logger: logger, Metrics: metrics, Tracer: tp})
+
+	in := httpx.NewRouter(httpx.RouterOptions{Server: "internal", Logger: logger, Metrics: metrics, Tracer: tp})
+	in.Handle("GET /healthz", health.Healthz())
+	in.Handle("GET /readyz", health.Readyz())
+	in.Handle("GET /metrics", metrics.Handler())
+	return pub, in
+}
+
+type server struct {
+	name    string
+	ln      net.Listener
+	handler http.Handler
+}
+
+// runServers serves all servers until ctx is cancelled. Then it drains: /readyz
+// turns 503 at once, and the listeners stay open for delay so that Traefik and
+// the endpoints controller stop sending traffic (NFK-02). After that every
+// server shuts down gracefully, each bounded by timeout. If one server fails on
+// its own, the others are stopped.
+func runServers(ctx context.Context, logger *slog.Logger, health *httpx.Health, delay, timeout time.Duration, servers ...server) error {
+	srvCtx, stop := context.WithCancel(context.WithoutCancel(ctx))
+	defer stop()
+
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-srvCtx.Done():
+			return
+		}
+		health.SetDraining()
+		logger.InfoContext(srvCtx, "draining", slog.String("delay", delay.String()))
+		select {
+		case <-time.After(delay):
+		case <-srvCtx.Done():
+		}
+		stop()
+	}()
+
+	errc := make(chan error, len(servers))
+	for _, s := range servers {
+		go func() {
+			err := serve(srvCtx, logger.With(slog.String("server", s.name)), s.ln, s.handler, timeout)
+			if err != nil {
+				stop() // take the others down with it
+			}
+			errc <- err
+		}()
+	}
+	var errs []error
+	for range servers {
+		if err := <-errc; err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // serve serves handler on ln until ctx is cancelled, then lets in-flight
