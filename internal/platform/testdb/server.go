@@ -59,7 +59,11 @@ func StartServer(ctx context.Context) (*Server, error) {
 const (
 	OwnerRole = "linochi_erp_owner"
 	AppRole   = "linochi_erp_app"
-	password  = "test"
+	// RedactorRole owns audit_redact_personal_data(). It cannot log in, and the
+	// owner is a member (it can SET ROLE to it but does not inherit its rights)
+	// so that the migrations can hand the function over. The app role never is.
+	RedactorRole = "linochi_erp_audit_redactor"
+	password     = "test"
 )
 
 func (s *Server) createRoles(ctx context.Context) error {
@@ -72,6 +76,14 @@ func (s *Server) createRoles(ctx context.Context) error {
 		if _, err := admin.Exec(ctx, "CREATE ROLE "+pgx.Identifier{role}.Sanitize()+" LOGIN PASSWORD '"+password+"'"); err != nil {
 			return fmt.Errorf("create role %s: %w", role, err)
 		}
+	}
+	if _, err := admin.Exec(ctx, "CREATE ROLE "+pgx.Identifier{RedactorRole}.Sanitize()+" NOLOGIN"); err != nil {
+		return fmt.Errorf("create role %s: %w", RedactorRole, err)
+	}
+	// SET TRUE: needed by ALTER FUNCTION ... OWNER TO. INHERIT FALSE: the owner
+	// gets none of the redactor's privileges just by being a member.
+	if _, err := admin.Exec(ctx, "GRANT "+pgx.Identifier{RedactorRole}.Sanitize()+" TO "+pgx.Identifier{OwnerRole}.Sanitize()+" WITH INHERIT FALSE, SET TRUE"); err != nil {
+		return fmt.Errorf("make %s a member of %s: %w", OwnerRole, RedactorRole, err)
 	}
 	return nil
 }

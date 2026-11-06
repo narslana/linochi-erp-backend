@@ -6,3 +6,10 @@
 CREATE ROLE linochi_erp_owner LOGIN PASSWORD 'dev';
 CREATE ROLE linochi_erp_app   LOGIN PASSWORD 'dev';
 CREATE DATABASE linochi_erp OWNER linochi_erp_owner;
+
+-- Owns the function that redacts personal data in the audit log (GDPR). It cannot
+-- log in. The owner is a member, only so that the migrations can hand the function
+-- over; WITH INHERIT FALSE means it gets none of the redactor's rights by that.
+-- The app role is never a member.
+CREATE ROLE linochi_erp_audit_redactor NOLOGIN;
+GRANT linochi_erp_audit_redactor TO linochi_erp_owner WITH INHERIT FALSE, SET TRUE;
