@@ -11,7 +11,7 @@ import (
 )
 
 // Masked replaces personal data and secrets in logs.
-const Masked = "[maskerad]"
+const Masked = "[masked]"
 
 // Personal marks a value as personal data (name, e-mail, phone, address). It is
 // masked in logs whatever key it is logged under (AGENTS.md: persondata

@@ -1,67 +1,71 @@
 # linochi-erp-backend
 
-Go-backend för Linochi ERP. Se `PROJECT.md` och `AGENTS.md` i arbetsmappen
-(`linochi-erp-workspace`) för vad vi bygger och hur vi arbetar.
+The Go backend for Linochi ERP. See `PROJECT.md` and `AGENTS.md` in the workspace
+(`linochi-erp-workspace`) for what we are building and how we work.
 
-## Krav
+## Requirements
 
 - Go 1.27.3
 - make
-- Docker med Compose (integrationstesterna startar PostgreSQL med testcontainers)
+- Docker with Compose (the integration tests start PostgreSQL with testcontainers)
 
-Inget annat behöver installeras. golangci-lint ligger som `tool` i
-`tools/go.mod`, en egen modul, så att verktygens beroenden inte hamnar i
-appens `go.mod`. sqlc, goose och oapi-codegen läggs dit i sina steg.
+Nothing else needs to be installed. golangci-lint is a `tool` in `tools/go.mod`, a
+module of its own, so that the tools' dependencies do not end up in the app's
+`go.mod`. sqlc, goose and oapi-codegen are added there in their steps.
 
-## Kommandon
+## Commands
 
-| Kommando | Gör |
+| Command | Does |
 |---|---|
-| `make dev` | Startar Postgres i Docker Compose och kör API:t lokalt |
-| `make build` | Bygger `bin/api` (statisk, med version och commit) |
-| `make test` | Enhetstester |
-| `make test-int` | Integrationstester med testcontainers |
-| `make lint` | gofmt, go vet, golangci-lint och `go mod tidy -diff` |
-| `make gen` | Kodgenerering (inget att generera ännu) |
-| `make check` | Lint, `test` och `test-int`. Måste vara grönt före commit |
+| `make dev` | Starts Postgres in Docker Compose and runs the API locally |
+| `make build` | Builds `bin/api` (static, with version and commit) |
+| `make test` | Unit tests |
+| `make test-int` | Integration tests with testcontainers |
+| `make lint` | gofmt, go vet, golangci-lint and `go mod tidy -diff` |
+| `make gen` | Code generation (nothing to generate yet) |
+| `make check` | Lint, `test` and `test-int`. Must be green before commit |
 
-`make dev` läser `.env` om den finns (börja från `.env.example`). Compose
-startar bara Postgres tills första funktionen som lagrar filer kommer, då
-läggs RustFS till.
+`make dev` reads `.env` if it exists (start from `.env.example`). Compose starts only
+Postgres until the first feature that stores files arrives, then RustFS is added.
 
-## Konfiguration
+The race detector (`-race`) runs by default. CI on arm64 runs `make check RACE=`
+because ThreadSanitizer aborts on the Raspberry Pi 5 default kernel (see
+`docs/DECISIONS.md` in the workspace).
 
-Bara miljövariabler (NFK-02, NFK-14). Inga filer läses i drift.
+## Configuration
 
-| Variabel | Standard | |
+Environment variables only (NFK-02, NFK-14). No files are read in production.
+
+| Variable | Default | |
 |---|---|---|
-| `DATABASE_URL` | | Krävs. `postgres://…`. Innehåller hemlighet och maskeras i loggar |
-| `HTTP_ADDR` | `:8080` | Publikt API (`/api`, `/auth`) |
-| `INTERNAL_ADDR` | `:9090` | `/healthz`, `/readyz`, `/metrics` och senare API-nycklar. Ingen ingress-route |
-| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` eller `error` |
-| `SHUTDOWN_DELAY` | `5s` | Efter SIGTERM blir `/readyz` 503 direkt och portarna hålls öppna så här länge, så att Traefik hinner sluta skicka trafik. `0s` lokalt |
-| `SHUTDOWN_TIMEOUT` | `20s` | Hur länge pågående anrop får avslutas efteråt |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | tom | Bas-URL för OTLP/HTTP, i klustret `http://alloy.alloy.svc.cluster.local:4318`. Tom = spans skapas (loggarna får `trace_id`) men skickas inte |
-| `POD_NAME` | tom | Replikans namn i traces |
+| `DATABASE_URL` | | Required. `postgres://…`. Contains a secret and is masked in logs |
+| `HTTP_ADDR` | `:8080` | The public API (`/api`, `/auth`) |
+| `INTERNAL_ADDR` | `:9090` | `/healthz`, `/readyz`, `/metrics` and later API keys. No ingress route |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
+| `SHUTDOWN_DELAY` | `5s` | After SIGTERM `/readyz` turns 503 at once and the ports stay open this long, so that Traefik has time to stop sending traffic. `0s` locally |
+| `SHUTDOWN_TIMEOUT` | `20s` | How long in-flight requests get to finish afterwards |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | empty | Base URL for OTLP/HTTP, in the cluster `http://alloy.alloy.svc.cluster.local:4318`. Empty = spans are created (the logs get `trace_id`) but not sent |
+| `POD_NAME` | empty | The replica's name in traces |
 
-## Observabilitet
+## Observability
 
-- **Intern port (`INTERNAL_ADDR`):** `/healthz` (liveness, beror på inget), `/readyz` (503 vid dränering eller när en check fallerar) och `/metrics`.
-- **Metrics:** `linochi_http_requests_total`, `linochi_http_request_duration_seconds` (gränser på 0,2 och 0,5 s för NFK-03), `linochi_http_requests_in_flight`, `linochi_build_info`, samt `go_*` och `process_*`. Etiketten `route` är mönstret (`GET /api/v1/items/{id}`), och allt som inte matchar heter `unmatched`.
-- **Loggar:** JSON på stderr med `trace_id` och `span_id`. Namn, e-post, telefon, adress, lösenord och tokens maskeras (`[maskerad]`), också via `obs.Personal(...)`. Access-loggen innehåller aldrig query-strängen.
-- **Fel:** `application/problem+json` (RFC 9457) med `trace_id`. Typade fel implementerar `httpx.ProblemError`.
-- **Traces mot riktiga Alloy lokalt:** `kubectl port-forward -n alloy svc/alloy 14318:4318`, sedan `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318 make dev`. Tracen syns i Tempo efter ungefär en halv minut.
+- **Internal port (`INTERNAL_ADDR`):** `/healthz` (liveness, depends on nothing), `/readyz` (503 while draining or when a check fails) and `/metrics`.
+- **Metrics:** `linochi_http_requests_total`, `linochi_http_request_duration_seconds` (bounds at 0.2 and 0.5 s for NFK-03), `linochi_http_requests_in_flight`, `linochi_build_info`, and `go_*` and `process_*`. The `route` label is the pattern (`GET /api/v1/items/{id}`), and everything that does not match is called `unmatched`.
+- **Logs:** JSON on stderr with `trace_id` and `span_id`. Name, e-mail, phone, address, passwords and tokens are masked (`[masked]`), also through `obs.Personal(...)`. The access log never contains the query string.
+- **Errors:** `application/problem+json` (RFC 9457) with `trace_id`. Typed errors implement `httpx.ProblemError`.
+- **Traces against the real Alloy locally:** `kubectl port-forward -n alloy svc/alloy 14318:4318`, then `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318 make dev`. The trace shows up in Tempo after about half a minute.
 
-## PostgreSQL-version
+## PostgreSQL version
 
-Klustret kör `ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie`. Lokalt och
-i tester används `postgres:18.6-trixie`: samma major och minor och samma Debian,
-så att kollationering och locale stämmer. Taggen står på två ställen som byts
-tillsammans med klustret: `compose.yaml` och `internal/platform/testdb/testdb.go`.
+The cluster runs `ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie`. Locally and
+in tests `postgres:18.6-trixie` is used: the same major and minor and the same
+Debian, so that collation and locale match. The tag is in two places that change
+together with the cluster: `compose.yaml` and `internal/platform/testdb/testdb.go`.
 
-## Tester
+## Tests
 
-Testnamn börjar med krav-id (`TestNFK02_…`, `TestINS07_…`). Integrationstester
-har build-taggen `integration` och körs med `make test-int`. De ansluter till
-containern över nätverket (inte `exec` i containern), eftersom det är det som
-brukar gå sönder i Docker-in-Docker i CI.
+Test names start with the requirement ID (`TestNFK02_…`, `TestINS07_…`).
+Requirements without an ID use `TestOBS_…` and `TestAPI_…`. Integration tests have
+the build tag `integration` and run with `make test-int`. They connect to the
+container over the network (not `exec` in the container), because that is what
+tends to break in Docker-in-Docker in CI.

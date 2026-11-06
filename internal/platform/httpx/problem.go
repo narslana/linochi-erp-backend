@@ -72,9 +72,9 @@ func Error(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 var (
-	problemInternal         = Problem{Code: "internal", Title: "Internt fel", Status: http.StatusInternalServerError}
-	problemNotFound         = Problem{Code: "not-found", Title: "Hittades inte", Status: http.StatusNotFound}
-	problemMethodNotAllowed = Problem{Code: "method-not-allowed", Title: "Metoden tillåts inte", Status: http.StatusMethodNotAllowed}
+	problemInternal         = Problem{Code: "internal", Title: "Internal error", Status: http.StatusInternalServerError}
+	problemNotFound         = Problem{Code: "not-found", Title: "Not found", Status: http.StatusNotFound}
+	problemMethodNotAllowed = Problem{Code: "method-not-allowed", Title: "Method not allowed", Status: http.StatusMethodNotAllowed}
 )
 
 type loggerKey struct{}
