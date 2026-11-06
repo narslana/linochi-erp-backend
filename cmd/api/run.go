@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/config"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
 )
@@ -20,9 +21,14 @@ import (
 // run is main without the process globals, so that it can be tested. It
 // returns the exit code.
 func run(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer) int {
-	if len(args) > 1 && args[1] == "version" {
-		_, _ = fmt.Fprintf(stdout, "%s · %s\n", version, commit)
-		return 0
+	if len(args) > 1 {
+		switch args[1] {
+		case "version":
+			_, _ = fmt.Fprintf(stdout, "%s · %s\n", version, commit)
+			return 0
+		case "migrate":
+			return runMigrate(ctx, args, getenv, stdout, stderr)
+		}
 	}
 
 	cfg, err := config.Load(getenv)
@@ -48,8 +54,22 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 		}
 	}()
 
+	metrics := obs.NewMetrics(version, commit)
+	// The pool connects lazily: the app starts while the database is down or the
+	// schema is behind, and /readyz stays red until that is fixed (NFK-02).
+	pool, err := db.Open(ctx, db.Options{
+		URL: cfg.DatabaseURL, MaxConns: cfg.DBMaxConns, MinConns: cfg.DBMinConns,
+		MaxConnLifetime: cfg.DBMaxConnLife, Metrics: metrics, Tracer: tp,
+	})
+	if err != nil {
+		logger.ErrorContext(ctx, "database setup failed", slog.Any("error", err))
+		return 1
+	}
+	defer pool.Close()
+
 	health := &httpx.Health{}
-	public, internal := newHandlers(logger, obs.NewMetrics(version, commit), health, tp)
+	health.AddCheck("database", db.ReadinessCheck(pool))
+	public, internal := newHandlers(logger, metrics, health, tp)
 
 	var lc net.ListenConfig
 	pubLn, err := lc.Listen(ctx, "tcp", cfg.HTTPAddr)

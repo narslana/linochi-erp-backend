@@ -12,7 +12,7 @@ RACE ?= -race
 
 GOLANGCI := go tool -modfile=tools/go.mod golangci-lint
 
-.PHONY: help dev gen build test test-int lint check
+.PHONY: help dev gen migrate-new build test test-int lint check
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -23,8 +23,15 @@ dev: ## Start Postgres in Docker Compose and run the API locally
 	  DATABASE_URL="$${DATABASE_URL:-postgres://linochi:dev@localhost:5432/linochi_erp?sslmode=disable}" \
 	  go run -ldflags "$(LDFLAGS)" ./cmd/api
 
-gen: ## Generate code (nothing to generate yet: sqlc arrives in B3, oapi-codegen in B6)
-	@echo "gen: nothing to generate yet"
+SQLC := go tool -modfile=tools/go.mod sqlc
+GOOSE := go tool -modfile=tools/go.mod goose
+
+gen: ## Generate Go code from db/queries with sqlc (OpenAPI codegen joins in B6)
+	$(SQLC) generate
+
+migrate-new: ## New goose migration: make migrate-new name=add_things
+	@test -n "$(name)" || { echo "usage: make migrate-new name=<description>"; exit 2; }
+	$(GOOSE) -dir db/migrations create $(name) sql
 
 build: ## Build bin/api (static, with version and commit)
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/api ./cmd/api
@@ -35,10 +42,11 @@ test: ## Unit tests
 test-int: ## Integration tests with testcontainers (needs Docker)
 	go test $(RACE) -tags=integration -count=1 ./...
 
-lint: ## gofmt, go vet, golangci-lint and go mod tidy
+lint: ## gofmt, go vet, golangci-lint, sqlc diff and go mod tidy
 	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
 	go vet -tags=integration ./...
 	$(GOLANGCI) run ./...
+	$(SQLC) diff
 	go mod tidy -diff
 
 check: lint test test-int ## Everything. Must be green before commit

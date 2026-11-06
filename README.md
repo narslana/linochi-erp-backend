@@ -21,8 +21,9 @@ module of its own, so that the tools' dependencies do not end up in the app's
 | `make build` | Builds `bin/api` (static, with version and commit) |
 | `make test` | Unit tests |
 | `make test-int` | Integration tests with testcontainers |
-| `make lint` | gofmt, go vet, golangci-lint and `go mod tidy -diff` |
-| `make gen` | Code generation (nothing to generate yet) |
+| `make lint` | gofmt, go vet, golangci-lint, `sqlc diff` (generated code is up to date) and `go mod tidy -diff` |
+| `make gen` | Generates Go code from `db/queries` with sqlc (the OpenAPI client joins in B6) |
+| `make migrate-new name=...` | A new goose migration in `db/migrations` |
 | `make check` | Lint, `test` and `test-int`. Must be green before commit |
 
 `make dev` reads `.env` if it exists (start from `.env.example`). Compose starts only
@@ -46,6 +47,19 @@ Environment variables only (NFK-02, NFK-14). No files are read in production.
 | `SHUTDOWN_TIMEOUT` | `20s` | How long in-flight requests get to finish afterwards |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | empty | Base URL for OTLP/HTTP, in the cluster `http://alloy.alloy.svc.cluster.local:4318`. Empty = spans are created (the logs get `trace_id`) but not sent |
 | `POD_NAME` | empty | The replica's name in traces |
+| `DB_MAX_CONNS` | `5` | Pool size per pod, 1 to 50. The cluster has 100 connections for all services, see the budget in `docs/DECISIONS.md` |
+| `DB_MIN_CONNS` | `0` | Connections kept open when idle |
+| `DB_MAX_CONN_LIFETIME` | `30m` | How long a connection is reused |
+
+## Database
+
+PostgreSQL through `pgx` and `sqlc`. The schema is the goose migrations in `db/migrations`, embedded in the binary.
+
+- **Migrate:** `api migrate up|down|status` (locally `./bin/api migrate up`). The serving process never migrates; the PreSync Job in the chart runs `api migrate up` with the same image. `down` rolls back one migration and is meant for local use.
+- **Queries:** write SQL in `db/queries/<module>.sql` with a `-- name: GetThing :one` comment and run `make gen`. The name is also the label of the query metrics.
+- **Every table** has `id` (UUIDv7, made in the app, with `uuidv7()` as a default), `created_at`, `updated_at` and `version`. A test checks this for every table. Writes check `version` (optimistic locking) and return `db.ErrStaleVersion`, which becomes a 409 problem.
+- **Start-up:** the app starts while the database is down or the schema is behind. `/readyz` is red (503) until the database answers and the schema is at least as new as the binary's migrations. A newer schema is accepted, so a rollback to the previous image works.
+- **Metrics:** `linochi_db_query_duration_seconds{query}` and `linochi_db_pool_*`. SQL spans are children of the request span.
 
 ## Observability
 
