@@ -10,6 +10,8 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel/trace"
+
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 )
 
 // ProblemTypeBase is the prefix of the "type" member. The code that follows it
@@ -67,12 +69,22 @@ func Error(w http.ResponseWriter, r *http.Request, err error) {
 		WriteProblem(w, r, pe.Problem())
 		return
 	}
+	// Errors every store can return: the platform maps them once, here.
+	switch {
+	case errors.Is(err, db.ErrStaleVersion):
+		WriteProblem(w, r, problemVersionConflict)
+		return
+	case errors.Is(err, db.ErrNotFound):
+		WriteProblem(w, r, problemNotFound)
+		return
+	}
 	LoggerFrom(r.Context()).ErrorContext(r.Context(), "request failed", slog.Any("error", err))
 	WriteProblem(w, r, problemInternal)
 }
 
 var (
 	problemInternal         = Problem{Code: "internal", Title: "Internal error", Status: http.StatusInternalServerError}
+	problemVersionConflict  = Problem{Code: "version-conflict", Title: "The record was changed by someone else", Status: http.StatusConflict}
 	problemNotFound         = Problem{Code: "not-found", Title: "Not found", Status: http.StatusNotFound}
 	problemMethodNotAllowed = Problem{Code: "method-not-allowed", Title: "Method not allowed", Status: http.StatusMethodNotAllowed}
 )

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -34,7 +35,17 @@ type Config struct {
 	OTLPEndpoint string
 	// PodName identifies the replica in traces. Optional.
 	PodName string
+	// DBMaxConns is the pool size per pod. The CNPG cluster has 100 connections
+	// for all services, so the budget is 5 per pod (DECISIONS.md 2026-11-06).
+	DBMaxConns int
+	// DBMinConns is how many connections the pool keeps open when idle.
+	DBMinConns int
+	// DBMaxConnLife is how long a connection is reused before it is replaced.
+	DBMaxConnLife time.Duration
 }
+
+// maxDBConnsCeiling stops a typo from eating the whole cluster's connections.
+const maxDBConnsCeiling = 50
 
 // Error says which environment variable is wrong. It never contains the value
 // of a variable, since values may be secrets.
@@ -59,6 +70,9 @@ func Load(getenv func(string) string) (Config, error) {
 		ShutdownDelay:   5 * time.Second,
 		OTLPEndpoint:    getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
 		PodName:         getenv("POD_NAME"),
+		DBMaxConns:      5,
+		DBMinConns:      0,
+		DBMaxConnLife:   30 * time.Minute,
 	}
 
 	if err := validateAddr("HTTP_ADDR", cfg.HTTPAddr); err != nil {
@@ -81,6 +95,31 @@ func Load(getenv func(string) string) (Config, error) {
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 			return Config{}, &Error{Field: "OTEL_EXPORTER_OTLP_ENDPOINT", Reason: "must be an http(s) URL such as http://alloy.alloy.svc.cluster.local:4318"}
 		}
+	}
+
+	if v := getenv("DB_MAX_CONNS"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > maxDBConnsCeiling {
+			return Config{}, &Error{Field: "DB_MAX_CONNS", Reason: fmt.Sprintf("must be a whole number from 1 to %d", maxDBConnsCeiling)}
+		}
+		cfg.DBMaxConns = n
+	}
+	if v := getenv("DB_MIN_CONNS"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 0 {
+			return Config{}, &Error{Field: "DB_MIN_CONNS", Reason: "must be a whole number, zero or more"}
+		}
+		cfg.DBMinConns = n
+	}
+	if cfg.DBMinConns > cfg.DBMaxConns {
+		return Config{}, &Error{Field: "DB_MIN_CONNS", Reason: "must not be larger than DB_MAX_CONNS"}
+	}
+	if v := getenv("DB_MAX_CONN_LIFETIME"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil || d <= 0 {
+			return Config{}, &Error{Field: "DB_MAX_CONN_LIFETIME", Reason: "must be a positive duration such as 30m"}
+		}
+		cfg.DBMaxConnLife = d
 	}
 
 	if v := getenv("SHUTDOWN_DELAY"); v != "" {
@@ -119,8 +158,8 @@ func (c Config) SlogLevel() slog.Level {
 // logged or printed without leaking secrets.
 func (c Config) String() string {
 	return fmt.Sprintf(
-		"Config{HTTPAddr:%s InternalAddr:%s DatabaseURL:%s LogLevel:%s ShutdownTimeout:%s ShutdownDelay:%s OTLPEndpoint:%s PodName:%s}",
-		c.HTTPAddr, c.InternalAddr, maskDSN(c.DatabaseURL), c.LogLevel, c.ShutdownTimeout, c.ShutdownDelay, c.OTLPEndpoint, c.PodName,
+		"Config{HTTPAddr:%s InternalAddr:%s DatabaseURL:%s LogLevel:%s ShutdownTimeout:%s ShutdownDelay:%s OTLPEndpoint:%s PodName:%s DBMaxConns:%d DBMinConns:%d DBMaxConnLife:%s}",
+		c.HTTPAddr, c.InternalAddr, maskDSN(c.DatabaseURL), c.LogLevel, c.ShutdownTimeout, c.ShutdownDelay, c.OTLPEndpoint, c.PodName, c.DBMaxConns, c.DBMinConns, c.DBMaxConnLife,
 	)
 }
 

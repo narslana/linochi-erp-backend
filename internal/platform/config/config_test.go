@@ -32,6 +32,9 @@ func TestNFK02_ConfigLoadsFromEnvOnly(t *testing.T) {
 				LogLevel:        "info",
 				ShutdownTimeout: 20 * time.Second,
 				ShutdownDelay:   5 * time.Second,
+				DBMaxConns:      5,
+				DBMinConns:      0,
+				DBMaxConnLife:   30 * time.Minute,
 			},
 		},
 		{
@@ -45,6 +48,9 @@ func TestNFK02_ConfigLoadsFromEnvOnly(t *testing.T) {
 				"SHUTDOWN_DELAY":              "0s",
 				"OTEL_EXPORTER_OTLP_ENDPOINT": "http://alloy.alloy.svc.cluster.local:4318",
 				"POD_NAME":                    "erp-api-7d9f",
+				"DB_MAX_CONNS":                "8",
+				"DB_MIN_CONNS":                "2",
+				"DB_MAX_CONN_LIFETIME":        "10m",
 			},
 			want: config.Config{
 				HTTPAddr:        "127.0.0.1:9000",
@@ -55,6 +61,9 @@ func TestNFK02_ConfigLoadsFromEnvOnly(t *testing.T) {
 				ShutdownDelay:   0,
 				OTLPEndpoint:    "http://alloy.alloy.svc.cluster.local:4318",
 				PodName:         "erp-api-7d9f",
+				DBMaxConns:      8,
+				DBMinConns:      2,
+				DBMaxConnLife:   10 * time.Minute,
 			},
 		},
 	}
@@ -85,6 +94,12 @@ func TestNFK02_ConfigRejectsMissingOrInvalid(t *testing.T) {
 		{"bad shutdown delay", map[string]string{"DATABASE_URL": validDSN, "SHUTDOWN_DELAY": "soon"}, "SHUTDOWN_DELAY"},
 		{"negative shutdown delay", map[string]string{"DATABASE_URL": validDSN, "SHUTDOWN_DELAY": "-1s"}, "SHUTDOWN_DELAY"},
 		{"otlp endpoint not a url", map[string]string{"DATABASE_URL": validDSN, "OTEL_EXPORTER_OTLP_ENDPOINT": "alloy:4318"}, "OTEL_EXPORTER_OTLP_ENDPOINT"},
+		{"db max conns not a number", map[string]string{"DATABASE_URL": validDSN, "DB_MAX_CONNS": "many"}, "DB_MAX_CONNS"},
+		{"db max conns zero", map[string]string{"DATABASE_URL": validDSN, "DB_MAX_CONNS": "0"}, "DB_MAX_CONNS"},
+		{"db max conns above the budget", map[string]string{"DATABASE_URL": validDSN, "DB_MAX_CONNS": "51"}, "DB_MAX_CONNS"},
+		{"db min conns negative", map[string]string{"DATABASE_URL": validDSN, "DB_MIN_CONNS": "-1"}, "DB_MIN_CONNS"},
+		{"db min conns above max", map[string]string{"DATABASE_URL": validDSN, "DB_MAX_CONNS": "3", "DB_MIN_CONNS": "4"}, "DB_MIN_CONNS"},
+		{"db conn lifetime invalid", map[string]string{"DATABASE_URL": validDSN, "DB_MAX_CONN_LIFETIME": "long"}, "DB_MAX_CONN_LIFETIME"},
 		{"bad log level", map[string]string{"DATABASE_URL": validDSN, "LOG_LEVEL": "loud"}, "LOG_LEVEL"},
 		{"bad http addr", map[string]string{"DATABASE_URL": validDSN, "HTTP_ADDR": "no-port"}, "HTTP_ADDR"},
 	}

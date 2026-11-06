@@ -17,6 +17,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
 )
@@ -86,6 +87,13 @@ func TestAPI_ErrorsAreRFC9457ProblemDetails(t *testing.T) {
 	e.router.Handle("GET /api/v1/conflict", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, conflictError{})
 	}))
+	// Platform errors travel wrapped, as they do from the stores.
+	e.router.Handle("GET /api/v1/stale", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		httpx.Error(w, r, fmt.Errorf("archive user 7: %w", db.ErrStaleVersion))
+	}))
+	e.router.Handle("GET /api/v1/missing", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		httpx.Error(w, r, fmt.Errorf("get user 7: %w", db.ErrNotFound))
+	}))
 	e.router.Handle("GET /api/v1/untyped", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, errors.New("pq: password authentication failed for user linochi"))
 	}))
@@ -100,6 +108,8 @@ func TestAPI_ErrorsAreRFC9457ProblemDetails(t *testing.T) {
 		{"not found", "GET", "/does-not-exist", 404, "not-found", "Not found", ""},
 		{"method not allowed", "POST", "/api/v1/ok", 405, "method-not-allowed", "Method not allowed", "GET"},
 		{"typed domain error", "GET", "/api/v1/conflict", 409, "version-conflict", "The record was changed by someone else", ""},
+		{"stale version is a 409 so that clients re-read", "GET", "/api/v1/stale", 409, "version-conflict", "The record was changed by someone else", ""},
+		{"missing row is a 404", "GET", "/api/v1/missing", 404, "not-found", "Not found", ""},
 		{"untyped error is a generic 500", "GET", "/api/v1/untyped", 500, "internal", "Internal error", ""},
 	}
 	traceID := regexp.MustCompile(`^[0-9a-f]{32}$`)
@@ -217,7 +227,7 @@ func TestOBS_MetricNamesFollowConvention(t *testing.T) {
 	e.router.Handle("GET /x", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	e.do("GET", "/x")
 
-	name := regexp.MustCompile(`^linochi_[a-z0-9]+(_[a-z0-9]+)*_(total|seconds|bytes|info|in_flight)$`)
+	name := regexp.MustCompile(`^linochi_[a-z0-9]+(_[a-z0-9]+)*_(total|seconds|bytes|info|in_flight|connections)$`)
 	var seen int
 	for n := range e.families(t) {
 		if !strings.HasPrefix(n, "linochi_") {
