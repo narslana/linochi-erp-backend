@@ -1,0 +1,28 @@
+name: CI
+
+# Every push runs the same thing a developer runs before committing (NFK-33).
+# The image and deploy jobs arrive with B7.
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    # nars-ci is built from gitea-runner-image and has Go, make and gcc
+    # (go test -race needs cgo). The runner is arm64, so this proves NFK-01
+    # for the code and NFK-28 for testcontainers inside Docker-in-Docker.
+    runs-on: nars-ci
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Show the environment
+        run: |
+          go version
+          uname -m
+          docker version --format 'server {{.Server.Version}} {{.Server.Os}}/{{.Server.Arch}}'
+          echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
+
+      - name: Lint, unit tests and integration tests
+        run: make check RACE=  # no race detector: ThreadSanitizer aborts on the Pi 5 kernel (47-bit VMA)
