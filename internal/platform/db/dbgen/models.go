@@ -5,20 +5,40 @@
 package dbgen
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
 
+type AuditLog struct {
+	ID         uuid.UUID       `json:"id"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	Version    int32           `json:"version"`
+	ActorType  string          `json:"actor_type"`
+	ActorID    *uuid.UUID      `json:"actor_id"`
+	ActorLabel string          `json:"actor_label"`
+	Module     string          `json:"module"`
+	EntityType string          `json:"entity_type"`
+	EntityID   uuid.UUID       `json:"entity_id"`
+	Action     string          `json:"action"`
+	Before     json.RawMessage `json:"before"`
+	After      json.RawMessage `json:"after"`
+	Reason     *string         `json:"reason"`
+	TraceID    *string         `json:"trace_id"`
+	RedactedAt *time.Time      `json:"redacted_at"`
+}
+
 type User struct {
-	ID          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Version     int32
-	OidcIssuer  string
-	OidcSubject string
-	Email       string
-	DisplayName string
-	LastLoginAt *time.Time
-	ArchivedAt  *time.Time
+	ID          uuid.UUID  `json:"id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	Version     int32      `json:"version"`
+	OidcIssuer  string     `json:"oidc_issuer"`
+	OidcSubject string     `json:"oidc_subject"`
+	Email       string     `json:"email"`
+	DisplayName string     `json:"display_name"`
+	LastLoginAt *time.Time `json:"last_login_at"`
+	ArchivedAt  *time.Time `json:"archived_at"`
 }

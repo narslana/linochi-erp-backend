@@ -142,3 +142,36 @@ func TestNFK14_ConfigStringMasksDatabasePassword(t *testing.T) {
 		}
 	}
 }
+
+// `api migrate` runs as the database owner, with its own URL. The app's
+// DATABASE_URL (the restricted role) is not needed by the migration Job.
+func TestNFK28_LoadMigrateReadsOnlyTheMigrateURL(t *testing.T) {
+	const ownerDSN = "postgres://linochi_erp_owner:0wn3r-pw@db:5432/linochi_erp?sslmode=disable"
+	cfg, err := config.LoadMigrate(env(map[string]string{"MIGRATE_DATABASE_URL": ownerDSN}))
+	if err != nil {
+		t.Fatalf("LoadMigrate: %v", err)
+	}
+	if cfg.DatabaseURL != ownerDSN {
+		t.Errorf("DatabaseURL = %q", cfg.DatabaseURL)
+	}
+	if out := cfg.String(); strings.Contains(out, "0wn3r-pw") || !strings.Contains(out, "db:5432") {
+		t.Errorf("String must mask the password and keep the host: %s", out)
+	}
+}
+
+func TestNFK28_LoadMigrateRejectsMissingOrInvalid(t *testing.T) {
+	for name, m := range map[string]map[string]string{
+		"missing":      {},
+		"only the app": {"DATABASE_URL": validDSN}, // running migrations as the app role is a mistake
+		"wrong scheme": {"MIGRATE_DATABASE_URL": "mysql://u:p@h/db"},
+		"not a url":    {"MIGRATE_DATABASE_URL": "::nope"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := config.LoadMigrate(env(m))
+			var ce *config.Error
+			if !errors.As(err, &ce) || ce.Field != "MIGRATE_DATABASE_URL" {
+				t.Fatalf("err = %v, want a config.Error for MIGRATE_DATABASE_URL", err)
+			}
+		})
+	}
+}

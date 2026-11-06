@@ -9,15 +9,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	dto "github.com/prometheus/client_model/go"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db/dbgen"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/testdb"
 )
 
-func openWithObs(t *testing.T) (*db.Store, *obs.Metrics, *tracetest.SpanRecorder, *sdktrace.TracerProvider) {
+func openWithObs(t *testing.T) (*dbgen.Queries, *obs.Metrics, *tracetest.SpanRecorder, *sdktrace.TracerProvider) {
 	t.Helper()
 	dsn := migrated(t)
 	metrics := obs.NewMetrics("test", "abc1234")
@@ -26,14 +29,14 @@ func openWithObs(t *testing.T) (*db.Store, *obs.Metrics, *tracetest.SpanRecorder
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
 	pool, err := db.Open(context.Background(), db.Options{
-		URL: dsn, MaxConns: 3, MinConns: 1, MaxConnLifetime: 10 * time.Minute,
+		URL: testdb.AppURL(dsn), MaxConns: 3, MinConns: 1, MaxConnLifetime: 10 * time.Minute,
 		Metrics: metrics, Tracer: tp,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	return db.NewStore(pool), metrics, rec, tp
+	return dbgen.New(pool), metrics, rec, tp
 }
 
 func families(t *testing.T, m *obs.Metrics) map[string]*dto.MetricFamily {
@@ -60,7 +63,7 @@ func labels(m *dto.Metric) map[string]string {
 func TestNFK04_PoolHonoursTheConfiguredLimits(t *testing.T) {
 	dsn := migrated(t)
 	pool, err := db.Open(context.Background(), db.Options{
-		URL: dsn, MaxConns: 3, MinConns: 1, MaxConnLifetime: 10 * time.Minute,
+		URL: testdb.AppURL(dsn), MaxConns: 3, MinConns: 1, MaxConnLifetime: 10 * time.Minute,
 		Metrics: obs.NewMetrics("test", "x"), Tracer: sdktrace.NewTracerProvider(),
 	})
 	if err != nil {
@@ -81,7 +84,8 @@ func TestOBS_QueryMetricsAndSpansUseTheSqlcQueryName(t *testing.T) {
 	// appear. In the app every request has one.
 	ctx, request := tp.Tracer("test").Start(ctx, "GET /api/v1/me")
 
-	u, err := store.UpsertUserOnLogin(ctx, login("sub-1", "a@example.se", "A"))
+	u, err := store.InsertUserIfNew(ctx, dbgen.InsertUserIfNewParams{
+		ID: uuid.Must(uuid.NewV7()), OidcIssuer: issuer, OidcSubject: "sub-1", Email: "a@example.se"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +101,7 @@ func TestOBS_QueryMetricsAndSpansUseTheSqlcQueryName(t *testing.T) {
 	for _, m := range f.GetMetric() {
 		got[labels(m)["query"]] += m.GetHistogram().GetSampleCount()
 	}
-	for _, name := range []string{"UpsertUserOnLogin", "GetUser"} {
+	for _, name := range []string{"InsertUserIfNew", "GetUser"} {
 		if got[name] != 1 {
 			t.Errorf("query %q was observed %d times, want 1 (have %v)", name, got[name], got)
 		}
@@ -116,7 +120,7 @@ func TestOBS_QueryMetricsAndSpansUseTheSqlcQueryName(t *testing.T) {
 			t.Errorf("span %q is not a child of the request span", s.Name())
 		}
 	}
-	if !anyContains(spanNames, "query GetUser") || !anyContains(spanNames, "query UpsertUserOnLogin") {
+	if !anyContains(spanNames, "query GetUser") || !anyContains(spanNames, "query InsertUserIfNew") {
 		t.Errorf("spans %v do not carry the query names", spanNames)
 	}
 }
@@ -139,11 +143,8 @@ func TestOBS_FailedQueriesAreStillMeasured(t *testing.T) {
 }
 
 func TestOBS_PoolMetricsAreExported(t *testing.T) {
-	ctx := context.Background()
 	store, metrics, _, _ := openWithObs(t)
-	if _, err := store.UpsertUserOnLogin(ctx, login("sub-1", "a@example.se", "A")); err != nil {
-		t.Fatal(err)
-	}
+	newUser(context.Background(), t, store, "sub-1")
 	fs := families(t, metrics)
 
 	conns := fs["linochi_db_pool_connections"]
@@ -207,7 +208,7 @@ func TestOBS_DBMetricNamesFollowConvention(t *testing.T) {
 func TestOBS_ReadinessQueryHasItsOwnLabel(t *testing.T) {
 	dsn := migrated(t)
 	metrics := obs.NewMetrics("test", "x")
-	pool, err := db.Open(context.Background(), db.Options{URL: dsn, MaxConns: 2, Metrics: metrics, Tracer: sdktrace.NewTracerProvider()})
+	pool, err := db.Open(context.Background(), db.Options{URL: testdb.AppURL(dsn), MaxConns: 2, Metrics: metrics, Tracer: sdktrace.NewTracerProvider()})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -10,9 +10,24 @@ sql:
         out: internal/platform/db/dbgen
         sql_package: pgx/v5
         emit_pointers_for_null_types: true
+        # json tags with the column names: audit.Record diffs records as JSON, so
+        # the field names in the audit log are the column names.
+        emit_json_tags: true
         overrides:
           - db_type: uuid
             go_type: github.com/google/uuid.UUID
+          - db_type: uuid
+            nullable: true
+            go_type:
+              import: github.com/google/uuid
+              type: UUID
+              pointer: true
+          # A nil json.RawMessage is SQL NULL.
+          - db_type: jsonb
+            go_type: encoding/json.RawMessage
+          - db_type: jsonb
+            nullable: true
+            go_type: encoding/json.RawMessage
           - db_type: timestamptz
             go_type: time.Time
           - db_type: timestamptz

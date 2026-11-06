@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNFK28_MigrateUpStatusDown(t *testing.T) {
-	env := map[string]string{"DATABASE_URL": pgServer.NewDatabase(t)}
+	env := map[string]string{"MIGRATE_DATABASE_URL": pgServer.NewDatabase(t)}
 
 	if code, out, errOut := migrateCmd(t, env, "status"); code != 0 || !strings.Contains(out, "pending") {
 		t.Fatalf("status before up: code=%d out=%q err=%q, want the migration listed as pending", code, out, errOut)
@@ -50,8 +50,18 @@ func TestNFK28_MigrateUpStatusDown(t *testing.T) {
 	if code, out, errOut := migrateCmd(t, env, "down"); code != 0 || !strings.Contains(out, "rolled back") {
 		t.Fatalf("down: code=%d out=%q err=%q", code, out, errOut)
 	}
-	if code, out, _ := migrateCmd(t, env, "down"); code != 0 || !strings.Contains(out, "nothing to roll back") {
-		t.Fatalf("second down: code=%d out=%q", code, out)
+	// One step at a time until nothing is left.
+	for i := 0; ; i++ {
+		code, out, _ := migrateCmd(t, env, "down")
+		if code != 0 {
+			t.Fatalf("down #%d: code=%d out=%q", i+2, code, out)
+		}
+		if strings.Contains(out, "nothing to roll back") {
+			break
+		}
+		if i > 10 {
+			t.Fatal("down never reached the start")
+		}
 	}
 }
 
@@ -122,10 +132,10 @@ func start(t *testing.T, databaseURL string) (internal string, stop func() int) 
 
 func TestNFK02_ReadyzIsGreenWhenTheDatabaseIsMigrated(t *testing.T) {
 	url := pgServer.NewDatabase(t)
-	if code, _, errOut := migrateCmd(t, map[string]string{"DATABASE_URL": url}, "up"); code != 0 {
+	if code, _, errOut := migrateCmd(t, map[string]string{"MIGRATE_DATABASE_URL": url}, "up"); code != 0 {
 		t.Fatalf("migrate up: %d %s", code, errOut)
 	}
-	internal, stop := start(t, url)
+	internal, stop := start(t, testdb.AppURL(url))
 
 	deadline := time.Now().Add(10 * time.Second)
 	var code int
@@ -147,7 +157,7 @@ func TestNFK02_ReadyzIsGreenWhenTheDatabaseIsMigrated(t *testing.T) {
 // A schema that is behind the binary means this version must not get traffic,
 // but the process still starts and /healthz stays green (no crash loop).
 func TestNFK02_ReadyzIsRedUntilTheSchemaIsMigratedAndTheAppStillStarts(t *testing.T) {
-	internal, stop := start(t, pgServer.NewDatabase(t)) // empty database, no migrations
+	internal, stop := start(t, testdb.AppURL(pgServer.NewDatabase(t))) // empty database, no migrations
 	code, body := fetch(t, "http://"+internal+"/readyz")
 	if code != http.StatusServiceUnavailable || body.Checks["database"] != "failed" {
 		t.Fatalf("/readyz = %d %+v, want 503 with database failed", code, body)

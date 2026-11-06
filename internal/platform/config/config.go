@@ -81,7 +81,7 @@ func Load(getenv func(string) string) (Config, error) {
 	if err := validateAddr("INTERNAL_ADDR", cfg.InternalAddr); err != nil {
 		return Config{}, err
 	}
-	if err := validateDatabaseURL(cfg.DatabaseURL); err != nil {
+	if err := validateDatabaseURL("DATABASE_URL", cfg.DatabaseURL); err != nil {
 		return Config{}, err
 	}
 
@@ -147,6 +147,31 @@ func Load(getenv func(string) string) (Config, error) {
 	return cfg, nil
 }
 
+// MigrateConfig is the configuration of `api migrate`. Migrations run as the
+// database owner, a different role from the restricted one the app runs as, so
+// the Job has a URL of its own and does not need the app's DATABASE_URL.
+type MigrateConfig struct {
+	// DatabaseURL is the owner's connection string, from MIGRATE_DATABASE_URL.
+	// It contains a secret.
+	DatabaseURL string
+}
+
+// LoadMigrate reads the configuration of `api migrate`. There is no fallback to
+// DATABASE_URL: the app role cannot change the schema, and a migration that
+// quietly used it would only fail later and confusingly.
+func LoadMigrate(getenv func(string) string) (MigrateConfig, error) {
+	cfg := MigrateConfig{DatabaseURL: getenv("MIGRATE_DATABASE_URL")}
+	if err := validateDatabaseURL("MIGRATE_DATABASE_URL", cfg.DatabaseURL); err != nil {
+		return MigrateConfig{}, err
+	}
+	return cfg, nil
+}
+
+// String masks the password, like Config.String (NFK-14).
+func (c MigrateConfig) String() string {
+	return fmt.Sprintf("MigrateConfig{DatabaseURL:%s}", maskDSN(c.DatabaseURL))
+}
+
 // SlogLevel returns LogLevel as a slog.Level. Load has already validated it.
 func (c Config) SlogLevel() slog.Level {
 	var level slog.Level
@@ -177,16 +202,16 @@ func validateAddr(field, addr string) error {
 	return nil
 }
 
-func validateDatabaseURL(raw string) error {
+func validateDatabaseURL(field, raw string) error {
 	if raw == "" {
-		return &Error{Field: "DATABASE_URL", Reason: "is required"}
+		return &Error{Field: field, Reason: "is required"}
 	}
 	u, err := url.Parse(raw)
 	if err != nil {
-		return &Error{Field: "DATABASE_URL", Reason: "is not a valid URL"}
+		return &Error{Field: field, Reason: "is not a valid URL"}
 	}
 	if u.Scheme != "postgres" && u.Scheme != "postgresql" {
-		return &Error{Field: "DATABASE_URL", Reason: "must start with postgres:// or postgresql://"}
+		return &Error{Field: field, Reason: "must start with postgres:// or postgresql://"}
 	}
 	return nil
 }

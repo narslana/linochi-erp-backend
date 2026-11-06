@@ -13,8 +13,10 @@ import (
 const migrateUsage = "usage: api migrate up|down|status"
 
 // runMigrate is the `api migrate` subcommand. The PreSync Job runs `api migrate
-// up` with the same image as the app; the serving process never migrates.
-// `down` rolls back one migration and is meant for local development.
+// up` with the same image as the app; the serving process never migrates. It
+// connects with MIGRATE_DATABASE_URL, the database owner, because the role the
+// app runs as cannot change the schema. `down` rolls back one migration and is
+// meant for local development.
 func runMigrate(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer) int {
 	if len(args) < 3 {
 		_, _ = fmt.Fprintln(stderr, migrateUsage)
@@ -26,7 +28,7 @@ func runMigrate(ctx context.Context, args []string, getenv func(string) string, 
 		return 2
 	}
 
-	cfg, err := config.Load(getenv)
+	cfg, err := config.LoadMigrate(getenv)
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return 2

@@ -17,7 +17,7 @@ module of its own, so that the tools' dependencies do not end up in the app's
 
 | Command | Does |
 |---|---|
-| `make dev` | Starts Postgres in Docker Compose and runs the API locally |
+| `make dev` | Starts Postgres in Docker Compose, migrates as the owner and runs the API as the app role |
 | `make build` | Builds `bin/api` (static, with version and commit) |
 | `make test` | Unit tests |
 | `make test-int` | Integration tests with testcontainers |
@@ -28,6 +28,8 @@ module of its own, so that the tools' dependencies do not end up in the app's
 
 `make dev` reads `.env` if it exists (start from `.env.example`). Compose starts only
 Postgres until the first feature that stores files arrives, then RustFS is added.
+The two database roles are created by `db/dev/initdb` when the Compose volume is
+empty; after changing that script run `docker compose down -v`.
 
 The race detector (`-race`) runs by default. CI on arm64 runs `make check RACE=`
 because ThreadSanitizer aborts on the Raspberry Pi 5 default kernel (see
@@ -39,7 +41,8 @@ Environment variables only (NFK-02, NFK-14). No files are read in production.
 
 | Variable | Default | |
 |---|---|---|
-| `DATABASE_URL` | | Required. `postgres://…`. Contains a secret and is masked in logs |
+| `DATABASE_URL` | | Required to serve. `postgres://…` as the restricted app role. Contains a secret and is masked in logs |
+| `MIGRATE_DATABASE_URL` | | Required by `api migrate` only. The same database as the owner role, which can change the schema. There is no fallback to `DATABASE_URL` |
 | `HTTP_ADDR` | `:8080` | The public API (`/api`, `/auth`) |
 | `INTERNAL_ADDR` | `:9090` | `/healthz`, `/readyz`, `/metrics` and later API keys. No ingress route |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
@@ -55,11 +58,22 @@ Environment variables only (NFK-02, NFK-14). No files are read in production.
 
 PostgreSQL through `pgx` and `sqlc`. The schema is the goose migrations in `db/migrations`, embedded in the binary.
 
+- **Two roles** (see `docs/DECISIONS.md`): `linochi_erp_owner` owns the schema and runs migrations (`MIGRATE_DATABASE_URL`), `linochi_erp_app` is what the running app connects as (`DATABASE_URL`). The app role gets only what each migration grants it, per table: no DELETE (data is kept, NFK-09), no DDL, no TRUNCATE. The roles must exist before `api migrate up`: in the cluster H1 creates them, in Compose `db/dev/initdb`, in tests `internal/platform/testdb`. Every migration grants on its own tables, explicitly.
+
 - **Migrate:** `api migrate up|down|status` (locally `./bin/api migrate up`). The serving process never migrates; the PreSync Job in the chart runs `api migrate up` with the same image. `down` rolls back one migration and is meant for local use.
 - **Queries:** write SQL in `db/queries/<module>.sql` with a `-- name: GetThing :one` comment and run `make gen`. The name is also the label of the query metrics.
 - **Every table** has `id` (UUIDv7, made in the app, with `uuidv7()` as a default), `created_at`, `updated_at` and `version`. A test checks this for every table. Writes check `version` (optimistic locking) and return `db.ErrStaleVersion`, which becomes a 409 problem.
 - **Start-up:** the app starts while the database is down or the schema is behind. `/readyz` is red (503) until the database answers and the schema is at least as new as the binary's migrations. A newer schema is accepted, so a rollback to the previous image works.
 - **Metrics:** `linochi_db_query_duration_seconds{query}` and `linochi_db_pool_*`. SQL spans are children of the request span.
+
+## Change log (INS-05)
+
+Every write that changes data records an entry in `audit_log` **in the same transaction**, with `internal/audit`. `audit.Recorder.Record` takes a `*db.Tx` and not a pool, so it cannot be called outside a transaction.
+
+- **Actor:** from the context (`audit.WithActor`): a user, an API key or the system (named by a label such as `oidc-login`, never a person). No actor means `audit.ErrNoActor` and the whole transaction is rolled back: an unattributed change is not saved.
+- **What is stored:** a create stores the whole record as `after`, an archive the whole record as `before`, anything else only the changed fields, with `before` and `after` per field. `version` and `updated_at` are left out of those diffs. A change that changes nothing writes nothing.
+- **Append-only:** the app role has no UPDATE, DELETE or TRUNCATE on `audit_log`, and a trigger also stops the owner when it is connected directly. The one way to change old rows is the SECURITY DEFINER function `audit_redact_personal_data()` (GDPR, KUN-07), which only replaces the values of the given fields with `[redacted]` and is called through `Recorder.RedactPersonalData`, which also records an entry about the redaction. Old values stay in backups until those are rotated out.
+- **Loki and metrics:** after the commit, one log line `audit` with `trace_id`, the actor, the record and the **names** of the changed fields, never the values, and `linochi_audit_entries_total{module,action}`. A rolled-back change never shows up.
 
 ## Observability
 

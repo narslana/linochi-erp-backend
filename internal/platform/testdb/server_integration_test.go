@@ -85,3 +85,45 @@ func TestNFK28_NewDatabaseIsDroppedAfterTheTest(t *testing.T) {
 		t.Error("the database still exists after its test finished")
 	}
 }
+
+func currentUser(t *testing.T, dsn string) string {
+	t.Helper()
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	var u string
+	if err := conn.QueryRow(ctx, `SELECT current_user`).Scan(&u); err != nil {
+		t.Fatal(err)
+	}
+	return u
+}
+
+// The test databases mirror production: an owner role that owns the schema and
+// runs migrations, and a restricted app role that the running app uses.
+func TestNFK28_NewDatabaseIsOwnedByTheOwnerRoleAndAppURLIsTheRestrictedRole(t *testing.T) {
+	owner := server.NewDatabase(t)
+	if got := currentUser(t, owner); got != "linochi_erp_owner" {
+		t.Errorf("the returned URL connects as %q, want linochi_erp_owner", got)
+	}
+	app := testdb.AppURL(owner)
+	if got := currentUser(t, app); got != "linochi_erp_app" {
+		t.Errorf("AppURL connects as %q, want linochi_erp_app", got)
+	}
+
+	exec(t, owner, `CREATE TABLE made_by_owner (id int)`) // the owner may change the schema
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	if _, err := conn.Exec(ctx, `CREATE TABLE made_by_app (id int)`); err == nil {
+		t.Error("the app role must not be able to create tables")
+	}
+	if _, err := conn.Exec(ctx, `DROP TABLE made_by_owner`); err == nil {
+		t.Error("the app role must not be able to drop the owner's tables")
+	}
+}

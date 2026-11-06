@@ -17,10 +17,15 @@ GOLANGCI := go tool -modfile=tools/go.mod golangci-lint
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-dev: ## Start Postgres in Docker Compose and run the API locally
+DEV_DATABASE_URL ?= postgres://linochi_erp_app:dev@localhost:5432/linochi_erp?sslmode=disable
+DEV_MIGRATE_DATABASE_URL ?= postgres://linochi_erp_owner:dev@localhost:5432/linochi_erp?sslmode=disable
+
+dev: ## Start Postgres in Docker Compose, migrate as the owner and run the API as the app role
 	docker compose up -d --wait
 	@set -a; [ -f .env ] && . ./.env; set +a; \
-	  DATABASE_URL="$${DATABASE_URL:-postgres://linochi:dev@localhost:5432/linochi_erp?sslmode=disable}" \
+	  export DATABASE_URL="$${DATABASE_URL:-$(DEV_DATABASE_URL)}" \
+	         MIGRATE_DATABASE_URL="$${MIGRATE_DATABASE_URL:-$(DEV_MIGRATE_DATABASE_URL)}"; \
+	  go run -ldflags "$(LDFLAGS)" ./cmd/api migrate up && \
 	  go run -ldflags "$(LDFLAGS)" ./cmd/api
 
 SQLC := go tool -modfile=tools/go.mod sqlc
@@ -37,10 +42,10 @@ build: ## Build bin/api (static, with version and commit)
 	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/api ./cmd/api
 
 test: ## Unit tests
-	go test $(RACE) -cover ./...
+	go test $(RACE) -cover -timeout 5m ./...
 
 test-int: ## Integration tests with testcontainers (needs Docker)
-	go test $(RACE) -tags=integration -count=1 ./...
+	go test $(RACE) -tags=integration -count=1 -timeout 8m ./...
 
 lint: ## gofmt, go vet, golangci-lint, sqlc diff and go mod tidy
 	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
