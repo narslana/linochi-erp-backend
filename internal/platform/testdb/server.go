@@ -45,7 +45,46 @@ func StartServer(ctx context.Context) (*Server, error) {
 		_ = testcontainers.TerminateContainer(ctr)
 		return nil, fmt.Errorf("connection string: %w", err)
 	}
-	return &Server{ctr: ctr, adminDSN: dsn}, nil
+	s := &Server{ctr: ctr, adminDSN: dsn}
+	if err := s.createRoles(ctx); err != nil {
+		_ = testcontainers.TerminateContainer(ctr)
+		return nil, err
+	}
+	return s, nil
+}
+
+// The roles mirror production (see DECISIONS.md): the owner owns the schema and
+// runs migrations, the app role is what the running app uses and has only the
+// rights the migrations grant it.
+const (
+	OwnerRole = "linochi_erp_owner"
+	AppRole   = "linochi_erp_app"
+	password  = "test"
+)
+
+func (s *Server) createRoles(ctx context.Context) error {
+	admin, err := pgx.Connect(ctx, s.adminDSN)
+	if err != nil {
+		return fmt.Errorf("connect as admin: %w", err)
+	}
+	defer func() { _ = admin.Close(context.WithoutCancel(ctx)) }()
+	for _, role := range []string{OwnerRole, AppRole} {
+		if _, err := admin.Exec(ctx, "CREATE ROLE "+pgx.Identifier{role}.Sanitize()+" LOGIN PASSWORD '"+password+"'"); err != nil {
+			return fmt.Errorf("create role %s: %w", role, err)
+		}
+	}
+	return nil
+}
+
+// AppURL returns the connection string for the restricted app role on the
+// database that NewDatabase returned (which connects as the owner).
+func AppURL(ownerURL string) string {
+	u, err := url.Parse(ownerURL)
+	if err != nil {
+		panic("testdb: " + err.Error())
+	}
+	u.User = url.UserPassword(AppRole, password)
+	return u.String()
 }
 
 // Terminate removes the container.
@@ -80,7 +119,7 @@ func (s *Server) NewDatabase(t testing.TB) string {
 		t.Fatalf("connect as admin: %v", err)
 	}
 	defer func() { _ = admin.Close(context.Background()) }()
-	if _, err := admin.Exec(ctx, "CREATE DATABASE "+pgx.Identifier{name}.Sanitize()+" TEMPLATE template0"); err != nil {
+	if _, err := admin.Exec(ctx, "CREATE DATABASE "+pgx.Identifier{name}.Sanitize()+" OWNER "+pgx.Identifier{OwnerRole}.Sanitize()+" TEMPLATE template0"); err != nil {
 		t.Fatalf("create database: %v", err)
 	}
 
@@ -104,5 +143,6 @@ func (s *Server) NewDatabase(t testing.TB) string {
 		t.Fatalf("parse dsn: %v", err)
 	}
 	u.Path = "/" + name
+	u.User = url.UserPassword(OwnerRole, password)
 	return u.String()
 }
