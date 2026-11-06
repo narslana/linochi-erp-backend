@@ -127,7 +127,7 @@ func TestINS05_RedactReplacesOldValuesAndLeavesTheRest(t *testing.T) {
 	}
 }
 
-func TestINS05_RedactNeedsFieldsAndIsNotCallableByTheOwnerDirectly(t *testing.T) {
+func TestINS05_RedactNeedsFieldsAndOnlyTheAppRoleMayCallIt(t *testing.T) {
 	ctx := context.Background()
 	owner := migrated(t)
 	app := appConn(t, owner)
@@ -136,30 +136,64 @@ func TestINS05_RedactNeedsFieldsAndIsNotCallableByTheOwnerDirectly(t *testing.T)
 	if err := app.QueryRow(ctx, `SELECT audit_redact_personal_data('widget', $1::uuid, ARRAY[]::text[])`, someUUID).Scan(new(int)); err == nil {
 		t.Error("an empty field list must be rejected")
 	}
-	// session_user = current_user, so the guard trigger refuses the owner here too.
+	// The function is owned by the redactor role, so the owner has no right to
+	// call it: EXECUTE was revoked from PUBLIC and granted to the app role only.
 	err := connect(t, owner).QueryRow(ctx, `SELECT audit_redact_personal_data('widget', $1::uuid, ARRAY['email'])`, someUUID).Scan(new(int))
-	if err == nil || !strings.Contains(err.Error(), "append-only") {
-		t.Errorf("owner calling the function directly: err = %v, want the append-only refusal", err)
+	if err == nil || !strings.Contains(err.Error(), "permission denied for function") {
+		t.Errorf("owner calling the function: err = %v, want permission denied for function", err)
 	}
 }
 
-// Defence in depth: a definer function that tries to change anything but the
-// redactable columns is stopped by the trigger, even though it runs as the owner.
-func TestINS05_DefinerContextCanOnlyChangeTheRedactableColumns(t *testing.T) {
+// Another SECURITY DEFINER function does not get through, whoever owns it. One
+// that the owner wrote runs as the owner, and the trigger lets only the redactor
+// role change old rows.
+func TestINS05_AnotherDefinerFunctionOwnedByTheOwnerIsStopped(t *testing.T) {
 	ctx := context.Background()
 	owner := migrated(t)
 	ownerConn := connect(t, owner)
 	app := appConn(t, owner)
 	addAudit(t, app, someUUID, "", `{"email":"a@example.se"}`)
 
-	if _, err := ownerConn.Exec(ctx, `
-		CREATE FUNCTION tamper() RETURNS void LANGUAGE sql SECURITY DEFINER AS $$ UPDATE audit_log SET action = 'tampered' $$;
-		GRANT EXECUTE ON FUNCTION tamper() TO linochi_erp_app`); err != nil {
+	for name, body := range map[string]string{
+		"a locked column":     `UPDATE audit_log SET action = 'tampered'`,
+		"a redactable column": `UPDATE audit_log SET after = '{}'`,
+		"a delete":            `DELETE FROM audit_log`,
+	} {
+		fn := "tamper_" + strings.ReplaceAll(name, " ", "_")
+		if _, err := ownerConn.Exec(ctx, `
+			CREATE FUNCTION `+fn+`() RETURNS void LANGUAGE sql SECURITY DEFINER AS $$ `+body+` $$;
+			GRANT EXECUTE ON FUNCTION `+fn+`() TO linochi_erp_app`); err != nil {
+			t.Fatal(err)
+		}
+		_, err := app.Exec(ctx, `SELECT `+fn+`()`)
+		if err == nil || !strings.Contains(err.Error(), "append-only") {
+			t.Errorf("%s through a definer function owned by the owner: err = %v, want the append-only refusal", name, err)
+		}
+	}
+	var action, after string
+	if err := app.QueryRow(ctx, `SELECT action, after::text FROM audit_log`).Scan(&action, &after); err != nil || action != "update" || !strings.Contains(after, "a@example.se") {
+		t.Errorf("the row changed: action=%q after=%s err=%v", action, after, err)
+	}
+}
+
+// Defence in depth: even if the redactor's privileges were widened by mistake,
+// the trigger still lets it change only before, after and redacted_at.
+func TestINS05_RedactorCannotChangeLockedColumnsEvenIfPrivilegesWereWidened(t *testing.T) {
+	ctx := context.Background()
+	owner := migrated(t)
+	ownerConn := connect(t, owner)
+	addAudit(t, appConn(t, owner), someUUID, "", `{"email":"a@example.se"}`)
+
+	if _, err := ownerConn.Exec(ctx, `GRANT UPDATE (action) ON audit_log TO linochi_erp_audit_redactor`); err != nil {
 		t.Fatal(err)
 	}
-	_, err := app.Exec(ctx, `SELECT tamper()`)
-	if err == nil || !strings.Contains(err.Error(), "only") {
-		t.Errorf("tampering with a locked column through a definer function: err = %v, want the column refusal", err)
+	// The owner is a member of the redactor role, for the migrations' sake.
+	if _, err := ownerConn.Exec(ctx, `SET ROLE linochi_erp_audit_redactor`); err != nil {
+		t.Fatalf("the owner must be able to SET ROLE to the redactor: %v", err)
+	}
+	_, err := ownerConn.Exec(ctx, `UPDATE audit_log SET action = 'tampered'`)
+	if err == nil || !strings.Contains(err.Error(), "only before, after and redacted_at") {
+		t.Errorf("err = %v, want the column refusal from the trigger", err)
 	}
 }
 
@@ -168,12 +202,16 @@ func TestINS05_RedactFunctionIsHardened(t *testing.T) {
 	conn := connect(t, migrated(t))
 
 	var definer bool
+	var owner string
 	var config []string
-	if err := conn.QueryRow(ctx, `SELECT prosecdef, coalesce(proconfig, '{}') FROM pg_proc WHERE proname = 'audit_redact_personal_data'`).Scan(&definer, &config); err != nil {
+	if err := conn.QueryRow(ctx, `SELECT prosecdef, pg_get_userbyid(proowner), coalesce(proconfig, '{}') FROM pg_proc WHERE proname = 'audit_redact_personal_data'`).Scan(&definer, &owner, &config); err != nil {
 		t.Fatal(err)
 	}
 	if !definer {
 		t.Error("the function must be SECURITY DEFINER")
+	}
+	if owner != "linochi_erp_audit_redactor" {
+		t.Errorf("the function is owned by %q, want the redactor role", owner)
 	}
 	var pinned bool
 	for _, c := range config {
@@ -185,14 +223,15 @@ func TestINS05_RedactFunctionIsHardened(t *testing.T) {
 		t.Errorf("a SECURITY DEFINER function must pin search_path, config = %v", config)
 	}
 
-	var appMay, publicMay bool
+	var appMay, ownerMay, publicMay bool
 	if err := conn.QueryRow(ctx, `
 		SELECT has_function_privilege('linochi_erp_app', 'audit_redact_personal_data(text, uuid, text[])', 'EXECUTE'),
-		       has_function_privilege('public', 'audit_redact_personal_data(text, uuid, text[])', 'EXECUTE')`).Scan(&appMay, &publicMay); err != nil {
+		       has_function_privilege('linochi_erp_owner', 'audit_redact_personal_data(text, uuid, text[])', 'EXECUTE'),
+		       has_function_privilege('public', 'audit_redact_personal_data(text, uuid, text[])', 'EXECUTE')`).Scan(&appMay, &ownerMay, &publicMay); err != nil {
 		t.Fatal(err)
 	}
-	if !appMay || publicMay {
-		t.Errorf("EXECUTE: app=%v public=%v, want true and false", appMay, publicMay)
+	if !appMay || ownerMay || publicMay {
+		t.Errorf("EXECUTE: app=%v owner=%v public=%v, want true, false, false", appMay, ownerMay, publicMay)
 	}
 }
 
@@ -212,5 +251,84 @@ func TestINS05_AuditLogHasIndexesForTheFilters(t *testing.T) {
 		if !strings.Contains(all, want) {
 			t.Errorf("missing index on %s", want)
 		}
+	}
+}
+
+// The redactor role can log in nowhere and can change three columns of one
+// table, nothing else.
+func TestNFK09_RedactorRoleIsNoLoginAndHasOnlyTheNeededPrivileges(t *testing.T) {
+	ctx := context.Background()
+	conn := connect(t, migrated(t))
+
+	var canLogin, super, createDB, createRole bool
+	if err := conn.QueryRow(ctx, `SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole FROM pg_roles WHERE rolname = 'linochi_erp_audit_redactor'`).Scan(&canLogin, &super, &createDB, &createRole); err != nil {
+		t.Fatal(err)
+	}
+	if canLogin || super || createDB || createRole {
+		t.Errorf("login=%v super=%v createdb=%v createrole=%v, want all false", canLogin, super, createDB, createRole)
+	}
+
+	has := func(sql string) bool {
+		t.Helper()
+		var ok bool
+		if err := conn.QueryRow(ctx, sql).Scan(&ok); err != nil {
+			t.Fatal(err)
+		}
+		return ok
+	}
+	for _, col := range []string{"before", "after", "redacted_at"} {
+		if !has(`SELECT has_column_privilege('linochi_erp_audit_redactor', 'audit_log', '` + col + `', 'UPDATE')`) {
+			t.Errorf("the redactor must be able to UPDATE %s", col)
+		}
+	}
+	for _, col := range []string{"id", "created_at", "updated_at", "version", "actor_type", "actor_id", "actor_label", "module", "entity_type", "entity_id", "action", "reason", "trace_id"} {
+		if has(`SELECT has_column_privilege('linochi_erp_audit_redactor', 'audit_log', '` + col + `', 'UPDATE')`) {
+			t.Errorf("the redactor must not be able to UPDATE %s", col)
+		}
+	}
+	for _, priv := range []string{"INSERT", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"} {
+		if has(`SELECT has_table_privilege('linochi_erp_audit_redactor', 'audit_log', '` + priv + `')`) {
+			t.Errorf("the redactor must not have %s on audit_log", priv)
+		}
+	}
+	if has(`SELECT has_table_privilege('linochi_erp_audit_redactor', 'users', 'SELECT')`) {
+		t.Error("the redactor must not read users")
+	}
+	// The temporary CREATE on the schema, needed to hand over the function, is gone.
+	if has(`SELECT has_schema_privilege('linochi_erp_audit_redactor', 'public', 'CREATE')`) {
+		t.Error("the redactor must not be able to create objects")
+	}
+}
+
+// The owner is a member of the redactor role, because the migrations hand the
+// function to it and ALTER ... OWNER TO needs that. The app role never is.
+func TestNFK09_OnlyTheOwnerIsAMemberOfTheRedactorRole(t *testing.T) {
+	ctx := context.Background()
+	owner := migrated(t)
+	conn := connect(t, owner)
+
+	var ownerMember, appMember, appCanSet bool
+	if err := conn.QueryRow(ctx, `
+		SELECT pg_has_role('linochi_erp_owner', 'linochi_erp_audit_redactor', 'MEMBER'),
+		       pg_has_role('linochi_erp_app',   'linochi_erp_audit_redactor', 'MEMBER'),
+		       pg_has_role('linochi_erp_app',   'linochi_erp_audit_redactor', 'USAGE')`).Scan(&ownerMember, &appMember, &appCanSet); err != nil {
+		t.Fatal(err)
+	}
+	if !ownerMember || appMember || appCanSet {
+		t.Errorf("owner member=%v, app member=%v, app can use=%v; want true, false, false", ownerMember, appMember, appCanSet)
+	}
+
+	app := appConn(t, owner)
+	mustFailWith(t, "app SET ROLE to the redactor", app, `SET ROLE linochi_erp_audit_redactor`, "permission denied to set role")
+	// The owner does not inherit the redactor's rights, it can only switch to it.
+	var inherits bool
+	if err := conn.QueryRow(ctx, `
+		SELECT coalesce(bool_or(m.inherit_option), false)
+		FROM pg_auth_members m
+		WHERE pg_get_userbyid(m.roleid) = 'linochi_erp_audit_redactor' AND pg_get_userbyid(m.member) = 'linochi_erp_owner'`).Scan(&inherits); err != nil {
+		t.Fatal(err)
+	}
+	if inherits {
+		t.Error("the owner must not inherit the redactor's privileges, only be able to SET ROLE")
 	}
 }
