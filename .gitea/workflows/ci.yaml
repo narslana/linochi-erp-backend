@@ -24,6 +24,36 @@ jobs:
           docker version --format 'server {{.Server.Version}} {{.Server.Os}}/{{.Server.Arch}}'
           echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
 
+      # nars-ci already has Go (GOTOOLCHAIN=local), so there is no actions/setup-go
+      # here: it would download the same Go again on every run and put its copy
+      # first on PATH. Only its caching is wanted, and that is two actions/cache
+      # steps. The tools in tools/go.mod (golangci-lint, sqlc, goose) are built by
+      # `go tool` into the build cache, so the same two caches cover them: a hit
+      # turns minutes of compiling on the Pi into seconds.
+      - name: Locate the Go caches
+        id: gocache
+        run: |
+          echo "mod=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+          echo "version=$(go env GOVERSION)" >> "$GITHUB_OUTPUT"
+
+      # The key follows go.sum. restore-keys falls back to the newest older cache,
+      # so a dependency bump starts from a nearly full cache, not an empty one.
+      # A cache is saved only on a miss and only when the job succeeds.
+      - name: Module cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.gocache.outputs.mod }}
+          key: go-mod-${{ runner.arch }}-${{ hashFiles('go.sum', 'tools/go.sum') }}
+          restore-keys: go-mod-${{ runner.arch }}-
+
+      - name: Build cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.gocache.outputs.build }}
+          key: go-build-${{ runner.arch }}-${{ steps.gocache.outputs.version }}-${{ hashFiles('go.sum', 'tools/go.sum') }}
+          restore-keys: go-build-${{ runner.arch }}-${{ steps.gocache.outputs.version }}-
+
       # `make check` is `lint test test-int`. They run as three steps so that
       # the job log shows what each part costs (NFK-33).
       - name: Lint
