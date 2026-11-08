@@ -24,5 +24,14 @@ jobs:
           docker version --format 'server {{.Server.Version}} {{.Server.Os}}/{{.Server.Arch}}'
           echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
 
-      - name: Lint, unit tests and integration tests
-        run: make check RACE=  # no race detector: ThreadSanitizer aborts on the Pi 5 kernel (47-bit VMA)
+      # `make check` is `lint test test-int`. They run as three steps so that
+      # the job log shows what each part costs (NFK-33).
+      - name: Lint
+        run: make lint
+
+      # RACE= : no race detector, ThreadSanitizer aborts on the Pi 5 kernel (47-bit VMA)
+      - name: Unit tests
+        run: make test RACE=
+
+      - name: Integration tests
+        run: make test-int RACE=
