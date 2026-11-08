@@ -1,4 +1,4 @@
-// Package auth holds users, and later sessions and the OIDC login (B5, B6).
+// Package auth holds users and sessions, and later the OIDC login (B6).
 package auth
 
 import (
@@ -102,6 +102,17 @@ func (s *UserStore) Get(ctx context.Context, id uuid.UUID) (dbgen.User, error) {
 	return u, nil
 }
 
+// FindActiveByEmail returns the users that have this address, compared without
+// regard to case, archived ones left out. An address is not unique, so there can
+// be several, and none is not an error. For operator commands, not for login.
+func (s *UserStore) FindActiveByEmail(ctx context.Context, email string) ([]dbgen.User, error) {
+	users, err := dbgen.New(s.pool).ListActiveUsersByEmail(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("find users by e-mail: %w", err)
+	}
+	return users, nil
+}
+
 // Archive hides the user (NFK-09: never deleted). version is the version the
 // caller read: db.ErrStaleVersion if someone changed the row since, and
 // db.ErrNotFound if there is no such user. The actor is the one in the context,
@@ -131,7 +142,13 @@ func (s *UserStore) Archive(ctx context.Context, id uuid.UUID, version int32) (d
 		}
 		user = after
 		// The whole record before, as the archive entry stores it.
-		return s.audit.Record(ctx, tx, userEntry(audit.Archive, id, before, nil))
+		if err := s.audit.Record(ctx, tx, userEntry(audit.Archive, id, before, nil)); err != nil {
+			return err
+		}
+		// An archived user must not stay logged in: the sessions end in the
+		// same transaction, so there is no moment with one and not the other.
+		_, err = endUserSessions(ctx, s.audit, tx, id)
+		return err
 	})
 	if err != nil {
 		return dbgen.User{}, fmt.Errorf("archive user %s: %w", id, err)

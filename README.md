@@ -75,6 +75,25 @@ Every write that changes data records an entry in `audit_log` **in the same tran
 - **Append-only:** the app role has no UPDATE, DELETE or TRUNCATE on `audit_log`, and a trigger also stops the owner when it is connected directly. The one way to change old rows is the SECURITY DEFINER function `audit_redact_personal_data()` (GDPR, KUN-07), called through `Recorder.RedactPersonalData`, which also records an entry about the redaction. The function is owned by a role of its own, `linochi_erp_audit_redactor`: it cannot log in and can UPDATE only `before`, `after` and `redacted_at`. The trigger lets through `current_user = linochi_erp_audit_redactor` and nobody else, so a SECURITY DEFINER function written by the owner is stopped too. The function replaces the values of the given fields with `[redacted]` and nothing else. Old values stay in backups until those are rotated out.
 - **Loki and metrics:** after the commit, one log line `audit` with `trace_id`, the actor, the record and the **names** of the changed fields, never the values, and `linochi_audit_entries_total{module,action}`. A rolled-back change never shows up.
 
+## Sessions (NFK-02, NFK-11)
+
+Sessions live in Postgres (`sessions`), so every replica sees the same ones and a rolling update logs nobody out. The code is in `internal/platform/auth`.
+
+- **Token:** 32 random bytes in the cookie. Only its SHA-256 is stored, never the token. `Session`, the type that goes into audit entries, has no field for the token or the hash, because an append-only log could never have it redacted out.
+- **Limits:** logged out after 12 hours without use and after 7 days whatever the activity (`IdleTimeout`, `AbsoluteTimeout`: constants, so two replicas can never disagree). `expires_at` is set once and the app role has no UPDATE privilege on it. A session in use is written at most once a minute (`TouchInterval`), so a session can be cut short by up to a minute and never kept alive past its limit.
+- **Cookie:** `__Host-linochi_erp_session`, `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, no `Domain`, and a `Max-Age` that ends with the 7 days. It is the same in every environment: there is no switch that weakens it.
+- **Middleware:** `SessionMiddleware.Require` answers 401 without a valid session (and clears a cookie that is no good), puts the session in the context and the user as audit actor, and refuses cross-origin writes with 403 through `http.CrossOriginProtection`. `LogoutHandler` ends the session and clears the cookie. The routes themselves come with B6.
+- **Audit:** login (a create of the session), logout and "all sessions of a user ended" are recorded in the same transaction. Expiry and cleanup are not: they show up as a log line and a metric. Archiving a user ends their sessions in the same transaction as the archive, and a login for an archived user fails, also when the two happen at the same moment.
+- **Cleanup:** every replica deletes ended sessions at start-up and then every hour. It is idempotent, so two replicas at once is fine, and a failed run is only logged. `sessions` is the one table where the app role may DELETE: a session is a credential, not a record, and what happened to it is in `audit_log`.
+- **Ending all sessions of a user** (access removed in Authelia, a lost device): the roles live in the session, so without this a person whose access was removed could stay logged in for up to 7 days.
+
+  ```sh
+  api sessions revoke-user <email|user-id>
+  ```
+
+  In the cluster it is run with `kubectl exec` in a backend pod. The exact line (namespace, Deployment, path of the binary) is added when B7 has built the image and the chart: it has not been run in a cluster yet, only in the tests. It runs as the app role with `DATABASE_URL`, accepts an e-mail address (case-insensitive) or a user id, refuses an unknown or ambiguous address (and lists the ids), prints the user id and the count and never the address, and records the change with the system actor `cli-revoke-user`.
+- **Metrics:** `linochi_auth_session_checks_total{result}`, `linochi_auth_sessions_deleted_total{reason}` (`logout`, `revoked`, `cleanup`) and `linochi_auth_session_cleanup_runs_total{result}`. Lookup and cleanup have spans.
+
 ## Observability
 
 - **Internal port (`INTERNAL_ADDR`):** `/healthz` (liveness, depends on nothing), `/readyz` (503 while draining or when a check fails) and `/metrics`.
