@@ -1,0 +1,242 @@
+openapi: 3.1.0
+info:
+  title: Linochi ERP API
+  version: 0.1.0
+  description: |
+    The API of Linochi ERP. The web app and, later, n8n call it.
+
+    Errors are `application/problem+json` (RFC 9457). The `type` of a problem is
+    `https://erp.lab.internal/problems/<code>`, and the codes are stable once
+    published. Every problem carries a `trace_id` that finds the request in Loki
+    and Tempo.
+
+    Login is the authorization code flow with PKCE against Authelia, done by the
+    backend: the browser never sees a token, only the session cookie.
+servers:
+  - url: https://erp.lab.internal
+tags:
+  - name: auth
+    description: Login, logout and who is logged in
+
+paths:
+  /auth/login:
+    get:
+      operationId: login
+      tags: [auth]
+      summary: Start a login
+      description: |
+        Sends the browser to Authelia. A login that cannot even be started, with
+        Authelia down for instance, ends at the web app's error page like any
+        other failed login: `/login-error?code=failed`.
+
+        The login is bound to the browser that started it with the
+        `__Host-linochi_erp_login` cookie, which only the callback accepts.
+      security: []
+      parameters:
+        - name: return_to
+          in: query
+          required: false
+          description: |
+            A path in the web app to go to after the login. Anything that is not
+            a path of this app (an absolute URL, `//host`, a backslash, a control
+            character, more than 512 characters) is replaced by `/`.
+          schema:
+            type: string
+            maxLength: 512
+            examples: ["/products/42"]
+      responses:
+        "303":
+          description: To Authelia, or to the web app's error page.
+          headers:
+            Location:
+              description: Authelia's authorization endpoint, or `/login-error?code=failed`.
+              schema:
+                type: string
+            Set-Cookie:
+              description: The `__Host-linochi_erp_login` cookie that binds the login to this browser.
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+
+  /auth/callback:
+    get:
+      operationId: loginCallback
+      tags: [auth]
+      summary: Finish a login
+      description: |
+        Where Authelia sends the browser back. It always answers with a redirect:
+        to the page the login started from when it worked, and otherwise to the
+        web app's error page. The browser is told a fixed code and never a detail
+        (the details are in the log, with the `trace_id`):
+
+        | `code` | Means |
+        |---|---|
+        | `no-access` | The person is not allowed in: no role, an archived account, no second factor, or Authelia said no. |
+        | `expired` | The login took too long, was already used or is unknown. Start again. |
+        | `failed` | Anything else. |
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: false
+          description: The authorization code.
+          schema:
+            type: string
+            maxLength: 2048
+        - name: state
+          in: query
+          required: false
+          description: The state the login was started with. Works once.
+          schema:
+            type: string
+            maxLength: 2048
+        - name: error
+          in: query
+          required: false
+          description: An error code from Authelia (`access_denied`, for instance) in place of a code.
+          schema:
+            type: string
+            maxLength: 256
+      responses:
+        "303":
+          description: To the page the login started from, or to the web app's error page.
+          headers:
+            Location:
+              description: A path in the web app. On failure `/login-error?code=` and `no-access`, `expired` or `failed`.
+              schema:
+                type: string
+            Set-Cookie:
+              description: |
+                Clears the `__Host-linochi_erp_login` cookie, and on success sets the
+                `__Host-linochi_erp_session` cookie.
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out
+      description: |
+        Ends the session of the request and clears the cookie. It works without a
+        valid session, and twice, and answers 204 every time. It is refused from
+        another origin, or another site could log the user out.
+      security: []
+      responses:
+        "204":
+          description: Logged out.
+          headers:
+            Set-Cookie:
+              description: Clears the `__Host-linochi_erp_session` cookie.
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "403":
+          $ref: "#/components/responses/CrossOriginForbidden"
+
+  /api/v1/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Who is logged in
+      security:
+        - session: []
+      responses:
+        "200":
+          description: The logged-in user.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: __Host-linochi_erp_session
+      description: |
+        The session cookie, set by `/auth/callback`. A write from another origin
+        is refused with 403 whatever the cookie says.
+
+  responses:
+    Unauthenticated:
+      description: |
+        There is no usable session: no cookie, or one that is unknown, ended or
+        for an archived user. The answer never says which. A cookie that is no
+        good is cleared.
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    CrossOriginForbidden:
+      description: A request from another origin. Nothing was changed.
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Me:
+      type: object
+      required: [id, email, display_name, roles]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        display_name:
+          type: string
+        roles:
+          type: array
+          description: The roles worked out from the Authelia groups when this session was made.
+          items:
+            type: string
+            enum: [admin]
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          description: "`https://erp.lab.internal/problems/<code>`"
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          description: The path of the request, never its query.
+        trace_id:
+          type: string

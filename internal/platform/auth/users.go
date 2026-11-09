@@ -48,7 +48,9 @@ func NewUserStore(pool *pgxpool.Pool, rec *audit.Recorder) *UserStore {
 // UpsertOnLogin creates the user on the first login and refreshes the profile
 // and the time of the last login on later ones. The first login is audited as a
 // create with the whole record, later ones as a login with the fields that
-// changed. Concurrent first logins give one user and one create.
+// changed. Concurrent first logins give one user and one create. An archived
+// user is refused with ErrUserArchived before anything is written: a login that
+// does not happen leaves no trace in the record or in the audit log.
 func (s *UserStore) UpsertOnLogin(ctx context.Context, l UserLogin) (dbgen.User, error) {
 	ctx = audit.WithActor(ctx, audit.SystemActor(loginActor))
 	id, err := uuid.NewV7()
@@ -74,6 +76,9 @@ func (s *UserStore) UpsertOnLogin(ctx context.Context, l UserLogin) (dbgen.User,
 		before, err := q.LockUserByOIDC(ctx, dbgen.LockUserByOIDCParams{OidcIssuer: l.Issuer, OidcSubject: l.Subject})
 		if err != nil {
 			return fmt.Errorf("lock user: %w", err)
+		}
+		if before.ArchivedAt != nil {
+			return ErrUserArchived
 		}
 		after, err := q.UpdateUserOnLogin(ctx, dbgen.UpdateUserOnLoginParams{
 			ID: before.ID, Email: l.Email, DisplayName: l.DisplayName,

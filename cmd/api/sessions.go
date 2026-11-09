@@ -47,9 +47,10 @@ func runSessions(ctx context.Context, args []string, getenv func(string) string,
 	}
 	who := strings.TrimSpace(rest[0])
 
-	// Load, not LoadMigrate: the app role's URL. There is no fallback to the
-	// owner's, which is for migrations only.
-	cfg, err := config.Load(getenv)
+	// The app role's URL and nothing else: this command has to work when the
+	// login's settings are what is wrong. There is no fallback to the owner's
+	// URL, which is for migrations only.
+	cfg, err := config.LoadOperator(getenv)
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return 2

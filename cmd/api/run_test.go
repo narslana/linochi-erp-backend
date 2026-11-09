@@ -14,6 +14,8 @@ import (
 
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
 )
@@ -176,8 +178,43 @@ func testHandlers(t *testing.T) (public, internal http.Handler, health *httpx.He
 	tp := sdktrace.NewTracerProvider()
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 	health = &httpx.Health{}
-	public, internal = newHandlers(discardLogger(), obs.NewMetrics("v0.1.0", "abc1234"), health, tp)
+	metrics := obs.NewMetrics("v0.1.0", "abc1234")
+	// The stores have no pool: these tests never reach a route that uses one.
+	rec, err := audit.NewRecorder(discardLogger(), metrics)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sessions, err := auth.NewSessionStore(nil, rec, metrics)
+	if err != nil {
+		t.Fatal(err)
+	}
+	authHandler, err := auth.NewHandler(auth.HandlerConfig{
+		OIDC:     auth.NewOIDCClient(auth.OIDCConfig{Issuer: "https://auth.invalid", ClientID: "x", ClientSecret: "x", RedirectURL: "https://erp.invalid/auth/callback"}),
+		Attempts: auth.NewLoginAttemptStore(nil), Users: auth.NewUserStore(nil, rec), Sessions: sessions,
+		Logger: discardLogger(), Metrics: metrics,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	public, internal = newHandlers(discardLogger(), metrics, health, tp, authHandler)
 	return public, internal, health
+}
+
+// The auth routes of the OpenAPI document are on the public port and only there.
+func TestNFK10_AuthRoutesAreOnThePublicPortOnly(t *testing.T) {
+	public, internal, _ := testHandlers(t)
+	pub, int_ := httptest.NewServer(public), httptest.NewServer(internal)
+	defer pub.Close()
+	defer int_.Close()
+
+	if code, body := get(t, pub.URL+"/api/v1/me"); code != http.StatusUnauthorized || !strings.Contains(body, "unauthenticated") {
+		t.Errorf("public GET /api/v1/me = %d %s, want 401 as a problem", code, body)
+	}
+	for _, path := range []string{"/api/v1/me", "/auth/login", "/auth/callback"} {
+		if code, _ := get(t, int_.URL+path); code != http.StatusNotFound {
+			t.Errorf("internal %s = %d, want 404: the internal port has no login", path, code)
+		}
+	}
 }
 
 func TestNFK02_MetricsAndProbesOnlyOnInternalPort(t *testing.T) {

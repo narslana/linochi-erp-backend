@@ -18,11 +18,12 @@ module of its own, so that the tools' dependencies do not end up in the app's
 | Command | Does |
 |---|---|
 | `make dev` | Starts Postgres in Docker Compose, migrates as the owner and runs the API as the app role |
+| `make dev-oidc` | In another terminal: a local OIDC provider that logs everybody in as one fixed user, so that the login can be tried without Authelia. Loopback only, never in the image |
 | `make build` | Builds `bin/api` (static, with version and commit) |
 | `make test` | Unit tests |
 | `make test-int` | Integration tests with testcontainers |
-| `make lint` | gofmt, go vet, golangci-lint, `sqlc diff` (generated code is up to date) and `go mod tidy -diff` |
-| `make gen` | Generates Go code from `db/queries` with sqlc (the OpenAPI client joins in B6) |
+| `make lint` | gofmt, go vet, golangci-lint, `sqlc diff` and `oapi-codegen` (generated code is up to date) and `go mod tidy -diff` |
+| `make gen` | Generates Go code from `db/queries` with sqlc and from `api/openapi.yaml` with oapi-codegen (`internal/api`) |
 | `make migrate-new name=...` | A new goose migration in `db/migrations` |
 | `make check` | Lint, `test` and `test-int`. Must be green before commit |
 
@@ -53,6 +54,13 @@ Environment variables only (NFK-02, NFK-14). No files are read in production.
 | `DB_MAX_CONNS` | `5` | Pool size per pod, 1 to 50. The cluster has 100 connections for all services, see the budget in `docs/DECISIONS.md` |
 | `DB_MIN_CONNS` | `0` | Connections kept open when idle |
 | `DB_MAX_CONN_LIFETIME` | `30m` | How long a connection is reused |
+| `OIDC_ISSUER` | | Required to serve. Authelia's URL, `https://auth.lab.internal`. https only (http is accepted for `localhost`, `127.0.0.1` and `[::1]`, for `make dev-oidc`). The discovery document must claim exactly this issuer |
+| `OIDC_CLIENT_ID` | | Required to serve. `linochi-erp` |
+| `OIDC_CLIENT_SECRET` | | Required to serve. The clear text of the client secret whose hash is in Authelia's configuration. Masked in logs and errors |
+| `OIDC_REDIRECT_URL` | | Required to serve. `https://erp.lab.internal/auth/callback`: it must end in `/auth/callback`, and Authelia matches it exactly |
+| `AUTH_ADMIN_GROUPS` | `admins,linochi_erp_users` | The Authelia groups that give the admin role. Exact names, comma-separated. There is no read role yet |
+
+`api migrate` and `api sessions` need only their database URL: an operator must be able to end sessions when the login is what is broken.
 
 ## Database
 
@@ -75,6 +83,21 @@ Every write that changes data records an entry in `audit_log` **in the same tran
 - **Append-only:** the app role has no UPDATE, DELETE or TRUNCATE on `audit_log`, and a trigger also stops the owner when it is connected directly. The one way to change old rows is the SECURITY DEFINER function `audit_redact_personal_data()` (GDPR, KUN-07), called through `Recorder.RedactPersonalData`, which also records an entry about the redaction. The function is owned by a role of its own, `linochi_erp_audit_redactor`: it cannot log in and can UPDATE only `before`, `after` and `redacted_at`. The trigger lets through `current_user = linochi_erp_audit_redactor` and nobody else, so a SECURITY DEFINER function written by the owner is stopped too. The function replaces the values of the given fields with `[redacted]` and nothing else. Old values stay in backups until those are rotated out.
 - **Loki and metrics:** after the commit, one log line `audit` with `trace_id`, the actor, the record and the **names** of the changed fields, never the values, and `linochi_audit_entries_total{module,action}`. A rolled-back change never shows up.
 
+## Login (NFK-10, NFK-12)
+
+Login is the authorization code flow with PKCE against Authelia, done by the backend: the browser never sees a token, only the session cookie. The routes are in `api/openapi.yaml` (OpenAPI 3.1), which is the source: `make gen` makes `internal/api`, and `make lint` fails when it is out of date. The code is in `internal/platform/auth`.
+
+- **Routes:** `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` and `GET /api/v1/me`. Only the last needs a session. A test reads the spec and checks that every operation it declares as secured answers 401 without one, and that every answer matches the spec (NFK-29).
+- **`/auth/login`** stores a login in progress in Postgres (`oidc_login_attempts`, 10 minutes, so the callback may land on any replica), binds it to the browser with the `__Host-linochi_erp_login` cookie and sends the browser to Authelia with `state`, `nonce` and a PKCE challenge (S256). `return_to` must be a path of this app: anything else, `//host` and backslashes included, becomes `/`. At most 5000 logins may be open at once, since the route needs no session.
+- **`/auth/callback`** consumes the attempt first (`DELETE ... RETURNING`: a state works once, also across replicas, and also when the callback is refused), then checks, in this order: the browser holds the binding cookie; the code is traded for tokens with the PKCE verifier and `client_secret_basic`; the ID token is **RS256** and has the right issuer, audience, expiry and nonce; **`amr` contains `mfa`** if the claim is there; userinfo is for the same subject as the ID token; the groups give a role; the user is not archived. Only then are a user and a session made. Tokens are used and dropped, never stored or logged.
+- **Roles** are worked out from the Authelia groups (`AUTH_ADMIN_GROUPS`) at every login and kept in the session. A person with no matching group gets no user and no session. Removing someone's access in Authelia does not reach a session that exists: end it with `api sessions revoke-user`.
+- **Two-factor** is Authelia's `two_factor` policy, and `amr` is a second lock. If the provider does not deliver `amr` the login goes through and the log says so, `the ID token has no amr claim`. What Authelia 4.39 really sends is checked in H3, against the real one.
+- **Authelia down** does not stop the app: the provider is contacted at the first login (and again five seconds after a failure), so the app starts, and `/readyz` stays green for the people already in. A login then ends at the error page.
+- **Failed logins** always end in a `303` to the web app's page `/login-error?code=<code>` with one of three fixed codes: `no-access` (no role, an archived account, no second factor, Authelia said no), `expired` (too slow, already used or unknown) and `failed` (anything else). Never a detail in the URL: the reason is in the log with the `trace_id`, and in `linochi_auth_logins_total{result}`. The web app owns that page and its Swedish text.
+- **Metric:** `linochi_auth_logins_total{result}`, `ok` or the reason (`no_role`, `mfa_missing`, `attempt_expired`, `binding_mismatch`, `provider_unavailable` and so on, a closed set, every series there from the start). The refused-logins alert (B7) watches everything but `ok`.
+- **The internal CA (NFK-12):** the app trusts the system roots and nothing else. In the cluster the CA is mounted from a ConfigMap and `SSL_CERT_DIR=/etc/ssl/certs:/extra-ca-certs` adds it, as for Gitea and Grafana (Go adds those directories). A test starts the real binary with and without it.
+- **Locally:** `make dev-oidc` (`cmd/devoidc`) is a provider on `127.0.0.1:9096` that logs everybody in as one fixed user, and `make dev` already points at it. It refuses to listen anywhere but on loopback, and a test checks that it is not in the `cmd/api` binary. `__Host-` cookies work over `http://localhost` in Chromium 156 and Firefox 157 (tried with the whole login, from Playwright), so there is no development mode for the cookie. Safari was not tried and MDN says it does not make the `localhost` exception for `Secure` cookies; use another browser locally, or HTTPS.
+
 ## Sessions (NFK-02, NFK-11)
 
 Sessions live in Postgres (`sessions`), so every replica sees the same ones and a rolling update logs nobody out. The code is in `internal/platform/auth`.
@@ -82,9 +105,9 @@ Sessions live in Postgres (`sessions`), so every replica sees the same ones and 
 - **Token:** 32 random bytes in the cookie. Only its SHA-256 is stored, never the token. `Session`, the type that goes into audit entries, has no field for the token or the hash, because an append-only log could never have it redacted out.
 - **Limits:** logged out after 12 hours without use and after 7 days whatever the activity (`IdleTimeout`, `AbsoluteTimeout`: constants, so two replicas can never disagree). `expires_at` is set once and the app role has no UPDATE privilege on it. A session in use is written at most once a minute (`TouchInterval`), so a session can be cut short by up to a minute and never kept alive past its limit.
 - **Cookie:** `__Host-linochi_erp_session`, `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, no `Domain`, and a `Max-Age` that ends with the 7 days. It is the same in every environment: there is no switch that weakens it.
-- **Middleware:** `SessionMiddleware.Require` answers 401 without a valid session (and clears a cookie that is no good), puts the session in the context and the user as audit actor, and refuses cross-origin writes with 403 through `http.CrossOriginProtection`. `LogoutHandler` ends the session and clears the cookie. The routes themselves come with B6.
+- **Middleware:** `SessionMiddleware.Require` answers 401 without a valid session (and clears a cookie that is no good), puts the session in the context and the user as audit actor, and refuses cross-origin writes with 403 through `http.CrossOriginProtection`. `LogoutHandler` ends the session and clears the cookie. The routes are described under Login above.
 - **Audit:** login (a create of the session), logout and "all sessions of a user ended" are recorded in the same transaction. Expiry and cleanup are not: they show up as a log line and a metric. Archiving a user ends their sessions in the same transaction as the archive, and a login for an archived user fails, also when the two happen at the same moment.
-- **Cleanup:** every replica deletes ended sessions at start-up and then every hour. It is idempotent, so two replicas at once is fine, and a failed run is only logged. `sessions` is the one table where the app role may DELETE: a session is a credential, not a record, and what happened to it is in `audit_log`.
+- **Cleanup:** every replica deletes ended sessions (and expired login attempts) at start-up and then every hour. It is idempotent, so two replicas at once is fine, and a failed run is only logged. `sessions` and `oidc_login_attempts` are the two tables where the app role may DELETE: a session is a credential, not a record, and what happened to it is in `audit_log`; a login attempt is a credential in the making.
 - **Ending all sessions of a user** (access removed in Authelia, a lost device): the roles live in the session, so without this a person whose access was removed could stay logged in for up to 7 days.
 
   ```sh

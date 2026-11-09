@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -81,26 +82,44 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 		logger.ErrorContext(ctx, "session setup failed", slog.Any("error", err))
 		return 1
 	}
-	// Ended sessions are deleted in the background, on every replica. The delete
-	// is idempotent, so two replicas doing it at once is fine. A run that fails,
-	// for example while the database is down or the schema is behind, is logged
-	// and tried again: it must never stop the app from starting (NFK-02).
+	attempts := auth.NewLoginAttemptStore(pool, auth.WithAttemptLogger(logger))
+
+	// Ended sessions and expired login attempts are deleted in the background, on
+	// every replica. The deletes are idempotent, so two replicas doing it at once
+	// is fine. A run that fails, for example while the database is down or the
+	// schema is behind, is logged and tried again: it must never stop the app
+	// from starting (NFK-02).
 	cleanupCtx, stopCleanup := context.WithCancel(ctx)
-	cleanupDone := make(chan struct{})
-	go func() {
-		defer close(cleanupDone)
-		sessions.RunCleanup(cleanupCtx, auth.CleanupInterval)
-	}()
+	var cleanups sync.WaitGroup
+	for _, runCleanup := range []func(context.Context, time.Duration){sessions.RunCleanup, attempts.RunCleanup} {
+		cleanups.Go(func() { runCleanup(cleanupCtx, auth.CleanupInterval) })
+	}
 	// Registered after pool.Close, so it runs before it: the cleanup must not be
 	// left with a closed pool.
 	defer func() {
 		stopCleanup()
-		<-cleanupDone
+		cleanups.Wait()
 	}()
+
+	// The provider is not contacted here: the first login does that, so the app
+	// starts while Authelia is down, and /readyz does not depend on it (a login
+	// outage must not take the app out of rotation for the people already in).
+	oidcClient := auth.NewOIDCClient(auth.OIDCConfig{
+		Issuer: cfg.OIDC.Issuer, ClientID: cfg.OIDC.ClientID,
+		ClientSecret: string(cfg.OIDC.ClientSecret), RedirectURL: cfg.OIDC.RedirectURL,
+	}, auth.WithOIDCLogger(logger), auth.WithOIDCTracerProvider(tp))
+	authHandler, err := auth.NewHandler(auth.HandlerConfig{
+		OIDC: oidcClient, Attempts: attempts, Users: auth.NewUserStore(pool, rec), Sessions: sessions,
+		AdminGroups: cfg.OIDC.AdminGroups, Logger: logger, Metrics: metrics,
+	})
+	if err != nil {
+		logger.ErrorContext(ctx, "auth setup failed", slog.Any("error", err))
+		return 1
+	}
 
 	health := &httpx.Health{}
 	health.AddCheck("database", db.ReadinessCheck(pool))
-	public, internal := newHandlers(logger, metrics, health, tp)
+	public, internal := newHandlers(logger, metrics, health, tp, authHandler)
 
 	var lc net.ListenConfig
 	pubLn, err := lc.Listen(ctx, "tcp", cfg.HTTPAddr)
@@ -125,11 +144,12 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	return 0
 }
 
-// newHandlers builds the two routers. The public one carries /api and /auth
-// (B6 and later); the internal one has no ingress route and carries the probes
-// and /metrics. API-key routes join it in phase 6.
-func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health, tp trace.TracerProvider) (public, internal http.Handler) {
+// newHandlers builds the two routers. The public one carries /api and /auth,
+// the routes of api/openapi.yaml; the internal one has no ingress route and
+// carries the probes and /metrics. API-key routes join it in phase 6.
+func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health, tp trace.TracerProvider, authHandler *auth.Handler) (public, internal http.Handler) {
 	pub := httpx.NewRouter(httpx.RouterOptions{Server: "public", Logger: logger, Metrics: metrics, Tracer: tp})
+	authHandler.Mount(pub)
 
 	in := httpx.NewRouter(httpx.RouterOptions{Server: "internal", Logger: logger, Metrics: metrics, Tracer: tp})
 	in.Handle("GET /healthz", health.Healthz())
