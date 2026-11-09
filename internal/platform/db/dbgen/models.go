@@ -30,6 +30,19 @@ type AuditLog struct {
 	RedactedAt *time.Time      `json:"redacted_at"`
 }
 
+type OidcLoginAttempt struct {
+	ID           uuid.UUID `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Version      int32     `json:"version"`
+	StateHash    []byte    `json:"state_hash"`
+	BindingHash  []byte    `json:"binding_hash"`
+	Nonce        string    `json:"nonce"`
+	CodeVerifier string    `json:"code_verifier"`
+	ReturnTo     string    `json:"return_to"`
+	ExpiresAt    time.Time `json:"expires_at"`
+}
+
 type Session struct {
 	ID         uuid.UUID `json:"id"`
 	CreatedAt  time.Time `json:"created_at"`

@@ -9,7 +9,9 @@ import (
 	"log/slog"
 	"net"
 	"net/url"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -42,7 +44,45 @@ type Config struct {
 	DBMinConns int
 	// DBMaxConnLife is how long a connection is reused before it is replaced.
 	DBMaxConnLife time.Duration
+	// OIDC is the login through Authelia (NFK-10).
+	OIDC OIDC
 }
+
+// Secret is a value that must not reach a log or an error message, whichever
+// way a struct holding it is printed (NFK-14).
+type Secret string
+
+// String masks the value.
+func (Secret) String() string { return "[masked]" }
+
+// GoString masks the value for %#v.
+func (Secret) GoString() string { return `"[masked]"` }
+
+// LogValue masks the value for slog.
+func (Secret) LogValue() slog.Value { return slog.StringValue("[masked]") }
+
+// OIDC is how the app logs people in through Authelia (NFK-10).
+type OIDC struct {
+	// Issuer is Authelia's URL, https://auth.lab.internal. The discovery document
+	// must claim exactly this.
+	Issuer   string
+	ClientID string
+	// ClientSecret authenticates the app to Authelia. Only its hash is in the
+	// Authelia configuration; this is the clear text, from a Sealed Secret.
+	ClientSecret Secret
+	// RedirectURL is the callback registered in Authelia, matched exactly there.
+	RedirectURL string
+	// AdminGroups are the Authelia groups that give the admin role (DECISIONS.md
+	// 2026-11-05). The mapping from group to role is configuration, so a read
+	// role can be added later without a code change.
+	AdminGroups []string
+}
+
+// callbackPath is the route the provider sends the browser back to.
+const callbackPath = "/auth/callback"
+
+// defaultAdminGroups are the two groups of the requirement (NFK-10).
+var defaultAdminGroups = []string{"admins", "linochi_erp_users"}
 
 // maxDBConnsCeiling stops a typo from eating the whole cluster's connections.
 const maxDBConnsCeiling = 50
@@ -144,7 +184,117 @@ func Load(getenv func(string) string) (Config, error) {
 		cfg.ShutdownTimeout = d
 	}
 
+	oidc, err := loadOIDC(getenv)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.OIDC = oidc
+
 	return cfg, nil
+}
+
+// loadOIDC reads the login settings. All four are required to serve: an app
+// that starts without a way to log in only looks healthy.
+func loadOIDC(getenv func(string) string) (OIDC, error) {
+	o := OIDC{
+		Issuer: getenv("OIDC_ISSUER"), ClientID: getenv("OIDC_CLIENT_ID"),
+		ClientSecret: Secret(getenv("OIDC_CLIENT_SECRET")), RedirectURL: getenv("OIDC_REDIRECT_URL"),
+	}
+	if err := validateProviderURL("OIDC_ISSUER", o.Issuer, ""); err != nil {
+		return OIDC{}, err
+	}
+	if o.ClientID == "" {
+		return OIDC{}, &Error{Field: "OIDC_CLIENT_ID", Reason: "is required"}
+	}
+	if o.ClientSecret == "" {
+		return OIDC{}, &Error{Field: "OIDC_CLIENT_SECRET", Reason: "is required"}
+	}
+	if err := validateProviderURL("OIDC_REDIRECT_URL", o.RedirectURL, callbackPath); err != nil {
+		return OIDC{}, err
+	}
+
+	o.AdminGroups = slices.Clone(defaultAdminGroups)
+	if v := getenv("AUTH_ADMIN_GROUPS"); v != "" {
+		o.AdminGroups = nil
+		for g := range strings.SplitSeq(v, ",") {
+			if g = strings.TrimSpace(g); g != "" && !slices.Contains(o.AdminGroups, g) {
+				o.AdminGroups = append(o.AdminGroups, g)
+			}
+		}
+		if len(o.AdminGroups) == 0 {
+			return OIDC{}, &Error{Field: "AUTH_ADMIN_GROUPS", Reason: "must name at least one group, for example admins,linochi_erp_users"}
+		}
+	}
+	return o, nil
+}
+
+// validateProviderURL checks a URL that points at the login: https, or http on
+// this machine for a development provider and nowhere else. If path is not
+// empty the URL must have exactly that path. The value is never put in the
+// error, since a URL can carry credentials.
+func validateProviderURL(field, raw, path string) error {
+	if raw == "" {
+		return &Error{Field: field, Reason: "is required"}
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" || u.Scheme == "" {
+		return &Error{Field: field, Reason: "must be an https URL"}
+	}
+	if u.Scheme != "https" && (u.Scheme != "http" || !isLoopback(u.Hostname())) {
+		return &Error{Field: field, Reason: "must be an https URL (http is allowed only for localhost, 127.0.0.1 and [::1])"}
+	}
+	if u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.ForceQuery {
+		return &Error{Field: field, Reason: "must have no credentials, query or fragment"}
+	}
+	if path != "" && u.Path != path {
+		return &Error{Field: field, Reason: "must end in " + path + ", the route the app serves"}
+	}
+	return nil
+}
+
+func isLoopback(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// OperatorConfig is the configuration of the operator commands (`api sessions`):
+// the app role's database and the log level, and nothing else. They are run by
+// hand, often because something is wrong, so they must not need the login's
+// settings or anything else the server needs to start.
+type OperatorConfig struct {
+	// DatabaseURL is the app role's connection string. It contains a secret.
+	DatabaseURL string
+	// LogLevel is a slog level name.
+	LogLevel string
+}
+
+// LoadOperator reads the configuration of the operator commands. It is the app
+// role's DATABASE_URL, never the owner's.
+func LoadOperator(getenv func(string) string) (OperatorConfig, error) {
+	cfg := OperatorConfig{DatabaseURL: getenv("DATABASE_URL"), LogLevel: orDefault(getenv("LOG_LEVEL"), "info")}
+	if err := validateDatabaseURL("DATABASE_URL", cfg.DatabaseURL); err != nil {
+		return OperatorConfig{}, err
+	}
+	var level slog.Level
+	if err := level.UnmarshalText([]byte(cfg.LogLevel)); err != nil {
+		return OperatorConfig{}, &Error{Field: "LOG_LEVEL", Reason: "must be debug, info, warn or error"}
+	}
+	return cfg, nil
+}
+
+// SlogLevel returns LogLevel as a slog.Level. LoadOperator has validated it.
+func (c OperatorConfig) SlogLevel() slog.Level {
+	var level slog.Level
+	_ = level.UnmarshalText([]byte(c.LogLevel))
+	return level
+}
+
+// String masks the password, like Config.String (NFK-14).
+func (c OperatorConfig) String() string {
+	return fmt.Sprintf("OperatorConfig{DatabaseURL:%s LogLevel:%s}", maskDSN(c.DatabaseURL), c.LogLevel)
 }
 
 // MigrateConfig is the configuration of `api migrate`. Migrations run as the
@@ -183,8 +333,9 @@ func (c Config) SlogLevel() slog.Level {
 // logged or printed without leaking secrets.
 func (c Config) String() string {
 	return fmt.Sprintf(
-		"Config{HTTPAddr:%s InternalAddr:%s DatabaseURL:%s LogLevel:%s ShutdownTimeout:%s ShutdownDelay:%s OTLPEndpoint:%s PodName:%s DBMaxConns:%d DBMinConns:%d DBMaxConnLife:%s}",
+		"Config{HTTPAddr:%s InternalAddr:%s DatabaseURL:%s LogLevel:%s ShutdownTimeout:%s ShutdownDelay:%s OTLPEndpoint:%s PodName:%s DBMaxConns:%d DBMinConns:%d DBMaxConnLife:%s OIDC:{Issuer:%s ClientID:%s ClientSecret:%s RedirectURL:%s AdminGroups:%v}}",
 		c.HTTPAddr, c.InternalAddr, maskDSN(c.DatabaseURL), c.LogLevel, c.ShutdownTimeout, c.ShutdownDelay, c.OTLPEndpoint, c.PodName, c.DBMaxConns, c.DBMinConns, c.DBMaxConnLife,
+		c.OIDC.Issuer, c.OIDC.ClientID, c.OIDC.ClientSecret, c.OIDC.RedirectURL, c.OIDC.AdminGroups,
 	)
 }
 

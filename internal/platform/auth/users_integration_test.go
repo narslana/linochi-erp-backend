@@ -348,3 +348,37 @@ func TestINS05_ConcurrentFirstLoginsMakeOneUserAndOneCreate(t *testing.T) {
 		t.Errorf("audit: %d creates and %d logins, want 1 and %d", creates, logins, n-1)
 	}
 }
+
+// A login for an archived user is refused before anything is written: no profile
+// refresh, no new last_login_at and no audit entry for something that did not
+// happen (NFK-09, INS-05).
+func TestNFK10_LoginOfAnArchivedUserChangesNothingAndSaysSo(t *testing.T) {
+	e := newEnv(t)
+	u, err := e.users.UpsertOnLogin(context.Background(), login("anna", "anna@example.se", "Anna"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	archived, err := e.users.Archive(adminCtx(), u.ID, u.Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := e.auditRows(t, u.ID)
+
+	_, err = e.users.UpsertOnLogin(context.Background(), login("anna", "new-address@example.se", "Anna Renamed"))
+	if !errors.Is(err, auth.ErrUserArchived) {
+		t.Fatalf("err = %v, want auth.ErrUserArchived", err)
+	}
+
+	after, err := e.users.Get(context.Background(), u.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.Version != archived.Version || after.Email != "anna@example.se" || after.DisplayName != "Anna" ||
+		(after.LastLoginAt == nil) != (archived.LastLoginAt == nil) ||
+		(after.LastLoginAt != nil && !after.LastLoginAt.Equal(*archived.LastLoginAt)) {
+		t.Errorf("an archived user was changed by a refused login: %+v", after)
+	}
+	if rows := e.auditRows(t, u.ID); len(rows) != len(before) {
+		t.Errorf("%d audit rows, want %d: a refused login must not be recorded as one", len(rows), len(before))
+	}
+}

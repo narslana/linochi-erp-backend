@@ -100,11 +100,30 @@ func fetch(t *testing.T, url string) (int, readyz) {
 // stops it and returns the exit code.
 func start(t *testing.T, databaseURL string) (internal string, stop func() int) {
 	t.Helper()
-	internal = freeAddr(t)
+	app, stop := startApp(t, databaseURL, nil)
+	return app.internal, stop
+}
+
+type runningApp struct{ public, internal string }
+
+// startApp is start with settings of its own on top of the defaults, and both
+// addresses back. The defaults point the login at a provider that is not there:
+// the app must start without one.
+func startApp(t *testing.T, databaseURL string, extra map[string]string) (app runningApp, stop func() int) {
+	t.Helper()
+	app = runningApp{public: freeAddr(t), internal: freeAddr(t)}
 	env := map[string]string{
-		"DATABASE_URL": databaseURL, "HTTP_ADDR": freeAddr(t), "INTERNAL_ADDR": internal,
+		"DATABASE_URL": databaseURL, "HTTP_ADDR": app.public, "INTERNAL_ADDR": app.internal,
 		"SHUTDOWN_DELAY": "0s", "DB_MAX_CONNS": "2",
+		"OIDC_ISSUER": "https://auth.invalid", "OIDC_CLIENT_ID": "linochi-erp", "OIDC_CLIENT_SECRET": "a-client-secret",
+		"OIDC_REDIRECT_URL": "https://erp.invalid/auth/callback",
 	}
+	for k, v := range extra {
+		env[k] = v
+	}
+	// A test that needs to know the address before the app starts (the provider's
+	// redirect is the app's own callback) passes it in, and it is the one used.
+	app = runningApp{public: env["HTTP_ADDR"], internal: env["INTERNAL_ADDR"]}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan int, 1)
 	go func() { done <- run(ctx, []string{"api"}, envWith(env), os.Stdout, os.Stderr) }()
@@ -113,8 +132,8 @@ func start(t *testing.T, databaseURL string) (internal string, stop func() int) 
 	// Wait until the internal port answers at all.
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		if code, _ := fetch(t, "http://"+internal+"/healthz"); code == 200 {
-			return internal, func() int {
+		if code, _ := fetch(t, "http://"+app.internal+"/healthz"); code == 200 {
+			return app, func() int {
 				cancel()
 				select {
 				case c := <-done:
@@ -127,7 +146,7 @@ func start(t *testing.T, databaseURL string) (internal string, stop func() int) 
 		time.Sleep(50 * time.Millisecond)
 	}
 	t.Fatal("the app never started serving /healthz")
-	return "", nil
+	return runningApp{}, nil
 }
 
 func TestNFK02_ReadyzIsGreenWhenTheDatabaseIsMigrated(t *testing.T) {
