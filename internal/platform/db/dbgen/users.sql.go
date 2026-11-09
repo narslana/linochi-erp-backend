@@ -108,6 +108,49 @@ func (q *Queries) InsertUserIfNew(ctx context.Context, arg InsertUserIfNewParams
 	return i, err
 }
 
+const listActiveUsersByEmail = `-- name: ListActiveUsersByEmail :many
+SELECT id, created_at, updated_at, version, oidc_issuer, oidc_subject, email, display_name, last_login_at, archived_at FROM users
+WHERE lower(email) = lower($1) AND archived_at IS NULL
+ORDER BY created_at, id
+`
+
+// For the operator command that ends a user's sessions. An e-mail address is
+// not unique (a user is an issuer and a subject), so this can return more than
+// one row, and the caller must not guess. Archived users are left out: they
+// have no sessions and must not make an address ambiguous. Compared without
+// regard to case, because nobody types an address the way it is stored. There
+// is no index on lower(email): the table is two people, not thousands.
+func (q *Queries) ListActiveUsersByEmail(ctx context.Context, lower string) ([]User, error) {
+	rows, err := q.db.Query(ctx, listActiveUsersByEmail, lower)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Version,
+			&i.OidcIssuer,
+			&i.OidcSubject,
+			&i.Email,
+			&i.DisplayName,
+			&i.LastLoginAt,
+			&i.ArchivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockUser = `-- name: LockUser :one
 SELECT id, created_at, updated_at, version, oidc_issuer, oidc_subject, email, display_name, last_login_at, archived_at FROM users WHERE id = $1 FOR UPDATE
 `

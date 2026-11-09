@@ -30,6 +30,18 @@ type AuditLog struct {
 	RedactedAt *time.Time      `json:"redacted_at"`
 }
 
+type Session struct {
+	ID         uuid.UUID `json:"id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Version    int32     `json:"version"`
+	UserID     uuid.UUID `json:"user_id"`
+	TokenHash  []byte    `json:"token_hash"`
+	Roles      []string  `json:"roles"`
+	LastSeenAt time.Time `json:"last_seen_at"`
+	ExpiresAt  time.Time `json:"expires_at"`
+}
+
 type User struct {
 	ID          uuid.UUID  `json:"id"`
 	CreatedAt   time.Time  `json:"created_at"`

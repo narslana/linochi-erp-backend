@@ -12,6 +12,8 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/config"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
@@ -28,6 +30,8 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 			return 0
 		case "migrate":
 			return runMigrate(ctx, args, getenv, stdout, stderr)
+		case "sessions":
+			return runSessions(ctx, args, getenv, stdout, stderr)
 		}
 	}
 
@@ -66,6 +70,33 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 		return 1
 	}
 	defer pool.Close()
+
+	rec, err := audit.NewRecorder(logger, metrics)
+	if err != nil {
+		logger.ErrorContext(ctx, "audit setup failed", slog.Any("error", err))
+		return 1
+	}
+	sessions, err := auth.NewSessionStore(pool, rec, metrics, auth.WithLogger(logger), auth.WithTracerProvider(tp))
+	if err != nil {
+		logger.ErrorContext(ctx, "session setup failed", slog.Any("error", err))
+		return 1
+	}
+	// Ended sessions are deleted in the background, on every replica. The delete
+	// is idempotent, so two replicas doing it at once is fine. A run that fails,
+	// for example while the database is down or the schema is behind, is logged
+	// and tried again: it must never stop the app from starting (NFK-02).
+	cleanupCtx, stopCleanup := context.WithCancel(ctx)
+	cleanupDone := make(chan struct{})
+	go func() {
+		defer close(cleanupDone)
+		sessions.RunCleanup(cleanupCtx, auth.CleanupInterval)
+	}()
+	// Registered after pool.Close, so it runs before it: the cleanup must not be
+	// left with a closed pool.
+	defer func() {
+		stopCleanup()
+		<-cleanupDone
+	}()
 
 	health := &httpx.Health{}
 	health.AddCheck("database", db.ReadinessCheck(pool))

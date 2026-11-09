@@ -36,3 +36,14 @@ SET archived_at = coalesce(archived_at, now()),
     version     = version + 1
 WHERE id = $1 AND version = $2
 RETURNING *;
+
+-- name: ListActiveUsersByEmail :many
+-- For the operator command that ends a user's sessions. An e-mail address is
+-- not unique (a user is an issuer and a subject), so this can return more than
+-- one row, and the caller must not guess. Archived users are left out: they
+-- have no sessions and must not make an address ambiguous. Compared without
+-- regard to case, because nobody types an address the way it is stored. There
+-- is no index on lower(email): the table is two people, not thousands.
+SELECT * FROM users
+WHERE lower(email) = lower($1) AND archived_at IS NULL
+ORDER BY created_at, id;
