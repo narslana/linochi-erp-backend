@@ -1,11 +1,28 @@
 name: CI
 
-# Every push runs the same thing a developer runs before committing (NFK-33).
-# The image and deploy jobs arrive with B7.
+# ── Branch policy ─────────────────────────────────────────────────────────
+# main          → check, chart and vulnerabilities, then build, scan and push an
+#                 image, then point the chart at it; Argo CD syncs when Ninib says
+# anything else → the same quality gates, and the image is built, scanned and
+#                 smoke-tested but not pushed
+#
+# One deployable branch, one image stream, immutable tags (as linochi-web). A push
+# to main is a release candidate; a push anywhere else cannot reach the cluster.
+# Every push runs what a developer runs before committing (NFK-33).
+
 on:
   push:
     branches: ["**"]
+    # The deploy job rewrites image.tag in this file. Without this, its commit
+    # would trigger a build of itself, forever ([skip ci] in the message is a
+    # second guard).
+    paths-ignore:
+      - "deploy/helm/linochi-erp-backend/values.yaml"
   workflow_dispatch:
+
+env:
+  REGISTRY: gitea.lab.internal
+  IMAGE_NAME: linochi/linochi-erp-backend
 
 jobs:
   check:
@@ -65,3 +82,179 @@ jobs:
 
       - name: Integration tests
         run: make test-int RACE=
+
+      # Known vulnerabilities in what the code calls (NFK-13). Its own step, so
+      # that the log shows what it costs, and not in `make check` because it needs
+      # the network (vuln.go.dev). govulncheck is a tool in tools/go.mod, so it is
+      # built into the same caches as the other tools. It exits non-zero on a
+      # finding that the code reaches.
+      - name: govulncheck
+        run: make vuln
+
+      # The chart is part of the deliverable, so a broken template fails here and
+      # not as an Argo CD sync error. The script lints it and renders it with
+      # every switch on and off, and checks what must hold in the cluster: no owner
+      # URL in the Deployment, no route to the internal port, the CA added to the
+      # system roots, the alerts, no limits (NFK-04).
+      - name: Lint and render the Helm chart
+        run: make chart
+
+  # ── Build, scan and smoke-test the image ──────────────────────────────────
+  # On every push, so that a Dockerfile that does not build, or an image with a
+  # critical vulnerability, shows up on the branch and not on main. Only main
+  # pushes it, and the next job.
+  image:
+    needs: check
+    runs-on: nars-ci
+    outputs:
+      tag: ${{ steps.meta.outputs.TAG }}
+      version: ${{ steps.meta.outputs.VERSION }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          # git describe needs the tags, which a shallow clone does not carry.
+          fetch-depth: 0
+
+      # A release tag on this exact commit wins (v0.1.0 gives 0.1.0); otherwise it
+      # is the newest tag with -dev after it. The chart pins <version>-<sha8>:
+      # readable and never reused. A bare version would be reused by the next
+      # build, and Argo CD cannot tell that a tag has moved.
+      - name: Derive the version and the tag
+        id: meta
+        run: |
+          scripts/release-meta.sh | tee -a "$GITHUB_OUTPUT"
+
+      # No buildx container driver, no QEMU, no multi-arch: the runner is arm64 and
+      # so is the cluster, so a native `docker build` is simpler and faster, and it
+      # keeps the build in the DinD daemon, whose trust store has the internal CA.
+      - name: Build
+        env:
+          DOCKER_BUILDKIT: "1"
+        run: |
+          docker build \
+            --build-arg "VERSION=${{ steps.meta.outputs.VERSION }}" \
+            --build-arg "COMMIT=${{ steps.meta.outputs.COMMIT }}" \
+            -t "${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.TAG }}" \
+            .
+
+      # Trivy is in the job image (not trivy-action, which downloads ~50 MB from
+      # github.com on every run). --image-src docker: the image exists only in the
+      # DinD daemon at this point. CRITICAL stops the build (NFK-13). HIGH is shown
+      # and does not stop it: a fix that does not exist yet (--ignore-unfixed hides
+      # those) is not a reason to be unable to release.
+      - name: Scan for known vulnerabilities
+        run: |
+          trivy image \
+            --scanners vuln \
+            --image-src docker \
+            --ignore-unfixed \
+            --severity HIGH,CRITICAL \
+            --exit-code 0 \
+            --format table \
+            "${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.TAG }}"
+          trivy image \
+            --scanners vuln \
+            --image-src docker \
+            --ignore-unfixed \
+            --severity CRITICAL \
+            --exit-code 1 \
+            --quiet \
+            "${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.TAG }}"
+
+      # Starts the image the way the chart does, against a real Postgres, on a
+      # network made for the run (see the script for why not -p and 127.0.0.1).
+      - name: Smoke-test the image
+        run: |
+          scripts/smoke-image.sh \
+            "${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.TAG }}" \
+            "${{ steps.meta.outputs.VERSION }}" \
+            "${{ steps.meta.outputs.COMMIT }}"
+
+      # Plain docker login rather than docker/login-action: one fewer action from
+      # github.com, and the token never goes to third-party code. The user is a
+      # repository variable, not gitea.actor: an access token belongs to the user
+      # who made it, so authenticating as whoever pushed only works while that is
+      # the same person.
+      - name: Log in to the Gitea registry
+        if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.REGISTRY_TOKEN }}" \
+            | docker login "${REGISTRY}" \
+                -u "${{ vars.REGISTRY_USER || gitea.actor }}" \
+                --password-stdin
+
+      - name: Push
+        if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'
+        run: |
+          immutable="${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.TAG }}"
+          # The moving tags are for people. The chart never names them.
+          docker tag "$immutable" "${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.VERSION }}"
+          docker tag "$immutable" "${REGISTRY}/${IMAGE_NAME}:latest"
+          docker push "$immutable"
+          docker push "${REGISTRY}/${IMAGE_NAME}:${{ steps.meta.outputs.VERSION }}"
+          docker push "${REGISTRY}/${IMAGE_NAME}:latest"
+
+  # ── Close the GitOps loop (main only) ─────────────────────────────────────
+  # The one commit CI makes: it changes `image.tag` in the chart's values and
+  # nothing else (appVersion is moved by hand at a release). It is made by the bot
+  # user linochi-ci, which is on the push allow-list of main, with the message
+  # marked [skip ci].
+  deploy:
+    needs: image
+    if: gitea.event_name == 'push' && gitea.ref == 'refs/heads/main'
+    runs-on: nars-ci
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Point the chart at the new image
+        run: |
+          values=deploy/helm/linochi-erp-backend/values.yaml
+          sed -i -E "s|^(  tag: ).*|\\1\"${{ needs.image.outputs.tag }}\"|" "$values"
+          grep -A3 '^image:' "$values"
+
+      - name: Commit the tag bump
+        run: |
+          # Only image.tag may have changed. If anything else is in the diff, the
+          # sed matched something it should not have, and nothing is pushed.
+          changed=$(git diff --numstat | wc -l)
+          if [ "$changed" -eq 0 ]; then
+            echo "The chart already points at this image; nothing to commit."
+            exit 0
+          fi
+          if [ "$(git diff --numstat | cut -f1,2)" != "$(printf '1\t1')" ] || ! git diff -U0 | grep -q '^+  tag: '; then
+            echo "::error::More than the image tag changed; refusing to commit."
+            git diff
+            exit 1
+          fi
+
+          git config user.name "linochi-ci"
+          git config user.email "linochi-ci@linochi.eu"
+          git add deploy/helm/linochi-erp-backend/values.yaml
+          git commit -m "chore(deploy): linochi-erp-backend ${{ needs.image.outputs.tag }} [skip ci]"
+          git push origin HEAD:main
+
+  # ── A red main is everyone's problem ──────────────────────────────────────
+  # Only for main. A red branch is the author's to see in the run log.
+  report-failure:
+    needs: [check, image, deploy]
+    if: failure() && gitea.ref == 'refs/heads/main'
+    runs-on: nars-ci
+    steps:
+      - name: Open an issue for the broken build
+        env:
+          GITEA_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          RUN_URL: ${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_number }}
+        run: |
+          title="CI failed on main: ${{ gitea.sha }}"
+          body=$(printf 'The CI pipeline failed on `main`.\n\n| | |\n| --- | --- |\n| Commit | `%s` |\n| Author | @%s |\n| Run | %s |\n' \
+            "${{ gitea.sha }}" "${{ gitea.actor }}" "${RUN_URL}")
+          jq -n --arg title "$title" --arg body "$body" '{title: $title, body: $body, labels: []}' \
+            | curl -fsS -X POST \
+                -H "Authorization: token ${GITEA_TOKEN}" \
+                -H "Content-Type: application/json" \
+                --data @- \
+                "${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/issues"
