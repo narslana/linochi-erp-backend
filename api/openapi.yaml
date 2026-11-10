@@ -166,6 +166,31 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
 
+  /api/v1/version:
+    get:
+      operationId: getVersion
+      tags: [auth]
+      summary: Which release is running
+      description: |
+        The version and commit this build was made from, for the menu of the web
+        app (INS-07). For people who are logged in.
+      security:
+        - session: []
+      responses:
+        "200":
+          description: The running release.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Version"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
 components:
   securitySchemes:
     session:
@@ -221,6 +246,18 @@ components:
           items:
             type: string
             enum: [admin]
+    Version:
+      type: object
+      required: [version, commit]
+      properties:
+        version:
+          type: string
+          description: The release, for instance `0.1.0`. `dev` for a build outside CI.
+          examples: ["0.1.0"]
+        commit:
+          type: string
+          description: The short commit the build was made from.
+          examples: ["6ed201b"]
     Problem:
       type: object
       description: RFC 9457 problem details.

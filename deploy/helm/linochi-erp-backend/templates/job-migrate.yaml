@@ -1,0 +1,49 @@
+# `api migrate up` as the owner role, before the new pods start (Argo CD PreSync).
+# The Deployment cannot change the schema, so this is the only place that can.
+# It is replaced at the next sync (BeforeHookCreation) and kept after it finishes,
+# so that its log can be read.
+#
+# Its Secrets must exist before the first sync (H1).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "linochi-erp-backend.fullname" . }}-migrate
+  labels:
+    {{- include "linochi-erp-backend.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: {{ .Values.migrate.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrate.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "linochi-erp-backend.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "linochi-erp-backend.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["migrate", "up"]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            - name: MIGRATE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.ownerSecret }}
+                  key: {{ .Values.database.ownerSecretKey }}
+          resources:
+            {{- toYaml .Values.migrate.resources | nindent 12 }}

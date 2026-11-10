@@ -75,7 +75,8 @@ func (he *handlerEnv) newPod(t *testing.T, attemptOpts ...auth.LoginAttemptOptio
 		Attempts: auth.NewLoginAttemptStore(pool, attemptOpts...),
 		Users:    auth.NewUserStore(pool, rec), Sessions: sessions,
 		AdminGroups: []string{"admins", "linochi_erp_users"},
-		Logger:      logger, Metrics: metrics, Now: he.clock.Now,
+		Version:     "1.2.3", Commit: "abc1234",
+		Logger: logger, Metrics: metrics, Now: he.clock.Now,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -585,4 +586,30 @@ func TestNFK10_RolesAreWorkedOutAtLoginAndKeptInTheSession(t *testing.T) {
 	}
 	// The next login is the one that notices.
 	wantRedirect(t, he.login(t, he.browser(t, p), ""), "/login-error?code=no-access")
+}
+
+// The menu shows the release that is running (INS-07), so that a person looking
+// at the app can tell a developer which one it is. It is for people who are
+// logged in, and it is the build's own version and commit, nothing else.
+func TestINS07_VersionNeedsASessionAndNamesTheRunningRelease(t *testing.T) {
+	he, p := newHandlerEnv(t)
+	b := he.browser(t, p)
+	if w := b.get("/api/v1/version"); w.Code != http.StatusUnauthorized {
+		t.Fatalf("version without a session = %d, want 401", w.Code)
+	}
+	he.login(t, b, "")
+	w := b.get("/api/v1/version")
+	if w.Code != http.StatusOK {
+		t.Fatalf("version with a session = %d, want 200", w.Code)
+	}
+	var got struct{ Version, Commit string }
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Version != "1.2.3" || got.Commit != "abc1234" {
+		t.Errorf("version = %+v, want 1.2.3 and abc1234", got)
+	}
+	if cc := w.Header().Get("Cache-Control"); cc != "no-store" {
+		t.Errorf("Cache-Control = %q, want no-store", cc)
+	}
 }

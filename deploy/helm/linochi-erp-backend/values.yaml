@@ -1,0 +1,188 @@
+# Linochi ERP backend: Helm values.
+#
+# Written against the homelab cluster's conventions (as linochi-web): Traefik
+# IngressRoute and no Ingress, the internal-CA wildcard on websecure, Argo CD
+# with a manual sync, and nothing stateful here: sessions, login attempts and the
+# audit log are in Postgres (NFK-02).
+#
+# Every Secret is made outside this chart (a Sealed Secret from homelab H1). The
+# chart only names them.
+
+replicaCount: 2
+
+image:
+  repository: gitea.lab.internal/linochi/linochi-erp-backend
+  # Immutable tag, rewritten by CI on every push to main (only this line). Never
+  # "latest": Argo CD cannot tell a moved tag from an unchanged one, so a mutable
+  # tag gives a Synced application running last week's image.
+  tag: "0.0.0-dev-0000000"
+  pullPolicy: IfNotPresent
+
+# The Gitea registry is private; the Secret comes with H1.
+imagePullSecrets:
+  - name: gitea-registry
+
+# ── The three ports of the app ───────────────────────────────────────────
+service:
+  type: ClusterIP
+  # The public API: /api and /auth. Traefik routes here.
+  port: 8080
+  # /healthz, /readyz and /metrics. In the cluster only, and no route reaches it.
+  internalPort: 9090
+
+# ── Routing ──────────────────────────────────────────────────────────────
+# The web app (W6) owns the rest of the host, so this route takes only the two
+# prefixes that are the backend's. Traefik prefers the longer rule when two
+# routes match.
+ingress:
+  enabled: true
+  entryPoint: websecure
+  host: erp.lab.internal
+  paths:
+    - /api
+    - /auth
+  # Empty `tls: {}` picks up Traefik's default certificate, the internal-CA
+  # wildcard for *.lab.internal.
+  tlsSecretName: ""
+
+# ── Database ─────────────────────────────────────────────────────────────
+# Two logins, two Secrets, never together (INS-05). The Deployment gets only the
+# restricted app role and cannot change the schema; the owner's URL is in the
+# migration Job and nowhere else.
+database:
+  appSecret: linochi-erp-app-database
+  appSecretKey: DATABASE_URL
+  ownerSecret: linochi-erp-owner-database
+  ownerSecretKey: MIGRATE_DATABASE_URL
+  # Per pod. The cluster's 100 connections are shared (docs/DECISIONS.md).
+  maxConns: 5
+
+# ── Login (NFK-10) ───────────────────────────────────────────────────────
+oidc:
+  issuer: https://auth.lab.internal
+  clientId: linochi-erp
+  # Authelia matches this exactly.
+  redirectUrl: https://erp.lab.internal/auth/callback
+  # The clear text of the client secret whose hash is in Authelia's configuration.
+  existingSecret: linochi-erp-oidc
+  secretKey: OIDC_CLIENT_SECRET
+  # Empty keeps the app's default (admins,linochi_erp_users).
+  adminGroups: ""
+
+# ── The internal CA (NFK-12) ─────────────────────────────────────────────
+# The app trusts the system roots only. The internal CA is added with
+# SSL_CERT_DIR, as for Gitea and Grafana, from a ConfigMap that H1 creates in
+# this namespace. It is added to the system roots, not instead of them.
+caBundle:
+  enabled: true
+  configMapName: linochi-erp-ca-bundle
+
+# ── Traces and logs ──────────────────────────────────────────────────────
+otel:
+  endpoint: http://alloy.alloy.svc.cluster.local:4318
+logLevel: info
+# After SIGTERM /readyz turns 503 at once and the ports stay open this long, so
+# that Traefik stops sending traffic first. The grace period is this plus
+# SHUTDOWN_TIMEOUT (20s) and a margin.
+shutdownDelay: 5s
+terminationGracePeriodSeconds: 40
+
+# ── Metrics and alerts ───────────────────────────────────────────────────
+metrics:
+  path: /metrics
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    additionalLabels: {}
+  prometheusRule:
+    enabled: true
+    # Prometheus here has ruleSelector release=prometheus-stack, so a rule
+    # without this label is loaded by nobody. Alertmanager is switched off: the
+    # alerts are visible in Prometheus and sent nowhere (as the requirements say).
+    labels:
+      release: prometheus-stack
+    # No replica is up at all. One replica down is the PDB's business.
+    down:
+      for: 2m
+    # Logins that were refused (anything but result="ok"): a person who is not
+    # allowed in, a login that expired, a stolen or replayed state, Authelia
+    # down. More than `threshold` within `window` for `for` is more than a typo.
+    refusedLogins:
+      threshold: 10
+      window: 10m
+      for: 5m
+
+# ── Scheduling and capacity ──────────────────────────────────────────────
+# Requests only: NFK-04 sets the limits after measurement, and no hard limit may
+# govern functionality.
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+
+# rpi-k3s-e is the constrained node (4 GB RAM): nudged away from, not forbidden.
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 50
+        preference:
+          matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: NotIn
+              values: ["rpi-k3s-e"]
+
+# Keep the replicas off the same node, so a node reboot is not an outage.
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: linochi-erp-backend
+
+nodeSelector: {}
+tolerations: []
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# ── Migration Job (PreSync hook) ─────────────────────────────────────────
+migrate:
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+
+# ── Security ─────────────────────────────────────────────────────────────
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# ── Probes (the internal port) ───────────────────────────────────────────
+# Liveness is /healthz and does not look at the database: a database that is
+# down must take the pods out of rotation (readiness), not restart them.
+probes:
+  startup:
+    failureThreshold: 30
+    periodSeconds: 2
+  readiness:
+    periodSeconds: 5
+    timeoutSeconds: 3
+  liveness:
+    periodSeconds: 20
+    timeoutSeconds: 3
+
+podAnnotations: {}

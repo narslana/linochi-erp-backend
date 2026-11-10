@@ -1,0 +1,28 @@
+# Keep the build context small: everything here is rebuilt inside the image,
+# is irrelevant to it, or must never be baked into it.
+
+.git
+.gitignore
+.gitattributes
+.gitea
+
+bin
+coverage
+
+.env
+.env.*
+!.env.example
+
+.vscode
+.idea
+*.log
+
+# Not part of the binary. The migrations stay: they are embedded (db/embed.go).
+tools
+deploy
+scripts
+compose.yaml
+db/dev
+Dockerfile
+.dockerignore
+README.md

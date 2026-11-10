@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "linochi-erp-backend.fullname" . }}
+  labels:
+    {{- include "linochi-erp-backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "linochi-erp-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "linochi-erp-backend.labels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # The app never talks to the Kubernetes API.
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: api
+          image: {{ include "linochi-erp-backend.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+            - name: internal
+              containerPort: {{ .Values.service.internalPort }}
+              protocol: TCP
+          env:
+            - name: HTTP_ADDR
+              value: {{ printf ":%v" .Values.service.port | quote }}
+            - name: INTERNAL_ADDR
+              value: {{ printf ":%v" .Values.service.internalPort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            - name: SHUTDOWN_DELAY
+              value: {{ .Values.shutdownDelay | quote }}
+            - name: DB_MAX_CONNS
+              value: {{ .Values.database.maxConns | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.otel.endpoint | quote }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            # The restricted app role only. The owner's URL is in the migration Job.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.appSecret }}
+                  key: {{ .Values.database.appSecretKey }}
+            - name: OIDC_ISSUER
+              value: {{ .Values.oidc.issuer | quote }}
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.oidc.clientId | quote }}
+            - name: OIDC_REDIRECT_URL
+              value: {{ .Values.oidc.redirectUrl | quote }}
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oidc.existingSecret }}
+                  key: {{ .Values.oidc.secretKey }}
+            {{- with .Values.oidc.adminGroups }}
+            - name: AUTH_ADMIN_GROUPS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if .Values.caBundle.enabled }}
+            # NFK-12: the system roots plus the internal CA.
+            - name: SSL_CERT_DIR
+              value: /etc/ssl/certs:/extra-ca-certs
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: internal
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: internal
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: internal
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.caBundle.enabled }}
+          volumeMounts:
+            - name: ca-bundle
+              mountPath: /extra-ca-certs
+              readOnly: true
+          {{- end }}
+      {{- if .Values.caBundle.enabled }}
+      volumes:
+        - name: ca-bundle
+          configMap:
+            name: {{ .Values.caBundle.configMapName }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

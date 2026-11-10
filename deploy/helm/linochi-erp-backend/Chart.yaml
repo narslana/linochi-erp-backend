@@ -1,0 +1,18 @@
+apiVersion: v2
+name: linochi-erp-backend
+description: Linochi ERP backend (Go). A stateless API with sessions and login in Postgres.
+type: application
+
+# Chart version: bump on template changes.
+version: 0.1.0
+
+# What the chart means by "the release". CI rewrites only `image.tag` in
+# values.yaml, never this line, so it is moved by hand at a release.
+appVersion: "0.1.0"
+
+home: https://erp.lab.internal
+sources:
+  - https://gitea.lab.internal/linochi/linochi-erp-backend
+maintainers:
+  - name: Ninib Afram
+    email: contact@linochi.eu

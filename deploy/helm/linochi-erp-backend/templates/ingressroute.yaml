@@ -1,0 +1,29 @@
+{{- if .Values.ingress.enabled }}
+# erp.lab.internal/api and /auth, terminated by Traefik with the internal-CA
+# wildcard. Only the public port is routed: /healthz, /readyz and /metrics are on
+# the internal port, which no route reaches.
+#
+# No forwardAuth middleware: the app does its own login (OIDC, B6), and a redirect
+# in front of an API call is what the web app cannot follow.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "linochi-erp-backend.fullname" . }}
+  labels:
+    {{- include "linochi-erp-backend.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - {{ .Values.ingress.entryPoint }}
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`) && ({{ range $i, $p := .Values.ingress.paths }}{{ if $i }} || {{ end }}PathPrefix(`{{ $p }}`){{ end }})
+      kind: Rule
+      services:
+        - name: {{ include "linochi-erp-backend.fullname" . }}
+          port: {{ .Values.service.port }}
+  {{- if .Values.ingress.tlsSecretName }}
+  tls:
+    secretName: {{ .Values.ingress.tlsSecretName }}
+  {{- else }}
+  tls: {}
+  {{- end }}
+{{- end }}

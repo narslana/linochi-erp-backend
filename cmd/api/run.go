@@ -110,7 +110,7 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	}, auth.WithOIDCLogger(logger), auth.WithOIDCTracerProvider(tp))
 	authHandler, err := auth.NewHandler(auth.HandlerConfig{
 		OIDC: oidcClient, Attempts: attempts, Users: auth.NewUserStore(pool, rec), Sessions: sessions,
-		AdminGroups: cfg.OIDC.AdminGroups, Logger: logger, Metrics: metrics,
+		AdminGroups: cfg.OIDC.AdminGroups, Version: version, Commit: commit, Logger: logger, Metrics: metrics,
 	})
 	if err != nil {
 		logger.ErrorContext(ctx, "auth setup failed", slog.Any("error", err))
