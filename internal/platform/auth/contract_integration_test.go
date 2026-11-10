@@ -92,12 +92,14 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b := he.browser(t, p)
 	// Not logged in.
 	b.call("GET", "/api/v1/me", nil, &calls)
+	b.call("GET", "/api/v1/version", nil, &calls)
 	b.call("POST", "/auth/logout", map[string]string{"Sec-Fetch-Site": "cross-site"}, &calls)
 	// A good login, with the answers of every step.
 	w := b.call("GET", "/auth/login?return_to=%2Fproducts", nil, &calls)
 	target := he.callbackTarget(t, w.Header().Get("Location"))
 	b.call("GET", target, nil, &calls)
 	b.call("GET", "/api/v1/me", nil, &calls)
+	b.call("GET", "/api/v1/version", nil, &calls)
 	b.call("POST", "/auth/logout", nil, &calls)
 	b.call("POST", "/auth/logout", nil, &calls)
 	// Refused logins: a state used twice, no state, a login Authelia turned down.

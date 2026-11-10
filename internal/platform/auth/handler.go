@@ -28,8 +28,10 @@ type HandlerConfig struct {
 	Sessions *SessionStore
 	// AdminGroups are the Authelia groups that give the admin role.
 	AdminGroups []string
-	Logger      *slog.Logger
-	Metrics     *obs.Metrics
+	// Version and Commit are what GET /api/v1/version answers (INS-07).
+	Version, Commit string
+	Logger          *slog.Logger
+	Metrics         *obs.Metrics
 	// Now is the clock; time.Now when nil. For tests.
 	Now func() time.Time
 }
@@ -212,6 +214,17 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(body)
+}
+
+// GetVersion says which release is running (GET /api/v1/version, INS-07).
+func (h *Handler) GetVersion(w http.ResponseWriter, r *http.Request) {
+	h.mw.Require(http.HandlerFunc(h.version)).ServeHTTP(w, r)
+}
+
+func (h *Handler) version(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(api.Version{Version: h.cfg.Version, Commit: h.cfg.Commit})
 }
 
 // refuse ends a login that did not work: it counts it, logs why with the trace
