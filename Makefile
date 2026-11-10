@@ -11,8 +11,9 @@ LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT)
 RACE ?= -race
 
 GOLANGCI := go tool -modfile=tools/go.mod golangci-lint
+GOVULNCHECK := go tool -modfile=tools/go.mod govulncheck
 
-.PHONY: help dev dev-oidc gen migrate-new build test test-int lint check
+.PHONY: help dev dev-oidc gen migrate-new build test test-int lint vuln chart image smoke check
 
 help: ## List the targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -71,4 +72,20 @@ lint: ## gofmt, go vet, golangci-lint, sqlc diff and go mod tidy
 	  || { echo "internal/api/api.gen.go is out of date: run make gen"; exit 1; }
 	go mod tidy -diff
 
-check: lint test test-int ## Everything. Must be green before commit
+vuln: ## govulncheck: known vulnerabilities in what the code calls (needs the network, so not part of check)
+	$(GOVULNCHECK) ./...
+
+CHART := deploy/helm/linochi-erp-backend
+chart: ## helm lint and helm template of the chart, with every switch on and off
+	scripts/check-chart.sh $(CHART)
+
+IMAGE ?= linochi-erp-backend:local
+image: ## Build the container image (what CI builds), tagged $(IMAGE)
+	@eval "$$(scripts/release-meta.sh | sed 's/^/export /')"; \
+	  docker build --build-arg VERSION=$$VERSION --build-arg COMMIT=$$COMMIT -t $(IMAGE) .
+
+smoke: ## Run the image against a real Postgres and check what the cluster depends on (needs Docker)
+	@eval "$$(scripts/release-meta.sh | sed 's/^/export /')"; \
+	  scripts/smoke-image.sh $(IMAGE) "$$VERSION" "$$COMMIT"
+
+check: lint test test-int ## Lint and tests, not vuln, chart or image. Must be green before commit

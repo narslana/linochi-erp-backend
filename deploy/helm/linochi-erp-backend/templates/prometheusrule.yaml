@@ -1,0 +1,41 @@
+{{- if .Values.metrics.prometheusRule.enabled }}
+{{- $name := include "linochi-erp-backend.fullname" . -}}
+{{- $r := .Values.metrics.prometheusRule -}}
+# Alertmanager is switched off in this cluster, so these are visible in
+# Prometheus and sent nowhere, which matches the requirements. The label below is
+# what Prometheus' ruleSelector asks for.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "linochi-erp-backend.labels" . | nindent 4 }}
+    {{- with $r.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ $name }}
+      rules:
+        # No replica is up. `absent` answers when no series is left at all, so it
+        # also fires when the ServiceMonitor or the namespace has gone.
+        - alert: LinochiErpBackendDown
+          expr: absent(up{job="{{ $name }}", namespace="{{ .Release.Namespace }}"} == 1)
+          for: {{ $r.down.for }}
+          labels:
+            severity: critical
+          annotations:
+            summary: Linochi ERP backend is down
+            description: No replica of {{ $name }} in {{ .Release.Namespace }} has answered Prometheus for {{ $r.down.for }}.
+        # Many refused logins (NFK-10). The reason is the `result` label and is in
+        # the log with the trace_id; the person never sees it.
+        - alert: LinochiErpRefusedLogins
+          expr: |
+            sum(increase(linochi_auth_logins_total{result!="ok", namespace="{{ .Release.Namespace }}"}[{{ $r.refusedLogins.window }}])) > {{ $r.refusedLogins.threshold }}
+          for: {{ $r.refusedLogins.for }}
+          labels:
+            severity: warning
+          annotations:
+            summary: Many refused logins at Linochi ERP
+            description: More than {{ $r.refusedLogins.threshold }} logins were refused in {{ $r.refusedLogins.window }}. See the reasons with sum by (result) (increase(linochi_auth_logins_total{result!="ok"}[{{ $r.refusedLogins.window }}])), and the log line of a refused login for the trace_id.
+{{- end }}

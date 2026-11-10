@@ -1,0 +1,21 @@
+{{- if .Values.metrics.serviceMonitor.enabled }}
+# Scrapes each pod through the Service, on the internal port. Prometheus here
+# selects every ServiceMonitor (serviceMonitorSelector is empty).
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "linochi-erp-backend.fullname" . }}
+  labels:
+    {{- include "linochi-erp-backend.labels" . | nindent 4 }}
+    {{- with .Values.metrics.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "linochi-erp-backend.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: internal
+      path: {{ .Values.metrics.path }}
+      interval: {{ .Values.metrics.serviceMonitor.interval }}
+{{- end }}

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "linochi-erp-backend.fullname" . }}
+  labels:
+    {{- include "linochi-erp-backend.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+    # For Prometheus. No IngressRoute names this port.
+    - name: internal
+      port: {{ .Values.service.internalPort }}
+      targetPort: internal
+      protocol: TCP
+  selector:
+    {{- include "linochi-erp-backend.selectorLabels" . | nindent 4 }}

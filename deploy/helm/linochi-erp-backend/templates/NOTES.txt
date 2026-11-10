@@ -1,0 +1,10 @@
+Linochi ERP backend {{ include "linochi-erp-backend.image" . }}
+
+Before the first sync, these must exist in {{ .Release.Namespace }} (homelab H1):
+  Secrets   {{ .Values.database.appSecret }}, {{ .Values.database.ownerSecret }}, {{ .Values.oidc.existingSecret }}{{ range .Values.imagePullSecrets }}, {{ .name }}{{ end }}
+{{- if .Values.caBundle.enabled }}
+  ConfigMap {{ .Values.caBundle.configMapName }}
+{{- end }}
+
+End the sessions of a user (the exact command is in the backend README):
+  kubectl -n {{ .Release.Namespace }} exec deploy/{{ include "linochi-erp-backend.fullname" . }} -- /api sessions revoke-user <user-id>

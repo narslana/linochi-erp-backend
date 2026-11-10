@@ -26,6 +26,10 @@ module of its own, so that the tools' dependencies do not end up in the app's
 | `make gen` | Generates Go code from `db/queries` with sqlc and from `api/openapi.yaml` with oapi-codegen (`internal/api`) |
 | `make migrate-new name=...` | A new goose migration in `db/migrations` |
 | `make check` | Lint, `test` and `test-int`. Must be green before commit |
+| `make vuln` | govulncheck: known vulnerabilities in what the code calls. Needs the network, so it is not part of `check`; CI runs it |
+| `make chart` | `helm lint` and `helm template` of `deploy/helm/linochi-erp-backend` with every switch on and off, and checks of what must hold in the cluster |
+| `make image` | Builds the container image as `linochi-erp-backend:local` (what CI builds) |
+| `make smoke` | Starts that image against a real Postgres and checks what the cluster depends on |
 
 `make dev` reads `.env` if it exists (start from `.env.example`). Compose starts only
 Postgres until the first feature that stores files arrives, then RustFS is added.
@@ -114,8 +118,26 @@ Sessions live in Postgres (`sessions`), so every replica sees the same ones and 
   api sessions revoke-user <email|user-id>
   ```
 
-  In the cluster it is run with `kubectl exec` in a backend pod. The exact line (namespace, Deployment, path of the binary) is added when B7 has built the image and the chart: it has not been run in a cluster yet, only in the tests. It runs as the app role with `DATABASE_URL`, accepts an e-mail address (case-insensitive) or a user id, refuses an unknown or ambiguous address (and lists the ids), prints the user id and the count and never the address, and records the change with the system actor `cli-revoke-user`.
+  In the cluster it is run with `kubectl exec` in a backend pod:
+
+  ```sh
+  kubectl -n linochi-erp exec deploy/linochi-erp-backend -- /api sessions revoke-user <email|user-id>
+  ```
+
+  The image has no shell, so `kubectl exec` runs the binary itself; the smoke test (`make smoke`) runs the same command against a real Postgres, but it has not been run in the cluster yet (that is H3). It runs as the app role with `DATABASE_URL`, accepts an e-mail address (case-insensitive) or a user id, refuses an unknown or ambiguous address (and lists the ids), prints the user id and the count and never the address, and records the change with the system actor `cli-revoke-user`.
 - **Metrics:** `linochi_auth_session_checks_total{result}`, `linochi_auth_sessions_deleted_total{reason}` (`logout`, `revoked`, `cleanup`) and `linochi_auth_session_cleanup_runs_total{result}`. Lookup and cleanup have spans.
+
+## Packaging and release (NFK-01, NFK-02, NFK-04, NFK-13)
+
+- **Image:** `Dockerfile`, one static binary on `gcr.io/distroless/static-debian13:nonroot` (about 40 MB), built natively on arm64 by the runner and on amd64 locally. User `65532`, no shell. `api version` prints `<version> · <commit>`, and `GET /api/v1/version` answers the same to a logged-in person (INS-07). The system roots are in the image; the internal CA is not, see below.
+- **Version and tag:** `scripts/release-meta.sh`. A tag `v0.1.0` on the commit gives `0.1.0`, otherwise the newest tag with `-dev` after it (`0.0.0-dev` before the first tag). The image tag is `<version>-<sha8>`, never reused, so Argo CD can see that it moved. `latest` and `<version>` are moving tags for people; the chart never names them.
+- **Chart:** `deploy/helm/linochi-erp-backend/`, in namespace `linochi-erp`. Two replicas spread over nodes, a rolling update with `maxUnavailable: 0`, a PodDisruptionBudget, requests 32 MB / 50m and **no limits** until they are set from the dashboard (NFK-04). Probes are on the internal port: `/healthz` (liveness) and `/readyz`. The IngressRoute takes `erp.lab.internal` with the prefixes `/api` and `/auth` only, to the public port; nothing routes to the internal port.
+- **Two logins, two Secrets (INS-05):** the Deployment has only `DATABASE_URL` (the app role). `MIGRATE_DATABASE_URL` (the owner) is only in the migration Job, an Argo CD PreSync hook that runs `api migrate up`. Both Secrets, `linochi-erp-oidc`, `gitea-registry` and the CA ConfigMap must exist in the namespace before the first sync: they are made in homelab H1 (names in `values.yaml`).
+- **The internal CA (NFK-12):** the app trusts the system roots only. The chart mounts the ConfigMap `linochi-erp-ca-bundle` at `/extra-ca-certs` and sets `SSL_CERT_DIR=/etc/ssl/certs:/extra-ca-certs`, which adds the CA to the system roots (as for Gitea and Grafana). `caBundle.enabled=false` turns it off.
+- **Alerts** (`PrometheusRule`, label `release: prometheus-stack`, which Prometheus selects on): `LinochiErpBackendDown` (no replica up for 2 minutes) and `LinochiErpRefusedLogins` (more than 10 logins with `result!="ok"` in 10 minutes, for 5). Alertmanager is switched off, so they are visible in Prometheus and sent nowhere.
+- **Dashboard:** `deploy/grafana/linochi-erp-dashboard.json`, imported by hand (see `deploy/grafana/README.md`).
+- **CI** (`.gitea/workflows/ci.yaml`): on every push `check` (lint, tests, `make vuln`, `make chart`), then `image` (build, Trivy, smoke test). Trivy lists HIGH and **stops on CRITICAL** (fixed ones only). On `main` the image is pushed and `deploy` changes `image.tag` in `values.yaml` and nothing else, as the bot user `linochi-ci` with `[skip ci]` in the message. Argo CD reads the chart from the GitHub mirror and syncs by hand. The secrets of the repository are `REGISTRY_TOKEN` and `DEPLOY_TOKEN`, and the variable `REGISTRY_USER`.
+- **Not in CI:** `-race` (amd64 only, locally: `docs/DECISIONS.md` 2026-11-09).
 
 ## Observability
 
