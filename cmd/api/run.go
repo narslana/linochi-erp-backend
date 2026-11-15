@@ -11,14 +11,24 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/trace"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/boards"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/calendar"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/ids"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/inventory"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/kiosk"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/config"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/products"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/purchasing"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/shipments"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/suppliers"
 )
 
 // run is main without the process globals, so that it can be tested. It
@@ -119,7 +129,7 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 
 	health := &httpx.Health{}
 	health.AddCheck("database", db.ReadinessCheck(pool))
-	public, internal := newHandlers(logger, metrics, health, tp, authHandler)
+	public, internal := newHandlers(logger, metrics, health, tp, authHandler, pool, rec, sessions)
 
 	var lc net.ListenConfig
 	pubLn, err := lc.Listen(ctx, "tcp", cfg.HTTPAddr)
@@ -147,9 +157,65 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 // newHandlers builds the two routers. The public one carries /api and /auth,
 // the routes of api/openapi.yaml; the internal one has no ingress route and
 // carries the probes and /metrics. API-key routes join it in phase 6.
-func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health, tp trace.TracerProvider, authHandler *auth.Handler) (public, internal http.Handler) {
+func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health, tp trace.TracerProvider, authHandler *auth.Handler, pool *pgxpool.Pool, rec *audit.Recorder, sessions *auth.SessionStore) (public, internal http.Handler) {
 	pub := httpx.NewRouter(httpx.RouterOptions{Server: "public", Logger: logger, Metrics: metrics, Tracer: tp})
-	authHandler.Mount(pub)
+
+	mw := auth.NewSessionMiddleware(sessions)
+	boardsHandler := boards.NewHandler(
+		boards.NewService(boards.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+	productsHandler := products.NewHandler(
+		products.NewService(products.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	idsHandler := ids.NewHandler(
+		ids.NewService(ids.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	suppliersHandler := suppliers.NewHandler(
+		suppliers.NewService(suppliers.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	purchasingHandler := purchasing.NewHandler(
+		purchasing.NewService(purchasing.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	shipmentsHandler := shipments.NewHandler(
+		shipments.NewService(shipments.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	inventoryHandler := inventory.NewHandler(
+		inventory.NewService(inventory.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	calendarHandler := calendar.NewHandler(
+		calendar.NewService(calendar.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	kioskHandler := kiosk.NewHandler(
+		kiosk.NewService(kiosk.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	composite := boards.NewComposite(authHandler, boardsHandler, productsHandler, idsHandler, suppliersHandler, purchasingHandler, shipmentsHandler, inventoryHandler, calendarHandler, kioskHandler)
+	composite.Mount(pub)
 
 	in := httpx.NewRouter(httpx.RouterOptions{Server: "internal", Logger: logger, Metrics: metrics, Tracer: tp})
 	in.Handle("GET /healthz", health.Healthz())

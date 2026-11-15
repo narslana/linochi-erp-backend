@@ -17,8 +17,869 @@ servers:
 tags:
   - name: auth
     description: Login, logout and who is logged in
+  - name: boards
+    description: Kanban boards, columns, cards, checklists and comments (TAV-01 to TAV-07)
+  - name: products
+    description: Products, field definitions, product types and documents (PRD-01 to PRD-19)
+  - name: ids
+    description: Numbers and IDs registry (REG-01 to REG-03)
+  - name: suppliers
+    description: Suppliers and contacts (LEV-01 to LEV-03)
+  - name: purchasing
+    description: Purchase orders and lines (INK-01, INK-04)
+  - name: shipments
+    description: Shipments linked to purchase orders (INK-02, INK-03, INK-05)
+  - name: inventory
+    description: Locations, stock movements and balance (LAG-01 to LAG-05)
+  - name: calendar
+    description: iCal calendar sources and events (KAL-01 to KAL-04)
+  - name: kiosk
+    description: Kiosk playlists, views and devices (KIO-01 to KIO-07)
 
 paths:
+  /api/v1/boards:
+    get:
+      operationId: listBoards
+      tags: [boards]
+      summary: List all boards (TAV-01)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All active boards.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Board"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createBoard
+      tags: [boards]
+      summary: Create a board (TAV-01)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+      responses:
+        "201":
+          description: The new board with default columns.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Board"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/boards/{board_id}:
+    get:
+      operationId: getBoard
+      tags: [boards]
+      summary: Get a board by ID
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The board.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Board"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateBoard
+      tags: [boards]
+      summary: Update a board name (TAV-01)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, version]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                version:
+                  type: integer
+      responses:
+        "200":
+          description: The updated board.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Board"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveBoard
+      tags: [boards]
+      summary: Archive a board (NFK-09)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The archived board.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Board"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/columns:
+    get:
+      operationId: listColumns
+      tags: [boards]
+      summary: List columns for a board (TAV-02)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Columns sorted by sort_order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Column"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createColumn
+      tags: [boards]
+      summary: Add a column (TAV-02)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                sort_order:
+                  type: integer
+      responses:
+        "201":
+          description: The new column.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Column"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/columns/{column_id}:
+    patch:
+      operationId: updateColumn
+      tags: [boards]
+      summary: Update a column name or order (TAV-02)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: column_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                sort_order:
+                  type: integer
+                version:
+                  type: integer
+      responses:
+        "200":
+          description: The updated column.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Column"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveColumn
+      tags: [boards]
+      summary: Archive a column (TAV-02)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: column_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The archived column.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Column"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/cards:
+    get:
+      operationId: listCards
+      tags: [boards]
+      summary: List cards for a board (TAV-03)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Cards for the board.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Card"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createCard
+      tags: [boards]
+      summary: Create a card (TAV-03)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, column_id]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                column_id:
+                  type: string
+                  format: uuid
+                description_md:
+                  type: string
+                assignee_id:
+                  type: string
+                  format: uuid
+                due_date:
+                  type: string
+                  format: date
+                labels:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Label"
+      responses:
+        "201":
+          description: The new card.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/cards/{card_id}:
+    get:
+      operationId: getCard
+      tags: [boards]
+      summary: Get a card (TAV-03)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The card.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateCard
+      tags: [boards]
+      summary: 'Update a card (TAV-04: move, rename, assign, due date, labels)'
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 256
+                column_id:
+                  type: string
+                  format: uuid
+                description_md:
+                  type: string
+                assignee_id:
+                  type: string
+                  format: uuid
+                due_date:
+                  type: string
+                  format: date
+                labels:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Label"
+                version:
+                  type: integer
+      responses:
+        "200":
+          description: The updated card.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveCard
+      tags: [boards]
+      summary: Archive a card (NFK-09)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The archived card.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/cards/{card_id}/checklist:
+    get:
+      operationId: listChecklistItems
+      tags: [boards]
+      summary: Checklist items for a card (TAV-05)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Checklist items.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChecklistItem"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createChecklistItem
+      tags: [boards]
+      summary: Add a checklist item (TAV-05)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                sort_order:
+                  type: integer
+      responses:
+        "201":
+          description: The new checklist item.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/cards/{card_id}/checklist/{item_id}:
+    patch:
+      operationId: updateChecklistItem
+      tags: [boards]
+      summary: Update a checklist item (TAV-05)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 256
+                completed:
+                  type: boolean
+                sort_order:
+                  type: integer
+                version:
+                  type: integer
+      responses:
+        "200":
+          description: The updated checklist item.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveChecklistItem
+      tags: [boards]
+      summary: Archive a checklist item (NFK-09)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The archived checklist item.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/boards/{board_id}/cards/{card_id}/comments:
+    get:
+      operationId: listComments
+      tags: [boards]
+      summary: Comments on a card (TAV-06)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Comments on the card.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CardComment"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createComment
+      tags: [boards]
+      summary: Add a comment (TAV-06)
+      security:
+        - session: []
+      parameters:
+        - name: board_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: card_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body_md]
+              properties:
+                body_md:
+                  type: string
+                  minLength: 1
+      responses:
+        "201":
+          description: The new comment.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardComment"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /auth/login:
     get:
       operationId: login
@@ -191,6 +1052,2800 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
 
+  # ─── Field Definitions (PRD-13, PRD-14, PRD-17, PRD-18) ───────────────────
+
+  /api/v1/field-definitions:
+    get:
+      operationId: listFieldDefinitions
+      tags: [products]
+      summary: List field definitions (PRD-13)
+      security: [session: []]
+      responses:
+        "200":
+          description: All active field definitions.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FieldDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createFieldDefinition
+      tags: [products]
+      summary: Create a field definition (PRD-13)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, name_en, field_type, group_name]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 128}
+                name_en: {type: string, maxLength: 128}
+                field_type:
+                  type: string
+                  enum: [short_text, long_text, text_per_language, integer, decimal, amount, date, yes_no, choice, multiple_choice, link, document]
+                group_name: {type: string, maxLength: 64}
+                help_text: {type: string, maxLength: 512}
+                mandatory: {type: boolean}
+                choices:
+                  type: array
+                  items: {type: string}
+                unit: {type: string, maxLength: 16}
+                show_on_card: {type: boolean}
+      responses:
+        "201":
+          description: The new field definition.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/field-definitions/{field_definition_id}:
+    get:
+      operationId: getFieldDefinition
+      tags: [products]
+      summary: Get a field definition by ID
+      security: [session: []]
+      parameters:
+        - name: field_definition_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The field definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateFieldDefinition
+      tags: [products]
+      summary: Update a field definition (PRD-18)
+      security: [session: []]
+      parameters:
+        - name: field_definition_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                name: {type: string, maxLength: 128}
+                name_en: {type: string, maxLength: 128}
+                field_type: {type: string, enum: [short_text, long_text, text_per_language, integer, decimal, amount, date, yes_no, choice, multiple_choice, link, document]}
+                group_name: {type: string, maxLength: 64}
+                help_text: {type: string, maxLength: 512}
+                mandatory: {type: boolean}
+                choices:
+                  type: array
+                  items: {type: string}
+                unit: {type: string, maxLength: 16}
+                show_on_card: {type: boolean}
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated field definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveFieldDefinition
+      tags: [products]
+      summary: Archive a field definition (PRD-18)
+      security: [session: []]
+      parameters:
+        - name: field_definition_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived field definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  # ─── Product Types (PRD-15) ────────────────────────────────────────────────
+
+  /api/v1/product-types:
+    get:
+      operationId: listProductTypes
+      tags: [products]
+      summary: List product types (PRD-15)
+      security: [session: []]
+      responses:
+        "200":
+          description: All active product types.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductType"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createProductType
+      tags: [products]
+      summary: Create a product type (PRD-15)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, name_en, type_code]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 64}
+                name_en: {type: string, maxLength: 64}
+                type_code: {type: string, minLength: 2, maxLength: 8, pattern: '^[A-Z]+$'}
+      responses:
+        "201":
+          description: The new product type.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductType"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/product-types/{product_type_id}:
+    get:
+      operationId: getProductType
+      tags: [products]
+      summary: Get a product type by ID
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The product type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductType"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateProductType
+      tags: [products]
+      summary: Update a product type (PRD-15)
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                name: {type: string, maxLength: 64}
+                name_en: {type: string, maxLength: 64}
+                type_code: {type: string, maxLength: 8, pattern: '^[A-Z]+$'}
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated product type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductType"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveProductType
+      tags: [products]
+      summary: Archive a product type (PRD-15)
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived product type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductType"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/product-types/{product_type_id}/fields:
+    get:
+      operationId: listProductTypeFields
+      tags: [products]
+      summary: List fields assigned to a product type (PRD-15)
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Fields for the product type.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductTypeField"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: assignFieldToProductType
+      tags: [products]
+      summary: Assign a field to a product type (PRD-15)
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [field_definition_id]
+              properties:
+                field_definition_id: {type: string, format: uuid}
+                sort_order: {type: integer}
+                mandatory_override: {type: boolean}
+      responses:
+        "201":
+          description: The assignment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductTypeField"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/product-types/{product_type_id}/fields/{ptf_id}:
+    patch:
+      operationId: updateProductTypeField
+      tags: [products]
+      summary: Update a field assignment in a product type (PRD-15)
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: ptf_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                sort_order: {type: integer}
+                mandatory_override: {type: boolean}
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated assignment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductTypeField"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveProductTypeField
+      tags: [products]
+      summary: Remove a field from a product type (PRD-15)
+      security: [session: []]
+      parameters:
+        - name: product_type_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: ptf_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived assignment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductTypeField"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  # ─── Products (PRD-01, PRD-02, PRD-04, PRD-08, PRD-09, PRD-10, PRD-16, PRD-17) ──
+
+  /api/v1/products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products (PRD-01, PRD-16)
+      security: [session: []]
+      parameters:
+        - name: q
+          in: query
+          description: Search by name, SKU or EAN
+          schema: {type: string}
+      responses:
+        "200":
+          description: All active products.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product (PRD-01, PRD-08)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, sku, product_type_id]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 256}
+                sku: {type: string, minLength: 1, maxLength: 32}
+                ean: {type: string, maxLength: 13}
+                product_type_id: {type: string, format: uuid}
+                short_description: {type: string, maxLength: 512}
+                wholesale_price_sek: {type: integer}
+                wholesale_currency: {type: string, maxLength: 3}
+                msrp_sek: {type: integer}
+                msrp_currency: {type: string, maxLength: 3}
+                status:
+                  type: string
+                  enum: [draft, active, discontinuing]
+                attributes:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "201":
+          description: The new product.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/products/{product_id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by ID (PRD-16)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The product.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product (PRD-01, PRD-17)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                name: {type: string, maxLength: 256}
+                sku: {type: string, maxLength: 32}
+                ean: {type: string, maxLength: 13}
+                product_type_id: {type: string, format: uuid}
+                short_description: {type: string, maxLength: 512}
+                wholesale_price_sek: {type: integer}
+                wholesale_currency: {type: string, maxLength: 3}
+                msrp_sek: {type: integer}
+                msrp_currency: {type: string, maxLength: 3}
+                status:
+                  type: string
+                  enum: [draft, active, discontinuing, archived]
+                attributes:
+                  type: object
+                  additionalProperties: true
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated product.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveProduct
+      tags: [products]
+      summary: Archive a product (PRD-01)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived product.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/products/{product_id}/lock-sku:
+    post:
+      operationId: lockProductSKU
+      tags: [products]
+      summary: Lock the SKU of a product (PRD-08)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The product with locked SKU.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/products/{product_id}/images:
+    get:
+      operationId: listProductImages
+      tags: [products]
+      summary: List images for a product (PRD-03)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The product images.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductImage"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createProductImage
+      tags: [products]
+      summary: Add an image to a product (PRD-03)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: {type: string}
+                sort_order: {type: integer}
+                is_main: {type: boolean}
+      responses:
+        "201":
+          description: The new image.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductImage"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/products/{product_id}/images/{image_id}:
+    patch:
+      operationId: updateProductImage
+      tags: [products]
+      summary: Update a product image (PRD-03)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: image_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                url: {type: string}
+                sort_order: {type: integer}
+                is_main: {type: boolean}
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated image.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductImage"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveProductImage
+      tags: [products]
+      summary: Remove an image from a product (PRD-03)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: image_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived image.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductImage"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/products/{product_id}/documents:
+    get:
+      operationId: listProductDocuments
+      tags: [products]
+      summary: List documents for a product (PRD-06)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The product documents.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductDocument"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createProductDocument
+      tags: [products]
+      summary: Add a document to a product (PRD-06)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, document_type, url]
+              properties:
+                title: {type: string, maxLength: 256}
+                title_en: {type: string, maxLength: 256}
+                document_type: {type: string, maxLength: 64}
+                url: {type: string}
+                expires_at: {type: string, format: date-time}
+      responses:
+        "201":
+          description: The new document.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDocument"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/products/{product_id}/documents/{doc_id}:
+    patch:
+      operationId: updateProductDocument
+      tags: [products]
+      summary: Update a product document (PRD-06)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: doc_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                title: {type: string, maxLength: 256}
+                title_en: {type: string, maxLength: 256}
+                document_type: {type: string, maxLength: 64}
+                url: {type: string}
+                expires_at: {type: string, format: date-time}
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated document.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDocument"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveProductDocument
+      tags: [products]
+      summary: Remove a product document (PRD-06)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: doc_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived document.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDocument"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Numbers and IDs (REG-01, REG-02, REG-03) ─────────────────────────────
+
+  /api/v1/ids:
+    get:
+      operationId: listIdsEntries
+      tags: [ids]
+      summary: List numbers and IDs (REG-01)
+      security: [session: []]
+      responses:
+        "200":
+          description: All active entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdsEntry"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createIdsEntry
+      tags: [ids]
+      summary: Create a number or ID entry (REG-01)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, name, value]
+              properties:
+                category: {type: string, maxLength: 64}
+                name: {type: string, minLength: 1, maxLength: 128}
+                value: {type: string, minLength: 1, maxLength: 256}
+                issuer: {type: string, maxLength: 128}
+                valid_from: {type: string, format: date}
+                valid_to: {type: string, format: date}
+                owner: {type: string, maxLength: 64}
+                note: {type: string, maxLength: 512}
+                document_url: {type: string}
+      responses:
+        "201":
+          description: The new entry.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdsEntry"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/ids/{entry_id}:
+    get:
+      operationId: getIdsEntry
+      tags: [ids]
+      summary: Get a number or ID entry
+      security: [session: []]
+      parameters:
+        - name: entry_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The entry.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdsEntry"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateIdsEntry
+      tags: [ids]
+      summary: Update a number or ID entry (REG-01)
+      security: [session: []]
+      parameters:
+        - name: entry_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                category: {type: string, maxLength: 64}
+                name: {type: string, maxLength: 128}
+                value: {type: string, maxLength: 256}
+                issuer: {type: string, maxLength: 128}
+                valid_from: {type: string, format: date}
+                valid_to: {type: string, format: date}
+                owner: {type: string, maxLength: 64}
+                note: {type: string, maxLength: 512}
+                document_url: {type: string}
+                version: {type: integer}
+      responses:
+        "200":
+          description: The updated entry.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdsEntry"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+    delete:
+      operationId: archiveIdsEntry
+      tags: [ids]
+      summary: Archive a number or ID entry (REG-01)
+      security: [session: []]
+      parameters:
+        - name: entry_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: The archived entry.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdsEntry"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  # ─── Suppliers (LEV-01 to LEV-03) ───────────────────────────────────────────
+
+  /api/v1/suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [suppliers]
+      summary: List all active suppliers (LEV-01)
+      security: [session: []]
+      responses:
+        "200":
+          description: All active suppliers.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Supplier" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createSupplier
+      tags: [suppliers]
+      summary: Create a supplier (LEV-01)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 256 }
+                name_en: { type: string, maxLength: 256 }
+                org_number: { type: string, maxLength: 32 }
+                vat_number: { type: string, maxLength: 32 }
+                country: { type: string, maxLength: 128 }
+                address: { type: string, maxLength: 256 }
+                city: { type: string, maxLength: 128 }
+                postal_code: { type: string, maxLength: 16 }
+                website: { type: string, maxLength: 256 }
+                contact_email: { type: string, maxLength: 256 }
+                contact_phone: { type: string, maxLength: 32 }
+                role: { type: string, enum: [component, manufacturer, freight] }
+                lead_time_days: { type: integer }
+                moq: { type: integer }
+                currency: { type: string, maxLength: 3 }
+                payment_terms: { type: string, maxLength: 128 }
+                delivery_terms: { type: string, maxLength: 128 }
+                notes: { type: string, maxLength: 1024 }
+      responses:
+        "201":
+          description: The new supplier.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Supplier" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/suppliers/{supplier_id}:
+    get:
+      operationId: getSupplier
+      tags: [suppliers]
+      summary: Get a supplier by ID
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The supplier.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Supplier" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updateSupplier
+      tags: [suppliers]
+      summary: Update a supplier (LEV-01)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                name: { type: string, maxLength: 256 }
+                name_en: { type: string, maxLength: 256 }
+                org_number: { type: string, maxLength: 32 }
+                vat_number: { type: string, maxLength: 32 }
+                country: { type: string, maxLength: 128 }
+                address: { type: string, maxLength: 256 }
+                city: { type: string, maxLength: 128 }
+                postal_code: { type: string, maxLength: 16 }
+                website: { type: string, maxLength: 256 }
+                contact_email: { type: string, maxLength: 256 }
+                contact_phone: { type: string, maxLength: 32 }
+                role: { type: string, enum: [component, manufacturer, freight] }
+                lead_time_days: { type: integer }
+                moq: { type: integer }
+                currency: { type: string, maxLength: 3 }
+                payment_terms: { type: string, maxLength: 128 }
+                delivery_terms: { type: string, maxLength: 128 }
+                notes: { type: string, maxLength: 1024 }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated supplier.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Supplier" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+    delete:
+      operationId: archiveSupplier
+      tags: [suppliers]
+      summary: Archive a supplier (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived supplier.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Supplier" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+
+  /api/v1/suppliers/{supplier_id}/contacts:
+    get:
+      operationId: listSupplierContacts
+      tags: [suppliers]
+      summary: List contacts for a supplier (LEV-01)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: All active contacts.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SupplierContact" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createSupplierContact
+      tags: [suppliers]
+      summary: Add a contact to a supplier (LEV-01)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 128 }
+                name_en: { type: string, maxLength: 128 }
+                email: { type: string, maxLength: 256 }
+                phone: { type: string, maxLength: 32 }
+                role: { type: string, maxLength: 64 }
+      responses:
+        "201":
+          description: The new contact.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierContact" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/suppliers/{supplier_id}/contacts/{contact_id}:
+    patch:
+      operationId: updateSupplierContact
+      tags: [suppliers]
+      summary: Update a contact (LEV-01)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: contact_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                name: { type: string, maxLength: 128 }
+                name_en: { type: string, maxLength: 128 }
+                email: { type: string, maxLength: 256 }
+                phone: { type: string, maxLength: 32 }
+                role: { type: string, maxLength: 64 }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated contact.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierContact" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+    delete:
+      operationId: archiveSupplierContact
+      tags: [suppliers]
+      summary: Archive a contact (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: contact_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived contact.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierContact" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+
+  /api/v1/suppliers/{supplier_id}/products:
+    get:
+      operationId: listSupplierProducts
+      tags: [suppliers]
+      summary: List products delivered by a supplier (LEV-02)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: All products for this supplier.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SupplierProduct" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createSupplierProduct
+      tags: [suppliers]
+      summary: Link a product to a supplier (LEV-02)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id]
+              properties:
+                product_id: { type: string, format: uuid }
+                purchase_price: { type: integer }
+                purchase_currency: { type: string, maxLength: 3 }
+      responses:
+        "201":
+          description: The new link.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierProduct" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/suppliers/{supplier_id}/products/{sp_id}:
+    delete:
+      operationId: archiveSupplierProduct
+      tags: [suppliers]
+      summary: Remove a product link from a supplier (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: supplier_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: sp_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived link.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierProduct" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+
+  # ─── Purchasing (INK-01, INK-04) ────────────────────────────────────────────
+
+  /api/v1/purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      tags: [purchasing]
+      summary: List purchase orders (INK-01)
+      security: [session: []]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, ordered, paid, done, cancelled] }
+        - name: supplier_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: All matching purchase orders.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createPurchaseOrder
+      tags: [purchasing]
+      summary: Create a purchase order (INK-01)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [supplier_id]
+              properties:
+                supplier_id: { type: string, format: uuid }
+                order_number: { type: string, maxLength: 64 }
+                currency: { type: string, maxLength: 3 }
+                order_date: { type: string, format: date }
+                expected_date: { type: string, format: date }
+                notes: { type: string, maxLength: 1024 }
+      responses:
+        "201":
+          description: The new purchase order.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/purchase-orders/{po_id}:
+    get:
+      operationId: getPurchaseOrder
+      tags: [purchasing]
+      summary: Get a purchase order by ID
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The purchase order.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updatePurchaseOrder
+      tags: [purchasing]
+      summary: Update a purchase order (INK-01)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                status: { type: string, enum: [draft, ordered, paid, done, cancelled] }
+                expected_date: { type: string, format: date }
+                total_amount: { type: integer }
+                notes: { type: string, maxLength: 1024 }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated purchase order.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+    delete:
+      operationId: archivePurchaseOrder
+      tags: [purchasing]
+      summary: Archive a purchase order (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived order.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+
+  /api/v1/purchase-orders/{po_id}/lines:
+    get:
+      operationId: listPurchaseOrderLines
+      tags: [purchasing]
+      summary: List lines for a purchase order (INK-01)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: All lines.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PurchaseOrderLine" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createPurchaseOrderLine
+      tags: [purchasing]
+      summary: Add a line to a purchase order (INK-01)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, quantity]
+              properties:
+                product_id: { type: string, format: uuid }
+                quantity: { type: integer }
+                unit_price: { type: integer }
+                unit_currency: { type: string, maxLength: 3 }
+      responses:
+        "201":
+          description: The new line.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrderLine" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/purchase-orders/{po_id}/lines/{line_id}:
+    patch:
+      operationId: updatePurchaseOrderLine
+      tags: [purchasing]
+      summary: Update a purchase order line (INK-01)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: line_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                quantity: { type: integer }
+                unit_price: { type: integer }
+                line_total: { type: integer }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated line.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrderLine" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+    delete:
+      operationId: archivePurchaseOrderLine
+      tags: [purchasing]
+      summary: Archive a purchase order line (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: line_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived line.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrderLine" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+
+  # ─── Shipments (INK-02, INK-03, INK-05) ─────────────────────────────────────
+
+  /api/v1/shipments:
+    get:
+      operationId: listShipments
+      tags: [shipments]
+      summary: List all shipments (INK-03)
+      security: [session: []]
+      responses:
+        "200":
+          description: All active shipments.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Shipment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createShipment
+      tags: [shipments]
+      summary: Create a shipment (INK-02)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [purchase_order_id]
+              properties:
+                purchase_order_id: { type: string, format: uuid }
+                from_location: { type: string, maxLength: 256 }
+                to_location: { type: string, maxLength: 256 }
+                carrier: { type: string, maxLength: 128 }
+                tracking_number: { type: string, maxLength: 128 }
+                shipped_at: { type: string, format: date-time }
+                estimated_arrival: { type: string, format: date }
+                actual_arrival: { type: string, format: date }
+                batch_number: { type: string, maxLength: 128 }
+                status: { type: string, enum: [planned, shipped, in_transit, arrived, delayed] }
+      responses:
+        "201":
+          description: The new shipment.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shipment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/shipments/{shipment_id}:
+    get:
+      operationId: getShipment
+      tags: [shipments]
+      summary: Get a shipment by ID
+      security: [session: []]
+      parameters:
+        - name: shipment_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The shipment.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shipment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updateShipment
+      tags: [shipments]
+      summary: Update a shipment (INK-02)
+      security: [session: []]
+      parameters:
+        - name: shipment_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                from_location: { type: string, maxLength: 256 }
+                to_location: { type: string, maxLength: 256 }
+                carrier: { type: string, maxLength: 128 }
+                tracking_number: { type: string, maxLength: 128 }
+                shipped_at: { type: string, format: date-time }
+                estimated_arrival: { type: string, format: date }
+                actual_arrival: { type: string, format: date }
+                batch_number: { type: string, maxLength: 128 }
+                status: { type: string, enum: [planned, shipped, in_transit, arrived, delayed] }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated shipment.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shipment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+    delete:
+      operationId: archiveShipment
+      tags: [shipments]
+      summary: Archive a shipment (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: shipment_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived shipment.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shipment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+
+  /api/v1/shipments/by-po/{po_id}:
+    get:
+      operationId: listShipmentsByPurchaseOrder
+      tags: [shipments]
+      summary: List shipments for a purchase order (INK-03)
+      security: [session: []]
+      parameters:
+        - name: po_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: All shipments for the order.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Shipment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /api/v1/locations:
+    get:
+      operationId: listLocations
+      tags: [inventory]
+      summary: List all active locations (LAG-01)
+      security: [session: []]
+      responses:
+        "200":
+          description: All active locations.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Location" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createLocation
+      tags: [inventory]
+      summary: Create a location (LAG-01)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+                name_en: { type: string }
+                address: { type: string }
+                city: { type: string }
+                country: { type: string }
+                channel_buffer: { type: integer }
+      responses:
+        "201":
+          description: The new location.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/locations/{location_id}:
+    get:
+      operationId: getLocation
+      tags: [inventory]
+      summary: Get a location by ID
+      security: [session: []]
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The location.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updateLocation
+      tags: [inventory]
+      summary: Update a location (LAG-01)
+      security: [session: []]
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                name_en: { type: string }
+                address: { type: string }
+                city: { type: string }
+                country: { type: string }
+                channel_buffer: { type: integer }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated location.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+    delete:
+      operationId: archiveLocation
+      tags: [inventory]
+      summary: Archive a location (NFK-09)
+      security: [session: []]
+      parameters:
+        - name: location_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The archived location.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/stockmovements:
+    get:
+      operationId: listStockMovements
+      tags: [inventory]
+      summary: List stock movements (LAG-01)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: location_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: movement_type
+          in: query
+          schema: { type: string, enum: [purchase, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
+        - name: reference_type
+          in: query
+          schema: { type: string }
+        - name: reference_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Stock movements.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StockMovement" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createStockMovement
+      tags: [inventory]
+      summary: Create a stock movement (LAG-01, LAG-04)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, location_id, movement_type, quantity]
+              properties:
+                product_id: { type: string, format: uuid }
+                location_id: { type: string, format: uuid }
+                batch_number: { type: string }
+                manufacturing_date: { type: string, format: date }
+                best_before_date: { type: string, format: date }
+                movement_type: { type: string, enum: [purchase, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
+                quantity: { type: integer }
+                reason: { type: string }
+                reference_type: { type: string }
+                reference_id: { type: string, format: uuid }
+      responses:
+        "201":
+          description: The new stock movement.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockMovement" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/inventory/balance/{product_id}:
+    get:
+      operationId: getBalance
+      tags: [inventory]
+      summary: Balance for a product (LAG-01, LAG-02)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Balance per location.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Balance" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /api/v1/inventory/fefo/{product_id}/{location_id}:
+    get:
+      operationId: getFEFOBatches
+      tags: [inventory]
+      summary: Batches ordered FEFO (LAG-03)
+      security: [session: []]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: location_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Batches ordered by FEFO.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FEFOBatch" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /api/v1/inventory/value:
+    get:
+      operationId: getInventoryValue
+      tags: [inventory]
+      summary: Inventory value per product per location (LAG-05)
+      security: [session: []]
+      responses:
+        "200":
+          description: Inventory value.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/InventoryValue" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /api/v1/inventory/reserve:
+    post:
+      operationId: reserveStock
+      tags: [inventory]
+      summary: Reserve stock for an order (LAG-02)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, location_id, quantity, reference_id]
+              properties:
+                product_id: { type: string, format: uuid }
+                location_id: { type: string, format: uuid }
+                quantity: { type: integer }
+                reference_type: { type: string }
+                reference_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Reserved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/inventory/release:
+    post:
+      operationId: releaseStock
+      tags: [inventory]
+      summary: Release a reservation (LAG-02)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, location_id, quantity, reference_id]
+              properties:
+                product_id: { type: string, format: uuid }
+                location_id: { type: string, format: uuid }
+                quantity: { type: integer }
+                reference_type: { type: string }
+                reference_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Released.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/inventory/withdraw:
+    post:
+      operationId: withdrawStock
+      tags: [inventory]
+      summary: Withdraw stock on shipment (LAG-02, LAG-03)
+      security: [session: []]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, location_id, quantity, reference_id]
+              properties:
+                product_id: { type: string, format: uuid }
+                location_id: { type: string, format: uuid }
+                quantity: { type: integer }
+                reference_type: { type: string }
+                reference_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Withdrawn.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  # ── Calendar (KAL-01 to KAL-04) ─────────────────────────────────────────────
+
+  /api/v1/ical-sources:
+    get:
+      operationId: listICalSources
+      tags: [calendar]
+      summary: List all active iCal sources (KAL-01)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All active iCal sources.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ICalSource"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createICalSource
+      tags: [calendar]
+      summary: Create an iCal source (KAL-01)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, ical_url]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+                name_en: { type: string, maxLength: 128 }
+                ical_url: { type: string, minLength: 1 }
+                color: { type: string, pattern: "^#[0-9a-fA-F]{6}$", default: "#3b82f6" }
+                sync_interval: { type: integer, minimum: 1, maximum: 1440, default: 15 }
+      responses:
+        "201":
+          description: The new iCal source.
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ICalSource"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/ical-sources/{source_id}:
+    get:
+      operationId: getICalSource
+      tags: [calendar]
+      summary: Get an iCal source (KAL-01)
+      security:
+        - session: []
+      parameters:
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The iCal source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ICalSource"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateICalSource
+      tags: [calendar]
+      summary: Update an iCal source (KAL-01)
+      security:
+        - session: []
+      parameters:
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 128 }
+                name_en: { type: string, maxLength: 128 }
+                ical_url: { type: string, minLength: 1 }
+                color: { type: string, pattern: "^#[0-9a-fA-F]{6}$" }
+                sync_interval: { type: integer, minimum: 1, maximum: 1440 }
+                enabled: { type: boolean }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated iCal source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ICalSource"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+    delete:
+      operationId: archiveICalSource
+      tags: [calendar]
+      summary: Archive an iCal source (NFK-09)
+      security:
+        - session: []
+      parameters:
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Archived.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ICalSource"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/calendar/events:
+    get:
+      operationId: listCalendarEvents
+      tags: [calendar]
+      summary: List calendar events in a time range (KAL-02, KAL-03)
+      security:
+        - session: []
+      parameters:
+        - name: start_time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: All events in the time range.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarEvent"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /api/v1/calendar/events/{event_id}:
+    get:
+      operationId: getCalendarEvent
+      tags: [calendar]
+      summary: Get a calendar event (KAL-04)
+      security:
+        - session: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The calendar event.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEvent"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/calendar/sync:
+    post:
+      operationId: syncCalendar
+      tags: [calendar]
+      summary: Sync all enabled iCal sources (KAL-01)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Sync completed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  synced: { type: integer }
+                  errors: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  # ── Kiosk (KIO-01 to KIO-07) ────────────────────────────────────────────────
+
+  /api/v1/kiosk/playlists:
+    get:
+      operationId: listKioskPlaylists
+      tags: [kiosk]
+      summary: List all active playlists (KIO-01)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All active playlists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KioskPlaylist"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createKioskPlaylist
+      tags: [kiosk]
+      summary: Create a playlist (KIO-01)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+                name_en: { type: string, maxLength: 128 }
+      responses:
+        "201":
+          description: The new playlist.
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylist"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/kiosk/playlists/{playlist_id}:
+    get:
+      operationId: getKioskPlaylist
+      tags: [kiosk]
+      summary: Get a playlist (KIO-01)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The playlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylist"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateKioskPlaylist
+      tags: [kiosk]
+      summary: Update a playlist (KIO-01)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 128 }
+                name_en: { type: string, maxLength: 128 }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated playlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylist"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+    delete:
+      operationId: archiveKioskPlaylist
+      tags: [kiosk]
+      summary: Archive a playlist (NFK-09)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Archived.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylist"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/kiosk/playlists/{playlist_id}/views:
+    get:
+      operationId: listPlaylistViews
+      tags: [kiosk]
+      summary: List views in a playlist (KIO-01)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: All views in the playlist.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KioskPlaylistView"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createPlaylistView
+      tags: [kiosk]
+      summary: Add a view to a playlist (KIO-01, KIO-04)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [view_type]
+              properties:
+                view_type:
+                  type: string
+                  enum: [map, graph, inventory, orders, calendar]
+                sort_order: { type: integer }
+                duration_sec: { type: integer, minimum: 5, maximum: 300, default: 30 }
+                settings:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "201":
+          description: The new view.
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylistView"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/kiosk/playlists/{playlist_id}/views/{view_id}:
+    put:
+      operationId: updatePlaylistView
+      tags: [kiosk]
+      summary: Update a view in a playlist (KIO-01)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: view_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                view_type:
+                  type: string
+                  enum: [map, graph, inventory, orders, calendar]
+                sort_order: { type: integer }
+                duration_sec: { type: integer, minimum: 5, maximum: 300 }
+                settings:
+                  type: object
+                  additionalProperties: true
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated view.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylistView"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+    delete:
+      operationId: archivePlaylistView
+      tags: [kiosk]
+      summary: Remove a view from a playlist (KIO-01)
+      security:
+        - session: []
+      parameters:
+        - name: playlist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: view_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Removed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskPlaylistView"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/kiosk/devices:
+    get:
+      operationId: listKioskDevices
+      tags: [kiosk]
+      summary: List all kiosk devices (KIO-06)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All kiosk devices.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KioskDevice"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      operationId: createKioskDevice
+      tags: [kiosk]
+      summary: Register a kiosk device (KIO-06)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        "201":
+          description: The new device with pairing code.
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskDevice"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/kiosk/devices/{device_id}:
+    get:
+      operationId: getKioskDevice
+      tags: [kiosk]
+      summary: Get a kiosk device (KIO-06)
+      security:
+        - session: []
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The kiosk device.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskDevice"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateKioskDevice
+      tags: [kiosk]
+      summary: Update a kiosk device (KIO-06)
+      security:
+        - session: []
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 128 }
+                approved: { type: boolean }
+                playlist_id: { type: string, format: uuid }
+                expires_at: { type: string, format: date-time }
+                version: { type: integer }
+      responses:
+        "200":
+          description: The updated device.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskDevice"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+    delete:
+      operationId: archiveKioskDevice
+      tags: [kiosk]
+      summary: Revoke and archive a kiosk device (KIO-06)
+      security:
+        - session: []
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskDevice"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/kiosk/pair:
+    post:
+      operationId: pairKioskDevice
+      tags: [kiosk]
+      summary: Pair a kiosk device with its pairing code (KIO-06)
+      security: []
+      parameters:
+        - name: pairing_code
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Paired. Returns read-only session.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        "401":
+          description: Not approved or invalid key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/v1/kiosk/data:
+    get:
+      operationId: getKioskData
+      tags: [kiosk]
+      summary: Get aggregated data for kiosk views (KIO-02, KIO-03, KIO-05)
+      security: []
+      parameters:
+        - name: playlist_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: period_months
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: Aggregated data for all view types.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KioskData"
+        "401":
+          description: Invalid or unapproved API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "400": { $ref: "#/components/responses/BadRequest" }
+
 components:
   securitySchemes:
     session:
@@ -227,8 +3882,311 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    BadRequest:
+      description: The request body is invalid.
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: The requested resource was not found.
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    VersionConflict:
+      description: The version number is stale (optimistic locking).
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            const: no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
 
   schemas:
+    Board:
+      type: object
+      required: [id, name, version, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        archived_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Column:
+      type: object
+      required: [id, board_id, name, sort_order, version, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        board_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sort_order:
+          type: integer
+        archived_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Card:
+      type: object
+      required: [id, board_id, column_id, title, labels, version, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        board_id:
+          type: string
+          format: uuid
+        column_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description_md:
+          type: string
+        assignee_id:
+          type: string
+          format: uuid
+        due_date:
+          type: string
+          format: date
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+        archived_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Label:
+      type: object
+      required: [name, color]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+    ChecklistItem:
+      type: object
+      required: [id, card_id, title, completed, sort_order, version, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        card_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        completed:
+          type: boolean
+        sort_order:
+          type: integer
+        archived_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CardComment:
+      type: object
+      required: [id, card_id, body_md, author_id, version, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        card_id:
+          type: string
+          format: uuid
+        body_md:
+          type: string
+        author_id:
+          type: string
+          format: uuid
+        archived_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    FieldDefinition:
+      type: object
+      required: [id, name, name_en, field_type, group_name, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        name_en: {type: string}
+        field_type: {type: string}
+        group_name: {type: string}
+        help_text: {type: string}
+        mandatory: {type: boolean}
+        choices:
+          type: array
+          items: {type: string}
+        unit: {type: string}
+        show_on_card: {type: boolean}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    ProductType:
+      type: object
+      required: [id, name, name_en, type_code, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        name_en: {type: string}
+        type_code: {type: string}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    ProductTypeField:
+      type: object
+      required: [id, product_type_id, field_definition_id, sort_order, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        product_type_id: {type: string, format: uuid}
+        field_definition_id: {type: string, format: uuid}
+        field_name: {type: string}
+        field_name_en: {type: string}
+        field_type: {type: string}
+        group_name: {type: string}
+        sort_order: {type: integer}
+        mandatory_override: {type: boolean}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    Product:
+      type: object
+      required: [id, name, sku, product_type_id, status, attributes, sku_locked, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        sku: {type: string}
+        ean: {type: string}
+        product_type_id: {type: string, format: uuid}
+        short_description: {type: string}
+        wholesale_price_sek: {type: integer}
+        wholesale_currency: {type: string}
+        msrp_sek: {type: integer}
+        msrp_currency: {type: string}
+        status: {type: string}
+        attributes:
+          type: object
+          additionalProperties: true
+        sku_locked: {type: boolean}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    ProductImage:
+      type: object
+      required: [id, product_id, url, sort_order, is_main, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        product_id: {type: string, format: uuid}
+        url: {type: string}
+        sort_order: {type: integer}
+        is_main: {type: boolean}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    ProductDocument:
+      type: object
+      required: [id, product_id, title, document_type, url, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        product_id: {type: string, format: uuid}
+        title: {type: string}
+        title_en: {type: string}
+        document_type: {type: string}
+        url: {type: string}
+        expires_at: {type: string, format: date-time}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    IdsEntry:
+      type: object
+      required: [id, category, name, value, version, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        category: {type: string}
+        name: {type: string}
+        value: {type: string}
+        issuer: {type: string}
+        valid_from: {type: string, format: date}
+        valid_to: {type: string, format: date}
+        owner: {type: string}
+        note: {type: string}
+        document_url: {type: string}
+        archived_at: {type: string, format: date-time}
+        version: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
     Me:
       type: object
       required: [id, email, display_name, roles]
@@ -246,6 +4204,174 @@ components:
           items:
             type: string
             enum: [admin]
+    Supplier:
+      type: object
+      required: [id, name, role, currency, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        name_en: { type: string }
+        org_number: { type: string }
+        vat_number: { type: string }
+        country: { type: string }
+        address: { type: string }
+        city: { type: string }
+        postal_code: { type: string }
+        website: { type: string }
+        contact_email: { type: string }
+        contact_phone: { type: string }
+        role: { type: string, enum: [component, manufacturer, freight] }
+        lead_time_days: { type: integer }
+        moq: { type: integer }
+        currency: { type: string }
+        payment_terms: { type: string }
+        delivery_terms: { type: string }
+        notes: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SupplierContact:
+      type: object
+      required: [id, supplier_id, name, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        supplier_id: { type: string, format: uuid }
+        name: { type: string }
+        name_en: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        role: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SupplierProduct:
+      type: object
+      required: [id, supplier_id, product_id, purchase_price, purchase_currency, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        supplier_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        purchase_price: { type: integer }
+        purchase_currency: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PurchaseOrder:
+      type: object
+      required: [id, supplier_id, currency, order_date, status, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        supplier_id: { type: string, format: uuid }
+        order_number: { type: string }
+        currency: { type: string }
+        order_date: { type: string, format: date }
+        expected_date: { type: string, format: date }
+        status: { type: string, enum: [draft, ordered, paid, done, cancelled] }
+        total_amount: { type: integer }
+        notes: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PurchaseOrderLine:
+      type: object
+      required: [id, purchase_order_id, product_id, quantity, unit_price, unit_currency, line_total, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        purchase_order_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        quantity: { type: integer }
+        unit_price: { type: integer }
+        unit_currency: { type: string }
+        line_total: { type: integer }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Shipment:
+      type: object
+      required: [id, purchase_order_id, status, batch_number, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        purchase_order_id: { type: string, format: uuid }
+        from_location: { type: string }
+        to_location: { type: string }
+        carrier: { type: string }
+        tracking_number: { type: string }
+        shipped_at: { type: string, format: date-time }
+        estimated_arrival: { type: string, format: date }
+        actual_arrival: { type: string, format: date }
+        batch_number: { type: string }
+        status: { type: string, enum: [planned, shipped, in_transit, arrived, delayed] }
+        documents: { type: array, items: { type: object } }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Location:
+      type: object
+      required: [id, name, channel_buffer, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        name_en: { type: string }
+        address: { type: string }
+        city: { type: string }
+        country: { type: string }
+        channel_buffer: { type: integer }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    StockMovement:
+      type: object
+      required: [id, product_id, location_id, movement_type, quantity, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        location_id: { type: string, format: uuid }
+        batch_number: { type: string }
+        manufacturing_date: { type: string, format: date }
+        best_before_date: { type: string, format: date }
+        movement_type: { type: string, enum: [purchase, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
+        quantity: { type: integer }
+        reason: { type: string }
+        reference_type: { type: string }
+        reference_id: { type: string, format: uuid }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Balance:
+      type: object
+      required: [product_id, location_id, in_stock, reserved, available]
+      properties:
+        product_id: { type: string, format: uuid }
+        location_id: { type: string, format: uuid }
+        in_stock: { type: integer }
+        reserved: { type: integer }
+        available: { type: integer }
+    FEFOBatch:
+      type: object
+      required: [product_id, location_id, batch_number, in_stock]
+      properties:
+        product_id: { type: string, format: uuid }
+        location_id: { type: string, format: uuid }
+        batch_number: { type: string }
+        manufacturing_date: { type: string, format: date }
+        best_before_date: { type: string, format: date }
+        in_stock: { type: integer }
+    InventoryValue:
+      type: object
+      required: [location_id, product_id, product_name, in_stock, value]
+      properties:
+        location_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        product_name: { type: string }
+        in_stock: { type: integer }
+        value: { type: integer }
     Version:
       type: object
       required: [version, commit]
@@ -277,3 +4403,119 @@ components:
           description: The path of the request, never its query.
         trace_id:
           type: string
+
+    ICalSource:
+      type: object
+      required: [id, name, ical_url, sync_interval, enabled, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        name_en: { type: string }
+        ical_url: { type: string }
+        color: { type: string }
+        sync_interval: { type: integer }
+        enabled: { type: boolean }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CalendarEvent:
+      type: object
+      required: [id, source_type, title, start_time, end_time, all_day, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        source_type:
+          type: string
+          enum: [ical, internal]
+        source_id: { type: string, format: uuid }
+        ical_uid: { type: string }
+        title: { type: string }
+        description: { type: string }
+        start_time: { type: string, format: date-time }
+        end_time: { type: string, format: date-time }
+        all_day: { type: boolean }
+        color: { type: string }
+        erp_link_type: { type: string }
+        erp_link_id: { type: string, format: uuid }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    KioskPlaylist:
+      type: object
+      required: [id, name, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        name_en: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    KioskPlaylistView:
+      type: object
+      required: [id, playlist_id, view_type, sort_order, duration_sec, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        playlist_id: { type: string, format: uuid }
+        view_type:
+          type: string
+          enum: [map, graph, inventory, orders, calendar]
+        sort_order: { type: integer }
+        duration_sec: { type: integer }
+        settings:
+          type: object
+          additionalProperties: true
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    KioskDevice:
+      type: object
+      required: [id, name, pairing_code, approved, lan_only, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        pairing_code: { type: string }
+        approved: { type: boolean }
+        playlist_id: { type: string, format: uuid }
+        expires_at: { type: string, format: date-time }
+        lan_only: { type: boolean }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    KioskData:
+      type: object
+      description: Aggregated data for kiosk views.
+      properties:
+        orders_per_month:
+          type: array
+          items:
+            type: object
+            properties:
+              month: { type: string }
+              orders: { type: integer }
+              revenue: { type: integer }
+        revenue_by_channel:
+          type: array
+          items:
+            type: object
+            properties:
+              channel: { type: string }
+              revenue: { type: integer }
+        key_figures:
+          type: object
+          properties:
+            orders_this_year: { type: integer }
+            revenue_this_year: { type: integer }
+            countries: { type: integer }
+            customers: { type: integer }
+        inventory_value:
+          type: integer
+        low_stock_count: { type: integer }

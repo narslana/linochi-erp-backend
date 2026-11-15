@@ -15,11 +15,57 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for CalendarEventSourceType.
+const (
+	Ical     CalendarEventSourceType = "ical"
+	Internal CalendarEventSourceType = "internal"
+)
+
+// Valid indicates whether the value is a known member of the CalendarEventSourceType enum.
+func (e CalendarEventSourceType) Valid() bool {
+	switch e {
+	case Ical:
+		return true
+	case Internal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for KioskPlaylistViewViewType.
+const (
+	KioskPlaylistViewViewTypeCalendar  KioskPlaylistViewViewType = "calendar"
+	KioskPlaylistViewViewTypeGraph     KioskPlaylistViewViewType = "graph"
+	KioskPlaylistViewViewTypeInventory KioskPlaylistViewViewType = "inventory"
+	KioskPlaylistViewViewTypeMap       KioskPlaylistViewViewType = "map"
+	KioskPlaylistViewViewTypeOrders    KioskPlaylistViewViewType = "orders"
+)
+
+// Valid indicates whether the value is a known member of the KioskPlaylistViewViewType enum.
+func (e KioskPlaylistViewViewType) Valid() bool {
+	switch e {
+	case KioskPlaylistViewViewTypeCalendar:
+		return true
+	case KioskPlaylistViewViewTypeGraph:
+		return true
+	case KioskPlaylistViewViewTypeInventory:
+		return true
+	case KioskPlaylistViewViewTypeMap:
+		return true
+	case KioskPlaylistViewViewTypeOrders:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for MeRoles.
 const (
@@ -34,6 +80,784 @@ func (e MeRoles) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// Defines values for PurchaseOrderStatus.
+const (
+	PurchaseOrderStatusCancelled PurchaseOrderStatus = "cancelled"
+	PurchaseOrderStatusDone      PurchaseOrderStatus = "done"
+	PurchaseOrderStatusDraft     PurchaseOrderStatus = "draft"
+	PurchaseOrderStatusOrdered   PurchaseOrderStatus = "ordered"
+	PurchaseOrderStatusPaid      PurchaseOrderStatus = "paid"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseOrderStatus enum.
+func (e PurchaseOrderStatus) Valid() bool {
+	switch e {
+	case PurchaseOrderStatusCancelled:
+		return true
+	case PurchaseOrderStatusDone:
+		return true
+	case PurchaseOrderStatusDraft:
+		return true
+	case PurchaseOrderStatusOrdered:
+		return true
+	case PurchaseOrderStatusPaid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ShipmentStatus.
+const (
+	ShipmentStatusArrived   ShipmentStatus = "arrived"
+	ShipmentStatusDelayed   ShipmentStatus = "delayed"
+	ShipmentStatusInTransit ShipmentStatus = "in_transit"
+	ShipmentStatusPlanned   ShipmentStatus = "planned"
+	ShipmentStatusShipped   ShipmentStatus = "shipped"
+)
+
+// Valid indicates whether the value is a known member of the ShipmentStatus enum.
+func (e ShipmentStatus) Valid() bool {
+	switch e {
+	case ShipmentStatusArrived:
+		return true
+	case ShipmentStatusDelayed:
+		return true
+	case ShipmentStatusInTransit:
+		return true
+	case ShipmentStatusPlanned:
+		return true
+	case ShipmentStatusShipped:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StockMovementMovementType.
+const (
+	StockMovementMovementTypeAdjustmentIn  StockMovementMovementType = "adjustment_in"
+	StockMovementMovementTypeAdjustmentOut StockMovementMovementType = "adjustment_out"
+	StockMovementMovementTypePurchase      StockMovementMovementType = "purchase"
+	StockMovementMovementTypeRelease       StockMovementMovementType = "release"
+	StockMovementMovementTypeReservation   StockMovementMovementType = "reservation"
+	StockMovementMovementTypeSale          StockMovementMovementType = "sale"
+	StockMovementMovementTypeTransferIn    StockMovementMovementType = "transfer_in"
+	StockMovementMovementTypeTransferOut   StockMovementMovementType = "transfer_out"
+)
+
+// Valid indicates whether the value is a known member of the StockMovementMovementType enum.
+func (e StockMovementMovementType) Valid() bool {
+	switch e {
+	case StockMovementMovementTypeAdjustmentIn:
+		return true
+	case StockMovementMovementTypeAdjustmentOut:
+		return true
+	case StockMovementMovementTypePurchase:
+		return true
+	case StockMovementMovementTypeRelease:
+		return true
+	case StockMovementMovementTypeReservation:
+		return true
+	case StockMovementMovementTypeSale:
+		return true
+	case StockMovementMovementTypeTransferIn:
+		return true
+	case StockMovementMovementTypeTransferOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SupplierRole.
+const (
+	SupplierRoleComponent    SupplierRole = "component"
+	SupplierRoleFreight      SupplierRole = "freight"
+	SupplierRoleManufacturer SupplierRole = "manufacturer"
+)
+
+// Valid indicates whether the value is a known member of the SupplierRole enum.
+func (e SupplierRole) Valid() bool {
+	switch e {
+	case SupplierRoleComponent:
+		return true
+	case SupplierRoleFreight:
+		return true
+	case SupplierRoleManufacturer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateFieldDefinitionJSONBodyFieldType.
+const (
+	CreateFieldDefinitionJSONBodyFieldTypeAmount          CreateFieldDefinitionJSONBodyFieldType = "amount"
+	CreateFieldDefinitionJSONBodyFieldTypeChoice          CreateFieldDefinitionJSONBodyFieldType = "choice"
+	CreateFieldDefinitionJSONBodyFieldTypeDate            CreateFieldDefinitionJSONBodyFieldType = "date"
+	CreateFieldDefinitionJSONBodyFieldTypeDecimal         CreateFieldDefinitionJSONBodyFieldType = "decimal"
+	CreateFieldDefinitionJSONBodyFieldTypeDocument        CreateFieldDefinitionJSONBodyFieldType = "document"
+	CreateFieldDefinitionJSONBodyFieldTypeInteger         CreateFieldDefinitionJSONBodyFieldType = "integer"
+	CreateFieldDefinitionJSONBodyFieldTypeLink            CreateFieldDefinitionJSONBodyFieldType = "link"
+	CreateFieldDefinitionJSONBodyFieldTypeLongText        CreateFieldDefinitionJSONBodyFieldType = "long_text"
+	CreateFieldDefinitionJSONBodyFieldTypeMultipleChoice  CreateFieldDefinitionJSONBodyFieldType = "multiple_choice"
+	CreateFieldDefinitionJSONBodyFieldTypeShortText       CreateFieldDefinitionJSONBodyFieldType = "short_text"
+	CreateFieldDefinitionJSONBodyFieldTypeTextPerLanguage CreateFieldDefinitionJSONBodyFieldType = "text_per_language"
+	CreateFieldDefinitionJSONBodyFieldTypeYesNo           CreateFieldDefinitionJSONBodyFieldType = "yes_no"
+)
+
+// Valid indicates whether the value is a known member of the CreateFieldDefinitionJSONBodyFieldType enum.
+func (e CreateFieldDefinitionJSONBodyFieldType) Valid() bool {
+	switch e {
+	case CreateFieldDefinitionJSONBodyFieldTypeAmount:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeChoice:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeDate:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeDecimal:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeDocument:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeInteger:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeLink:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeLongText:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeMultipleChoice:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeShortText:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeTextPerLanguage:
+		return true
+	case CreateFieldDefinitionJSONBodyFieldTypeYesNo:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateFieldDefinitionJSONBodyFieldType.
+const (
+	UpdateFieldDefinitionJSONBodyFieldTypeAmount          UpdateFieldDefinitionJSONBodyFieldType = "amount"
+	UpdateFieldDefinitionJSONBodyFieldTypeChoice          UpdateFieldDefinitionJSONBodyFieldType = "choice"
+	UpdateFieldDefinitionJSONBodyFieldTypeDate            UpdateFieldDefinitionJSONBodyFieldType = "date"
+	UpdateFieldDefinitionJSONBodyFieldTypeDecimal         UpdateFieldDefinitionJSONBodyFieldType = "decimal"
+	UpdateFieldDefinitionJSONBodyFieldTypeDocument        UpdateFieldDefinitionJSONBodyFieldType = "document"
+	UpdateFieldDefinitionJSONBodyFieldTypeInteger         UpdateFieldDefinitionJSONBodyFieldType = "integer"
+	UpdateFieldDefinitionJSONBodyFieldTypeLink            UpdateFieldDefinitionJSONBodyFieldType = "link"
+	UpdateFieldDefinitionJSONBodyFieldTypeLongText        UpdateFieldDefinitionJSONBodyFieldType = "long_text"
+	UpdateFieldDefinitionJSONBodyFieldTypeMultipleChoice  UpdateFieldDefinitionJSONBodyFieldType = "multiple_choice"
+	UpdateFieldDefinitionJSONBodyFieldTypeShortText       UpdateFieldDefinitionJSONBodyFieldType = "short_text"
+	UpdateFieldDefinitionJSONBodyFieldTypeTextPerLanguage UpdateFieldDefinitionJSONBodyFieldType = "text_per_language"
+	UpdateFieldDefinitionJSONBodyFieldTypeYesNo           UpdateFieldDefinitionJSONBodyFieldType = "yes_no"
+)
+
+// Valid indicates whether the value is a known member of the UpdateFieldDefinitionJSONBodyFieldType enum.
+func (e UpdateFieldDefinitionJSONBodyFieldType) Valid() bool {
+	switch e {
+	case UpdateFieldDefinitionJSONBodyFieldTypeAmount:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeChoice:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeDate:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeDecimal:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeDocument:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeInteger:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeLink:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeLongText:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeMultipleChoice:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeShortText:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeTextPerLanguage:
+		return true
+	case UpdateFieldDefinitionJSONBodyFieldTypeYesNo:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreatePlaylistViewJSONBodyViewType.
+const (
+	CreatePlaylistViewJSONBodyViewTypeCalendar  CreatePlaylistViewJSONBodyViewType = "calendar"
+	CreatePlaylistViewJSONBodyViewTypeGraph     CreatePlaylistViewJSONBodyViewType = "graph"
+	CreatePlaylistViewJSONBodyViewTypeInventory CreatePlaylistViewJSONBodyViewType = "inventory"
+	CreatePlaylistViewJSONBodyViewTypeMap       CreatePlaylistViewJSONBodyViewType = "map"
+	CreatePlaylistViewJSONBodyViewTypeOrders    CreatePlaylistViewJSONBodyViewType = "orders"
+)
+
+// Valid indicates whether the value is a known member of the CreatePlaylistViewJSONBodyViewType enum.
+func (e CreatePlaylistViewJSONBodyViewType) Valid() bool {
+	switch e {
+	case CreatePlaylistViewJSONBodyViewTypeCalendar:
+		return true
+	case CreatePlaylistViewJSONBodyViewTypeGraph:
+		return true
+	case CreatePlaylistViewJSONBodyViewTypeInventory:
+		return true
+	case CreatePlaylistViewJSONBodyViewTypeMap:
+		return true
+	case CreatePlaylistViewJSONBodyViewTypeOrders:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdatePlaylistViewJSONBodyViewType.
+const (
+	UpdatePlaylistViewJSONBodyViewTypeCalendar  UpdatePlaylistViewJSONBodyViewType = "calendar"
+	UpdatePlaylistViewJSONBodyViewTypeGraph     UpdatePlaylistViewJSONBodyViewType = "graph"
+	UpdatePlaylistViewJSONBodyViewTypeInventory UpdatePlaylistViewJSONBodyViewType = "inventory"
+	UpdatePlaylistViewJSONBodyViewTypeMap       UpdatePlaylistViewJSONBodyViewType = "map"
+	UpdatePlaylistViewJSONBodyViewTypeOrders    UpdatePlaylistViewJSONBodyViewType = "orders"
+)
+
+// Valid indicates whether the value is a known member of the UpdatePlaylistViewJSONBodyViewType enum.
+func (e UpdatePlaylistViewJSONBodyViewType) Valid() bool {
+	switch e {
+	case UpdatePlaylistViewJSONBodyViewTypeCalendar:
+		return true
+	case UpdatePlaylistViewJSONBodyViewTypeGraph:
+		return true
+	case UpdatePlaylistViewJSONBodyViewTypeInventory:
+		return true
+	case UpdatePlaylistViewJSONBodyViewTypeMap:
+		return true
+	case UpdatePlaylistViewJSONBodyViewTypeOrders:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateProductJSONBodyStatus.
+const (
+	CreateProductJSONBodyStatusActive        CreateProductJSONBodyStatus = "active"
+	CreateProductJSONBodyStatusDiscontinuing CreateProductJSONBodyStatus = "discontinuing"
+	CreateProductJSONBodyStatusDraft         CreateProductJSONBodyStatus = "draft"
+)
+
+// Valid indicates whether the value is a known member of the CreateProductJSONBodyStatus enum.
+func (e CreateProductJSONBodyStatus) Valid() bool {
+	switch e {
+	case CreateProductJSONBodyStatusActive:
+		return true
+	case CreateProductJSONBodyStatusDiscontinuing:
+		return true
+	case CreateProductJSONBodyStatusDraft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateProductJSONBodyStatus.
+const (
+	UpdateProductJSONBodyStatusActive        UpdateProductJSONBodyStatus = "active"
+	UpdateProductJSONBodyStatusArchived      UpdateProductJSONBodyStatus = "archived"
+	UpdateProductJSONBodyStatusDiscontinuing UpdateProductJSONBodyStatus = "discontinuing"
+	UpdateProductJSONBodyStatusDraft         UpdateProductJSONBodyStatus = "draft"
+)
+
+// Valid indicates whether the value is a known member of the UpdateProductJSONBodyStatus enum.
+func (e UpdateProductJSONBodyStatus) Valid() bool {
+	switch e {
+	case UpdateProductJSONBodyStatusActive:
+		return true
+	case UpdateProductJSONBodyStatusArchived:
+		return true
+	case UpdateProductJSONBodyStatusDiscontinuing:
+		return true
+	case UpdateProductJSONBodyStatusDraft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPurchaseOrdersParamsStatus.
+const (
+	ListPurchaseOrdersParamsStatusCancelled ListPurchaseOrdersParamsStatus = "cancelled"
+	ListPurchaseOrdersParamsStatusDone      ListPurchaseOrdersParamsStatus = "done"
+	ListPurchaseOrdersParamsStatusDraft     ListPurchaseOrdersParamsStatus = "draft"
+	ListPurchaseOrdersParamsStatusOrdered   ListPurchaseOrdersParamsStatus = "ordered"
+	ListPurchaseOrdersParamsStatusPaid      ListPurchaseOrdersParamsStatus = "paid"
+)
+
+// Valid indicates whether the value is a known member of the ListPurchaseOrdersParamsStatus enum.
+func (e ListPurchaseOrdersParamsStatus) Valid() bool {
+	switch e {
+	case ListPurchaseOrdersParamsStatusCancelled:
+		return true
+	case ListPurchaseOrdersParamsStatusDone:
+		return true
+	case ListPurchaseOrdersParamsStatusDraft:
+		return true
+	case ListPurchaseOrdersParamsStatusOrdered:
+		return true
+	case ListPurchaseOrdersParamsStatusPaid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdatePurchaseOrderJSONBodyStatus.
+const (
+	UpdatePurchaseOrderJSONBodyStatusCancelled UpdatePurchaseOrderJSONBodyStatus = "cancelled"
+	UpdatePurchaseOrderJSONBodyStatusDone      UpdatePurchaseOrderJSONBodyStatus = "done"
+	UpdatePurchaseOrderJSONBodyStatusDraft     UpdatePurchaseOrderJSONBodyStatus = "draft"
+	UpdatePurchaseOrderJSONBodyStatusOrdered   UpdatePurchaseOrderJSONBodyStatus = "ordered"
+	UpdatePurchaseOrderJSONBodyStatusPaid      UpdatePurchaseOrderJSONBodyStatus = "paid"
+)
+
+// Valid indicates whether the value is a known member of the UpdatePurchaseOrderJSONBodyStatus enum.
+func (e UpdatePurchaseOrderJSONBodyStatus) Valid() bool {
+	switch e {
+	case UpdatePurchaseOrderJSONBodyStatusCancelled:
+		return true
+	case UpdatePurchaseOrderJSONBodyStatusDone:
+		return true
+	case UpdatePurchaseOrderJSONBodyStatusDraft:
+		return true
+	case UpdatePurchaseOrderJSONBodyStatusOrdered:
+		return true
+	case UpdatePurchaseOrderJSONBodyStatusPaid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateShipmentJSONBodyStatus.
+const (
+	CreateShipmentJSONBodyStatusArrived   CreateShipmentJSONBodyStatus = "arrived"
+	CreateShipmentJSONBodyStatusDelayed   CreateShipmentJSONBodyStatus = "delayed"
+	CreateShipmentJSONBodyStatusInTransit CreateShipmentJSONBodyStatus = "in_transit"
+	CreateShipmentJSONBodyStatusPlanned   CreateShipmentJSONBodyStatus = "planned"
+	CreateShipmentJSONBodyStatusShipped   CreateShipmentJSONBodyStatus = "shipped"
+)
+
+// Valid indicates whether the value is a known member of the CreateShipmentJSONBodyStatus enum.
+func (e CreateShipmentJSONBodyStatus) Valid() bool {
+	switch e {
+	case CreateShipmentJSONBodyStatusArrived:
+		return true
+	case CreateShipmentJSONBodyStatusDelayed:
+		return true
+	case CreateShipmentJSONBodyStatusInTransit:
+		return true
+	case CreateShipmentJSONBodyStatusPlanned:
+		return true
+	case CreateShipmentJSONBodyStatusShipped:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateShipmentJSONBodyStatus.
+const (
+	UpdateShipmentJSONBodyStatusArrived   UpdateShipmentJSONBodyStatus = "arrived"
+	UpdateShipmentJSONBodyStatusDelayed   UpdateShipmentJSONBodyStatus = "delayed"
+	UpdateShipmentJSONBodyStatusInTransit UpdateShipmentJSONBodyStatus = "in_transit"
+	UpdateShipmentJSONBodyStatusPlanned   UpdateShipmentJSONBodyStatus = "planned"
+	UpdateShipmentJSONBodyStatusShipped   UpdateShipmentJSONBodyStatus = "shipped"
+)
+
+// Valid indicates whether the value is a known member of the UpdateShipmentJSONBodyStatus enum.
+func (e UpdateShipmentJSONBodyStatus) Valid() bool {
+	switch e {
+	case UpdateShipmentJSONBodyStatusArrived:
+		return true
+	case UpdateShipmentJSONBodyStatusDelayed:
+		return true
+	case UpdateShipmentJSONBodyStatusInTransit:
+		return true
+	case UpdateShipmentJSONBodyStatusPlanned:
+		return true
+	case UpdateShipmentJSONBodyStatusShipped:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListStockMovementsParamsMovementType.
+const (
+	ListStockMovementsParamsMovementTypeAdjustmentIn  ListStockMovementsParamsMovementType = "adjustment_in"
+	ListStockMovementsParamsMovementTypeAdjustmentOut ListStockMovementsParamsMovementType = "adjustment_out"
+	ListStockMovementsParamsMovementTypePurchase      ListStockMovementsParamsMovementType = "purchase"
+	ListStockMovementsParamsMovementTypeRelease       ListStockMovementsParamsMovementType = "release"
+	ListStockMovementsParamsMovementTypeReservation   ListStockMovementsParamsMovementType = "reservation"
+	ListStockMovementsParamsMovementTypeSale          ListStockMovementsParamsMovementType = "sale"
+	ListStockMovementsParamsMovementTypeTransferIn    ListStockMovementsParamsMovementType = "transfer_in"
+	ListStockMovementsParamsMovementTypeTransferOut   ListStockMovementsParamsMovementType = "transfer_out"
+)
+
+// Valid indicates whether the value is a known member of the ListStockMovementsParamsMovementType enum.
+func (e ListStockMovementsParamsMovementType) Valid() bool {
+	switch e {
+	case ListStockMovementsParamsMovementTypeAdjustmentIn:
+		return true
+	case ListStockMovementsParamsMovementTypeAdjustmentOut:
+		return true
+	case ListStockMovementsParamsMovementTypePurchase:
+		return true
+	case ListStockMovementsParamsMovementTypeRelease:
+		return true
+	case ListStockMovementsParamsMovementTypeReservation:
+		return true
+	case ListStockMovementsParamsMovementTypeSale:
+		return true
+	case ListStockMovementsParamsMovementTypeTransferIn:
+		return true
+	case ListStockMovementsParamsMovementTypeTransferOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateStockMovementJSONBodyMovementType.
+const (
+	CreateStockMovementJSONBodyMovementTypeAdjustmentIn  CreateStockMovementJSONBodyMovementType = "adjustment_in"
+	CreateStockMovementJSONBodyMovementTypeAdjustmentOut CreateStockMovementJSONBodyMovementType = "adjustment_out"
+	CreateStockMovementJSONBodyMovementTypePurchase      CreateStockMovementJSONBodyMovementType = "purchase"
+	CreateStockMovementJSONBodyMovementTypeRelease       CreateStockMovementJSONBodyMovementType = "release"
+	CreateStockMovementJSONBodyMovementTypeReservation   CreateStockMovementJSONBodyMovementType = "reservation"
+	CreateStockMovementJSONBodyMovementTypeSale          CreateStockMovementJSONBodyMovementType = "sale"
+	CreateStockMovementJSONBodyMovementTypeTransferIn    CreateStockMovementJSONBodyMovementType = "transfer_in"
+	CreateStockMovementJSONBodyMovementTypeTransferOut   CreateStockMovementJSONBodyMovementType = "transfer_out"
+)
+
+// Valid indicates whether the value is a known member of the CreateStockMovementJSONBodyMovementType enum.
+func (e CreateStockMovementJSONBodyMovementType) Valid() bool {
+	switch e {
+	case CreateStockMovementJSONBodyMovementTypeAdjustmentIn:
+		return true
+	case CreateStockMovementJSONBodyMovementTypeAdjustmentOut:
+		return true
+	case CreateStockMovementJSONBodyMovementTypePurchase:
+		return true
+	case CreateStockMovementJSONBodyMovementTypeRelease:
+		return true
+	case CreateStockMovementJSONBodyMovementTypeReservation:
+		return true
+	case CreateStockMovementJSONBodyMovementTypeSale:
+		return true
+	case CreateStockMovementJSONBodyMovementTypeTransferIn:
+		return true
+	case CreateStockMovementJSONBodyMovementTypeTransferOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateSupplierJSONBodyRole.
+const (
+	CreateSupplierJSONBodyRoleComponent    CreateSupplierJSONBodyRole = "component"
+	CreateSupplierJSONBodyRoleFreight      CreateSupplierJSONBodyRole = "freight"
+	CreateSupplierJSONBodyRoleManufacturer CreateSupplierJSONBodyRole = "manufacturer"
+)
+
+// Valid indicates whether the value is a known member of the CreateSupplierJSONBodyRole enum.
+func (e CreateSupplierJSONBodyRole) Valid() bool {
+	switch e {
+	case CreateSupplierJSONBodyRoleComponent:
+		return true
+	case CreateSupplierJSONBodyRoleFreight:
+		return true
+	case CreateSupplierJSONBodyRoleManufacturer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateSupplierJSONBodyRole.
+const (
+	UpdateSupplierJSONBodyRoleComponent    UpdateSupplierJSONBodyRole = "component"
+	UpdateSupplierJSONBodyRoleFreight      UpdateSupplierJSONBodyRole = "freight"
+	UpdateSupplierJSONBodyRoleManufacturer UpdateSupplierJSONBodyRole = "manufacturer"
+)
+
+// Valid indicates whether the value is a known member of the UpdateSupplierJSONBodyRole enum.
+func (e UpdateSupplierJSONBodyRole) Valid() bool {
+	switch e {
+	case UpdateSupplierJSONBodyRoleComponent:
+		return true
+	case UpdateSupplierJSONBodyRoleFreight:
+		return true
+	case UpdateSupplierJSONBodyRoleManufacturer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Balance defines model for Balance.
+type Balance struct {
+	Available  int                `json:"available"`
+	InStock    int                `json:"in_stock"`
+	LocationId openapi_types.UUID `json:"location_id"`
+	ProductId  openapi_types.UUID `json:"product_id"`
+	Reserved   int                `json:"reserved"`
+}
+
+// Board defines model for Board.
+type Board struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// CalendarEvent defines model for CalendarEvent.
+type CalendarEvent struct {
+	AllDay      bool                    `json:"all_day"`
+	ArchivedAt  *time.Time              `json:"archived_at,omitempty"`
+	Color       *string                 `json:"color,omitempty"`
+	CreatedAt   time.Time               `json:"created_at"`
+	Description *string                 `json:"description,omitempty"`
+	EndTime     time.Time               `json:"end_time"`
+	ErpLinkId   *openapi_types.UUID     `json:"erp_link_id,omitempty"`
+	ErpLinkType *string                 `json:"erp_link_type,omitempty"`
+	IcalUid     *string                 `json:"ical_uid,omitempty"`
+	Id          openapi_types.UUID      `json:"id"`
+	SourceId    *openapi_types.UUID     `json:"source_id,omitempty"`
+	SourceType  CalendarEventSourceType `json:"source_type"`
+	StartTime   time.Time               `json:"start_time"`
+	Title       string                  `json:"title"`
+	UpdatedAt   time.Time               `json:"updated_at"`
+	Version     int                     `json:"version"`
+}
+
+// CalendarEventSourceType defines model for CalendarEvent.SourceType.
+type CalendarEventSourceType string
+
+// Card defines model for Card.
+type Card struct {
+	ArchivedAt    *time.Time          `json:"archived_at,omitempty"`
+	AssigneeId    *openapi_types.UUID `json:"assignee_id,omitempty"`
+	BoardId       openapi_types.UUID  `json:"board_id"`
+	ColumnId      openapi_types.UUID  `json:"column_id"`
+	CreatedAt     time.Time           `json:"created_at"`
+	DescriptionMd *string             `json:"description_md,omitempty"`
+	DueDate       *openapi_types.Date `json:"due_date,omitempty"`
+	Id            openapi_types.UUID  `json:"id"`
+	Labels        []Label             `json:"labels"`
+	Title         string              `json:"title"`
+	UpdatedAt     time.Time           `json:"updated_at"`
+	Version       int                 `json:"version"`
+}
+
+// CardComment defines model for CardComment.
+type CardComment struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	AuthorId   openapi_types.UUID `json:"author_id"`
+	BodyMd     string             `json:"body_md"`
+	CardId     openapi_types.UUID `json:"card_id"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// ChecklistItem defines model for ChecklistItem.
+type ChecklistItem struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CardId     openapi_types.UUID `json:"card_id"`
+	Completed  bool               `json:"completed"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	SortOrder  int                `json:"sort_order"`
+	Title      string             `json:"title"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// Column defines model for Column.
+type Column struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	BoardId    openapi_types.UUID `json:"board_id"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	SortOrder  int                `json:"sort_order"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// FEFOBatch defines model for FEFOBatch.
+type FEFOBatch struct {
+	BatchNumber       string              `json:"batch_number"`
+	BestBeforeDate    *openapi_types.Date `json:"best_before_date,omitempty"`
+	InStock           int                 `json:"in_stock"`
+	LocationId        openapi_types.UUID  `json:"location_id"`
+	ManufacturingDate *openapi_types.Date `json:"manufacturing_date,omitempty"`
+	ProductId         openapi_types.UUID  `json:"product_id"`
+}
+
+// FieldDefinition defines model for FieldDefinition.
+type FieldDefinition struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	Choices    *[]string          `json:"choices,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	FieldType  string             `json:"field_type"`
+	GroupName  string             `json:"group_name"`
+	HelpText   *string            `json:"help_text,omitempty"`
+	Id         openapi_types.UUID `json:"id"`
+	Mandatory  *bool              `json:"mandatory,omitempty"`
+	Name       string             `json:"name"`
+	NameEn     string             `json:"name_en"`
+	ShowOnCard *bool              `json:"show_on_card,omitempty"`
+	Unit       *string            `json:"unit,omitempty"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// ICalSource defines model for ICalSource.
+type ICalSource struct {
+	ArchivedAt   *time.Time         `json:"archived_at,omitempty"`
+	Color        *string            `json:"color,omitempty"`
+	CreatedAt    time.Time          `json:"created_at"`
+	Enabled      bool               `json:"enabled"`
+	IcalUrl      string             `json:"ical_url"`
+	Id           openapi_types.UUID `json:"id"`
+	Name         string             `json:"name"`
+	NameEn       *string            `json:"name_en,omitempty"`
+	SyncInterval int                `json:"sync_interval"`
+	UpdatedAt    time.Time          `json:"updated_at"`
+	Version      int                `json:"version"`
+}
+
+// IdsEntry defines model for IdsEntry.
+type IdsEntry struct {
+	ArchivedAt  *time.Time          `json:"archived_at,omitempty"`
+	Category    string              `json:"category"`
+	CreatedAt   time.Time           `json:"created_at"`
+	DocumentUrl *string             `json:"document_url,omitempty"`
+	Id          openapi_types.UUID  `json:"id"`
+	Issuer      *string             `json:"issuer,omitempty"`
+	Name        string              `json:"name"`
+	Note        *string             `json:"note,omitempty"`
+	Owner       *string             `json:"owner,omitempty"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	ValidFrom   *openapi_types.Date `json:"valid_from,omitempty"`
+	ValidTo     *openapi_types.Date `json:"valid_to,omitempty"`
+	Value       string              `json:"value"`
+	Version     int                 `json:"version"`
+}
+
+// InventoryValue defines model for InventoryValue.
+type InventoryValue struct {
+	InStock     int                `json:"in_stock"`
+	LocationId  openapi_types.UUID `json:"location_id"`
+	ProductId   openapi_types.UUID `json:"product_id"`
+	ProductName string             `json:"product_name"`
+	Value       int                `json:"value"`
+}
+
+// KioskData Aggregated data for kiosk views.
+type KioskData struct {
+	InventoryValue *int `json:"inventory_value,omitempty"`
+	KeyFigures     *struct {
+		Countries       *int `json:"countries,omitempty"`
+		Customers       *int `json:"customers,omitempty"`
+		OrdersThisYear  *int `json:"orders_this_year,omitempty"`
+		RevenueThisYear *int `json:"revenue_this_year,omitempty"`
+	} `json:"key_figures,omitempty"`
+	LowStockCount  *int `json:"low_stock_count,omitempty"`
+	OrdersPerMonth *[]struct {
+		Month   *string `json:"month,omitempty"`
+		Orders  *int    `json:"orders,omitempty"`
+		Revenue *int    `json:"revenue,omitempty"`
+	} `json:"orders_per_month,omitempty"`
+	RevenueByChannel *[]struct {
+		Channel *string `json:"channel,omitempty"`
+		Revenue *int    `json:"revenue,omitempty"`
+	} `json:"revenue_by_channel,omitempty"`
+}
+
+// KioskDevice defines model for KioskDevice.
+type KioskDevice struct {
+	Approved    bool                `json:"approved"`
+	ArchivedAt  *time.Time          `json:"archived_at,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
+	ExpiresAt   *time.Time          `json:"expires_at,omitempty"`
+	Id          openapi_types.UUID  `json:"id"`
+	LanOnly     bool                `json:"lan_only"`
+	Name        string              `json:"name"`
+	PairingCode string              `json:"pairing_code"`
+	PlaylistId  *openapi_types.UUID `json:"playlist_id,omitempty"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	Version     int                 `json:"version"`
+}
+
+// KioskPlaylist defines model for KioskPlaylist.
+type KioskPlaylist struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	NameEn     *string            `json:"name_en,omitempty"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// KioskPlaylistView defines model for KioskPlaylistView.
+type KioskPlaylistView struct {
+	ArchivedAt  *time.Time                `json:"archived_at,omitempty"`
+	CreatedAt   time.Time                 `json:"created_at"`
+	DurationSec int                       `json:"duration_sec"`
+	Id          openapi_types.UUID        `json:"id"`
+	PlaylistId  openapi_types.UUID        `json:"playlist_id"`
+	Settings    *map[string]interface{}   `json:"settings,omitempty"`
+	SortOrder   int                       `json:"sort_order"`
+	UpdatedAt   time.Time                 `json:"updated_at"`
+	Version     int                       `json:"version"`
+	ViewType    KioskPlaylistViewViewType `json:"view_type"`
+}
+
+// KioskPlaylistViewViewType defines model for KioskPlaylistView.ViewType.
+type KioskPlaylistViewViewType string
+
+// Label defines model for Label.
+type Label struct {
+	Color string `json:"color"`
+	Name  string `json:"name"`
+}
+
+// Location defines model for Location.
+type Location struct {
+	Address       *string            `json:"address,omitempty"`
+	ArchivedAt    *time.Time         `json:"archived_at,omitempty"`
+	ChannelBuffer int                `json:"channel_buffer"`
+	City          *string            `json:"city,omitempty"`
+	Country       *string            `json:"country,omitempty"`
+	CreatedAt     time.Time          `json:"created_at"`
+	Id            openapi_types.UUID `json:"id"`
+	Name          string             `json:"name"`
+	NameEn        *string            `json:"name_en,omitempty"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	Version       int                `json:"version"`
 }
 
 // Me defines model for Me.
@@ -63,6 +887,221 @@ type Problem struct {
 	Type string `json:"type"`
 }
 
+// Product defines model for Product.
+type Product struct {
+	ArchivedAt        *time.Time             `json:"archived_at,omitempty"`
+	Attributes        map[string]interface{} `json:"attributes"`
+	CreatedAt         time.Time              `json:"created_at"`
+	Ean               *string                `json:"ean,omitempty"`
+	Id                openapi_types.UUID     `json:"id"`
+	MsrpCurrency      *string                `json:"msrp_currency,omitempty"`
+	MsrpSek           *int                   `json:"msrp_sek,omitempty"`
+	Name              string                 `json:"name"`
+	ProductTypeId     openapi_types.UUID     `json:"product_type_id"`
+	ShortDescription  *string                `json:"short_description,omitempty"`
+	Sku               string                 `json:"sku"`
+	SkuLocked         bool                   `json:"sku_locked"`
+	Status            string                 `json:"status"`
+	UpdatedAt         time.Time              `json:"updated_at"`
+	Version           int                    `json:"version"`
+	WholesaleCurrency *string                `json:"wholesale_currency,omitempty"`
+	WholesalePriceSek *int                   `json:"wholesale_price_sek,omitempty"`
+}
+
+// ProductDocument defines model for ProductDocument.
+type ProductDocument struct {
+	ArchivedAt   *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt    time.Time          `json:"created_at"`
+	DocumentType string             `json:"document_type"`
+	ExpiresAt    *time.Time         `json:"expires_at,omitempty"`
+	Id           openapi_types.UUID `json:"id"`
+	ProductId    openapi_types.UUID `json:"product_id"`
+	Title        string             `json:"title"`
+	TitleEn      *string            `json:"title_en,omitempty"`
+	UpdatedAt    time.Time          `json:"updated_at"`
+	Url          string             `json:"url"`
+	Version      int                `json:"version"`
+}
+
+// ProductImage defines model for ProductImage.
+type ProductImage struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	IsMain     bool               `json:"is_main"`
+	ProductId  openapi_types.UUID `json:"product_id"`
+	SortOrder  int                `json:"sort_order"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Url        string             `json:"url"`
+	Version    int                `json:"version"`
+}
+
+// ProductType defines model for ProductType.
+type ProductType struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	NameEn     string             `json:"name_en"`
+	TypeCode   string             `json:"type_code"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// ProductTypeField defines model for ProductTypeField.
+type ProductTypeField struct {
+	ArchivedAt        *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt         time.Time          `json:"created_at"`
+	FieldDefinitionId openapi_types.UUID `json:"field_definition_id"`
+	FieldName         *string            `json:"field_name,omitempty"`
+	FieldNameEn       *string            `json:"field_name_en,omitempty"`
+	FieldType         *string            `json:"field_type,omitempty"`
+	GroupName         *string            `json:"group_name,omitempty"`
+	Id                openapi_types.UUID `json:"id"`
+	MandatoryOverride *bool              `json:"mandatory_override,omitempty"`
+	ProductTypeId     openapi_types.UUID `json:"product_type_id"`
+	SortOrder         int                `json:"sort_order"`
+	UpdatedAt         time.Time          `json:"updated_at"`
+	Version           int                `json:"version"`
+}
+
+// PurchaseOrder defines model for PurchaseOrder.
+type PurchaseOrder struct {
+	ArchivedAt   *time.Time          `json:"archived_at,omitempty"`
+	CreatedAt    time.Time           `json:"created_at"`
+	Currency     string              `json:"currency"`
+	ExpectedDate *openapi_types.Date `json:"expected_date,omitempty"`
+	Id           openapi_types.UUID  `json:"id"`
+	Notes        *string             `json:"notes,omitempty"`
+	OrderDate    openapi_types.Date  `json:"order_date"`
+	OrderNumber  *string             `json:"order_number,omitempty"`
+	Status       PurchaseOrderStatus `json:"status"`
+	SupplierId   openapi_types.UUID  `json:"supplier_id"`
+	TotalAmount  *int                `json:"total_amount,omitempty"`
+	UpdatedAt    time.Time           `json:"updated_at"`
+	Version      int                 `json:"version"`
+}
+
+// PurchaseOrderStatus defines model for PurchaseOrder.Status.
+type PurchaseOrderStatus string
+
+// PurchaseOrderLine defines model for PurchaseOrderLine.
+type PurchaseOrderLine struct {
+	ArchivedAt      *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt       time.Time          `json:"created_at"`
+	Id              openapi_types.UUID `json:"id"`
+	LineTotal       int                `json:"line_total"`
+	ProductId       openapi_types.UUID `json:"product_id"`
+	PurchaseOrderId openapi_types.UUID `json:"purchase_order_id"`
+	Quantity        int                `json:"quantity"`
+	UnitCurrency    string             `json:"unit_currency"`
+	UnitPrice       int                `json:"unit_price"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+	Version         int                `json:"version"`
+}
+
+// Shipment defines model for Shipment.
+type Shipment struct {
+	ActualArrival    *openapi_types.Date       `json:"actual_arrival,omitempty"`
+	ArchivedAt       *time.Time                `json:"archived_at,omitempty"`
+	BatchNumber      string                    `json:"batch_number"`
+	Carrier          *string                   `json:"carrier,omitempty"`
+	CreatedAt        time.Time                 `json:"created_at"`
+	Documents        *[]map[string]interface{} `json:"documents,omitempty"`
+	EstimatedArrival *openapi_types.Date       `json:"estimated_arrival,omitempty"`
+	FromLocation     *string                   `json:"from_location,omitempty"`
+	Id               openapi_types.UUID        `json:"id"`
+	PurchaseOrderId  openapi_types.UUID        `json:"purchase_order_id"`
+	ShippedAt        *time.Time                `json:"shipped_at,omitempty"`
+	Status           ShipmentStatus            `json:"status"`
+	ToLocation       *string                   `json:"to_location,omitempty"`
+	TrackingNumber   *string                   `json:"tracking_number,omitempty"`
+	UpdatedAt        time.Time                 `json:"updated_at"`
+	Version          int                       `json:"version"`
+}
+
+// ShipmentStatus defines model for Shipment.Status.
+type ShipmentStatus string
+
+// StockMovement defines model for StockMovement.
+type StockMovement struct {
+	BatchNumber       *string                   `json:"batch_number,omitempty"`
+	BestBeforeDate    *openapi_types.Date       `json:"best_before_date,omitempty"`
+	CreatedAt         time.Time                 `json:"created_at"`
+	Id                openapi_types.UUID        `json:"id"`
+	LocationId        openapi_types.UUID        `json:"location_id"`
+	ManufacturingDate *openapi_types.Date       `json:"manufacturing_date,omitempty"`
+	MovementType      StockMovementMovementType `json:"movement_type"`
+	ProductId         openapi_types.UUID        `json:"product_id"`
+	Quantity          int                       `json:"quantity"`
+	Reason            *string                   `json:"reason,omitempty"`
+	ReferenceId       *openapi_types.UUID       `json:"reference_id,omitempty"`
+	ReferenceType     *string                   `json:"reference_type,omitempty"`
+	UpdatedAt         time.Time                 `json:"updated_at"`
+	Version           int                       `json:"version"`
+}
+
+// StockMovementMovementType defines model for StockMovement.MovementType.
+type StockMovementMovementType string
+
+// Supplier defines model for Supplier.
+type Supplier struct {
+	Address       *string            `json:"address,omitempty"`
+	ArchivedAt    *time.Time         `json:"archived_at,omitempty"`
+	City          *string            `json:"city,omitempty"`
+	ContactEmail  *string            `json:"contact_email,omitempty"`
+	ContactPhone  *string            `json:"contact_phone,omitempty"`
+	Country       *string            `json:"country,omitempty"`
+	CreatedAt     time.Time          `json:"created_at"`
+	Currency      string             `json:"currency"`
+	DeliveryTerms *string            `json:"delivery_terms,omitempty"`
+	Id            openapi_types.UUID `json:"id"`
+	LeadTimeDays  *int               `json:"lead_time_days,omitempty"`
+	Moq           *int               `json:"moq,omitempty"`
+	Name          string             `json:"name"`
+	NameEn        *string            `json:"name_en,omitempty"`
+	Notes         *string            `json:"notes,omitempty"`
+	OrgNumber     *string            `json:"org_number,omitempty"`
+	PaymentTerms  *string            `json:"payment_terms,omitempty"`
+	PostalCode    *string            `json:"postal_code,omitempty"`
+	Role          SupplierRole       `json:"role"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	VatNumber     *string            `json:"vat_number,omitempty"`
+	Version       int                `json:"version"`
+	Website       *string            `json:"website,omitempty"`
+}
+
+// SupplierRole defines model for Supplier.Role.
+type SupplierRole string
+
+// SupplierContact defines model for SupplierContact.
+type SupplierContact struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Email      *string            `json:"email,omitempty"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	NameEn     *string            `json:"name_en,omitempty"`
+	Phone      *string            `json:"phone,omitempty"`
+	Role       *string            `json:"role,omitempty"`
+	SupplierId openapi_types.UUID `json:"supplier_id"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// SupplierProduct defines model for SupplierProduct.
+type SupplierProduct struct {
+	ArchivedAt       *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt        time.Time          `json:"created_at"`
+	Id               openapi_types.UUID `json:"id"`
+	ProductId        openapi_types.UUID `json:"product_id"`
+	PurchaseCurrency string             `json:"purchase_currency"`
+	PurchasePrice    int                `json:"purchase_price"`
+	SupplierId       openapi_types.UUID `json:"supplier_id"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	Version          int                `json:"version"`
+}
+
 // Version defines model for Version.
 type Version struct {
 	// Commit The short commit the build was made from.
@@ -76,11 +1115,597 @@ type Version struct {
 	Version string `json:"version"`
 }
 
+// BadRequest RFC 9457 problem details.
+type BadRequest = Problem
+
 // CrossOriginForbidden RFC 9457 problem details.
 type CrossOriginForbidden = Problem
 
+// NotFound RFC 9457 problem details.
+type NotFound = Problem
+
 // Unauthenticated RFC 9457 problem details.
 type Unauthenticated = Problem
+
+// VersionConflict RFC 9457 problem details.
+type VersionConflict = Problem
+
+// CreateBoardJSONBody defines parameters for CreateBoard.
+type CreateBoardJSONBody struct {
+	Name string `json:"name"`
+}
+
+// UpdateBoardJSONBody defines parameters for UpdateBoard.
+type UpdateBoardJSONBody struct {
+	Name    string `json:"name"`
+	Version int    `json:"version"`
+}
+
+// CreateCardJSONBody defines parameters for CreateCard.
+type CreateCardJSONBody struct {
+	AssigneeId    *openapi_types.UUID `json:"assignee_id,omitempty"`
+	ColumnId      openapi_types.UUID  `json:"column_id"`
+	DescriptionMd *string             `json:"description_md,omitempty"`
+	DueDate       *openapi_types.Date `json:"due_date,omitempty"`
+	Labels        *[]Label            `json:"labels,omitempty"`
+	Title         string              `json:"title"`
+}
+
+// UpdateCardJSONBody defines parameters for UpdateCard.
+type UpdateCardJSONBody struct {
+	AssigneeId    *openapi_types.UUID `json:"assignee_id,omitempty"`
+	ColumnId      *openapi_types.UUID `json:"column_id,omitempty"`
+	DescriptionMd *string             `json:"description_md,omitempty"`
+	DueDate       *openapi_types.Date `json:"due_date,omitempty"`
+	Labels        *[]Label            `json:"labels,omitempty"`
+	Title         *string             `json:"title,omitempty"`
+	Version       *int                `json:"version,omitempty"`
+}
+
+// CreateChecklistItemJSONBody defines parameters for CreateChecklistItem.
+type CreateChecklistItemJSONBody struct {
+	SortOrder *int   `json:"sort_order,omitempty"`
+	Title     string `json:"title"`
+}
+
+// UpdateChecklistItemJSONBody defines parameters for UpdateChecklistItem.
+type UpdateChecklistItemJSONBody struct {
+	Completed *bool   `json:"completed,omitempty"`
+	SortOrder *int    `json:"sort_order,omitempty"`
+	Title     *string `json:"title,omitempty"`
+	Version   *int    `json:"version,omitempty"`
+}
+
+// CreateCommentJSONBody defines parameters for CreateComment.
+type CreateCommentJSONBody struct {
+	BodyMd string `json:"body_md"`
+}
+
+// CreateColumnJSONBody defines parameters for CreateColumn.
+type CreateColumnJSONBody struct {
+	Name      string `json:"name"`
+	SortOrder *int   `json:"sort_order,omitempty"`
+}
+
+// UpdateColumnJSONBody defines parameters for UpdateColumn.
+type UpdateColumnJSONBody struct {
+	Name      *string `json:"name,omitempty"`
+	SortOrder *int    `json:"sort_order,omitempty"`
+	Version   *int    `json:"version,omitempty"`
+}
+
+// ListCalendarEventsParams defines parameters for ListCalendarEvents.
+type ListCalendarEventsParams struct {
+	StartTime time.Time `form:"start_time" json:"start_time"`
+	EndTime   time.Time `form:"end_time" json:"end_time"`
+}
+
+// CreateFieldDefinitionJSONBody defines parameters for CreateFieldDefinition.
+type CreateFieldDefinitionJSONBody struct {
+	Choices    *[]string                              `json:"choices,omitempty"`
+	FieldType  CreateFieldDefinitionJSONBodyFieldType `json:"field_type"`
+	GroupName  string                                 `json:"group_name"`
+	HelpText   *string                                `json:"help_text,omitempty"`
+	Mandatory  *bool                                  `json:"mandatory,omitempty"`
+	Name       string                                 `json:"name"`
+	NameEn     string                                 `json:"name_en"`
+	ShowOnCard *bool                                  `json:"show_on_card,omitempty"`
+	Unit       *string                                `json:"unit,omitempty"`
+}
+
+// CreateFieldDefinitionJSONBodyFieldType defines parameters for CreateFieldDefinition.
+type CreateFieldDefinitionJSONBodyFieldType string
+
+// UpdateFieldDefinitionJSONBody defines parameters for UpdateFieldDefinition.
+type UpdateFieldDefinitionJSONBody struct {
+	Choices    *[]string                               `json:"choices,omitempty"`
+	FieldType  *UpdateFieldDefinitionJSONBodyFieldType `json:"field_type,omitempty"`
+	GroupName  *string                                 `json:"group_name,omitempty"`
+	HelpText   *string                                 `json:"help_text,omitempty"`
+	Mandatory  *bool                                   `json:"mandatory,omitempty"`
+	Name       *string                                 `json:"name,omitempty"`
+	NameEn     *string                                 `json:"name_en,omitempty"`
+	ShowOnCard *bool                                   `json:"show_on_card,omitempty"`
+	Unit       *string                                 `json:"unit,omitempty"`
+	Version    int                                     `json:"version"`
+}
+
+// UpdateFieldDefinitionJSONBodyFieldType defines parameters for UpdateFieldDefinition.
+type UpdateFieldDefinitionJSONBodyFieldType string
+
+// CreateICalSourceJSONBody defines parameters for CreateICalSource.
+type CreateICalSourceJSONBody struct {
+	Color        *string `json:"color,omitempty"`
+	IcalUrl      string  `json:"ical_url"`
+	Name         string  `json:"name"`
+	NameEn       *string `json:"name_en,omitempty"`
+	SyncInterval *int    `json:"sync_interval,omitempty"`
+}
+
+// ArchiveICalSourceParams defines parameters for ArchiveICalSource.
+type ArchiveICalSourceParams struct {
+	Version int `form:"version" json:"version"`
+}
+
+// UpdateICalSourceJSONBody defines parameters for UpdateICalSource.
+type UpdateICalSourceJSONBody struct {
+	Color        *string `json:"color,omitempty"`
+	Enabled      *bool   `json:"enabled,omitempty"`
+	IcalUrl      *string `json:"ical_url,omitempty"`
+	Name         *string `json:"name,omitempty"`
+	NameEn       *string `json:"name_en,omitempty"`
+	SyncInterval *int    `json:"sync_interval,omitempty"`
+	Version      *int    `json:"version,omitempty"`
+}
+
+// CreateIdsEntryJSONBody defines parameters for CreateIdsEntry.
+type CreateIdsEntryJSONBody struct {
+	Category    string              `json:"category"`
+	DocumentUrl *string             `json:"document_url,omitempty"`
+	Issuer      *string             `json:"issuer,omitempty"`
+	Name        string              `json:"name"`
+	Note        *string             `json:"note,omitempty"`
+	Owner       *string             `json:"owner,omitempty"`
+	ValidFrom   *openapi_types.Date `json:"valid_from,omitempty"`
+	ValidTo     *openapi_types.Date `json:"valid_to,omitempty"`
+	Value       string              `json:"value"`
+}
+
+// UpdateIdsEntryJSONBody defines parameters for UpdateIdsEntry.
+type UpdateIdsEntryJSONBody struct {
+	Category    *string             `json:"category,omitempty"`
+	DocumentUrl *string             `json:"document_url,omitempty"`
+	Issuer      *string             `json:"issuer,omitempty"`
+	Name        *string             `json:"name,omitempty"`
+	Note        *string             `json:"note,omitempty"`
+	Owner       *string             `json:"owner,omitempty"`
+	ValidFrom   *openapi_types.Date `json:"valid_from,omitempty"`
+	ValidTo     *openapi_types.Date `json:"valid_to,omitempty"`
+	Value       *string             `json:"value,omitempty"`
+	Version     int                 `json:"version"`
+}
+
+// ReleaseStockJSONBody defines parameters for ReleaseStock.
+type ReleaseStockJSONBody struct {
+	LocationId    openapi_types.UUID `json:"location_id"`
+	ProductId     openapi_types.UUID `json:"product_id"`
+	Quantity      int                `json:"quantity"`
+	ReferenceId   openapi_types.UUID `json:"reference_id"`
+	ReferenceType *string            `json:"reference_type,omitempty"`
+}
+
+// ReserveStockJSONBody defines parameters for ReserveStock.
+type ReserveStockJSONBody struct {
+	LocationId    openapi_types.UUID `json:"location_id"`
+	ProductId     openapi_types.UUID `json:"product_id"`
+	Quantity      int                `json:"quantity"`
+	ReferenceId   openapi_types.UUID `json:"reference_id"`
+	ReferenceType *string            `json:"reference_type,omitempty"`
+}
+
+// WithdrawStockJSONBody defines parameters for WithdrawStock.
+type WithdrawStockJSONBody struct {
+	LocationId    openapi_types.UUID `json:"location_id"`
+	ProductId     openapi_types.UUID `json:"product_id"`
+	Quantity      int                `json:"quantity"`
+	ReferenceId   openapi_types.UUID `json:"reference_id"`
+	ReferenceType *string            `json:"reference_type,omitempty"`
+}
+
+// GetKioskDataParams defines parameters for GetKioskData.
+type GetKioskDataParams struct {
+	PlaylistId   *openapi_types.UUID `form:"playlist_id,omitempty" json:"playlist_id,omitempty"`
+	PeriodMonths *int                `form:"period_months,omitempty" json:"period_months,omitempty"`
+}
+
+// CreateKioskDeviceJSONBody defines parameters for CreateKioskDevice.
+type CreateKioskDeviceJSONBody struct {
+	Name string `json:"name"`
+}
+
+// ArchiveKioskDeviceParams defines parameters for ArchiveKioskDevice.
+type ArchiveKioskDeviceParams struct {
+	Version int `form:"version" json:"version"`
+}
+
+// UpdateKioskDeviceJSONBody defines parameters for UpdateKioskDevice.
+type UpdateKioskDeviceJSONBody struct {
+	Approved   *bool               `json:"approved,omitempty"`
+	ExpiresAt  *time.Time          `json:"expires_at,omitempty"`
+	Name       *string             `json:"name,omitempty"`
+	PlaylistId *openapi_types.UUID `json:"playlist_id,omitempty"`
+	Version    *int                `json:"version,omitempty"`
+}
+
+// PairKioskDeviceJSONBody defines parameters for PairKioskDevice.
+type PairKioskDeviceJSONBody struct {
+	ApiKey string `json:"api_key"`
+}
+
+// PairKioskDeviceParams defines parameters for PairKioskDevice.
+type PairKioskDeviceParams struct {
+	PairingCode string `form:"pairing_code" json:"pairing_code"`
+}
+
+// CreateKioskPlaylistJSONBody defines parameters for CreateKioskPlaylist.
+type CreateKioskPlaylistJSONBody struct {
+	Name   string  `json:"name"`
+	NameEn *string `json:"name_en,omitempty"`
+}
+
+// ArchiveKioskPlaylistParams defines parameters for ArchiveKioskPlaylist.
+type ArchiveKioskPlaylistParams struct {
+	Version int `form:"version" json:"version"`
+}
+
+// UpdateKioskPlaylistJSONBody defines parameters for UpdateKioskPlaylist.
+type UpdateKioskPlaylistJSONBody struct {
+	Name    *string `json:"name,omitempty"`
+	NameEn  *string `json:"name_en,omitempty"`
+	Version *int    `json:"version,omitempty"`
+}
+
+// CreatePlaylistViewJSONBody defines parameters for CreatePlaylistView.
+type CreatePlaylistViewJSONBody struct {
+	DurationSec *int                               `json:"duration_sec,omitempty"`
+	Settings    *map[string]interface{}            `json:"settings,omitempty"`
+	SortOrder   *int                               `json:"sort_order,omitempty"`
+	ViewType    CreatePlaylistViewJSONBodyViewType `json:"view_type"`
+}
+
+// CreatePlaylistViewJSONBodyViewType defines parameters for CreatePlaylistView.
+type CreatePlaylistViewJSONBodyViewType string
+
+// ArchivePlaylistViewParams defines parameters for ArchivePlaylistView.
+type ArchivePlaylistViewParams struct {
+	Version int `form:"version" json:"version"`
+}
+
+// UpdatePlaylistViewJSONBody defines parameters for UpdatePlaylistView.
+type UpdatePlaylistViewJSONBody struct {
+	DurationSec *int                                `json:"duration_sec,omitempty"`
+	Settings    *map[string]interface{}             `json:"settings,omitempty"`
+	SortOrder   *int                                `json:"sort_order,omitempty"`
+	Version     *int                                `json:"version,omitempty"`
+	ViewType    *UpdatePlaylistViewJSONBodyViewType `json:"view_type,omitempty"`
+}
+
+// UpdatePlaylistViewJSONBodyViewType defines parameters for UpdatePlaylistView.
+type UpdatePlaylistViewJSONBodyViewType string
+
+// CreateLocationJSONBody defines parameters for CreateLocation.
+type CreateLocationJSONBody struct {
+	Address       *string `json:"address,omitempty"`
+	ChannelBuffer *int    `json:"channel_buffer,omitempty"`
+	City          *string `json:"city,omitempty"`
+	Country       *string `json:"country,omitempty"`
+	Name          string  `json:"name"`
+	NameEn        *string `json:"name_en,omitempty"`
+}
+
+// UpdateLocationJSONBody defines parameters for UpdateLocation.
+type UpdateLocationJSONBody struct {
+	Address       *string `json:"address,omitempty"`
+	ChannelBuffer *int    `json:"channel_buffer,omitempty"`
+	City          *string `json:"city,omitempty"`
+	Country       *string `json:"country,omitempty"`
+	Name          *string `json:"name,omitempty"`
+	NameEn        *string `json:"name_en,omitempty"`
+	Version       *int    `json:"version,omitempty"`
+}
+
+// CreateProductTypeJSONBody defines parameters for CreateProductType.
+type CreateProductTypeJSONBody struct {
+	Name     string `json:"name"`
+	NameEn   string `json:"name_en"`
+	TypeCode string `json:"type_code"`
+}
+
+// UpdateProductTypeJSONBody defines parameters for UpdateProductType.
+type UpdateProductTypeJSONBody struct {
+	Name     *string `json:"name,omitempty"`
+	NameEn   *string `json:"name_en,omitempty"`
+	TypeCode *string `json:"type_code,omitempty"`
+	Version  int     `json:"version"`
+}
+
+// AssignFieldToProductTypeJSONBody defines parameters for AssignFieldToProductType.
+type AssignFieldToProductTypeJSONBody struct {
+	FieldDefinitionId openapi_types.UUID `json:"field_definition_id"`
+	MandatoryOverride *bool              `json:"mandatory_override,omitempty"`
+	SortOrder         *int               `json:"sort_order,omitempty"`
+}
+
+// UpdateProductTypeFieldJSONBody defines parameters for UpdateProductTypeField.
+type UpdateProductTypeFieldJSONBody struct {
+	MandatoryOverride *bool `json:"mandatory_override,omitempty"`
+	SortOrder         *int  `json:"sort_order,omitempty"`
+	Version           int   `json:"version"`
+}
+
+// ListProductsParams defines parameters for ListProducts.
+type ListProductsParams struct {
+	// Q Search by name, SKU or EAN
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+}
+
+// CreateProductJSONBody defines parameters for CreateProduct.
+type CreateProductJSONBody struct {
+	Attributes        *map[string]interface{}      `json:"attributes,omitempty"`
+	Ean               *string                      `json:"ean,omitempty"`
+	MsrpCurrency      *string                      `json:"msrp_currency,omitempty"`
+	MsrpSek           *int                         `json:"msrp_sek,omitempty"`
+	Name              string                       `json:"name"`
+	ProductTypeId     openapi_types.UUID           `json:"product_type_id"`
+	ShortDescription  *string                      `json:"short_description,omitempty"`
+	Sku               string                       `json:"sku"`
+	Status            *CreateProductJSONBodyStatus `json:"status,omitempty"`
+	WholesaleCurrency *string                      `json:"wholesale_currency,omitempty"`
+	WholesalePriceSek *int                         `json:"wholesale_price_sek,omitempty"`
+}
+
+// CreateProductJSONBodyStatus defines parameters for CreateProduct.
+type CreateProductJSONBodyStatus string
+
+// UpdateProductJSONBody defines parameters for UpdateProduct.
+type UpdateProductJSONBody struct {
+	Attributes        *map[string]interface{}      `json:"attributes,omitempty"`
+	Ean               *string                      `json:"ean,omitempty"`
+	MsrpCurrency      *string                      `json:"msrp_currency,omitempty"`
+	MsrpSek           *int                         `json:"msrp_sek,omitempty"`
+	Name              *string                      `json:"name,omitempty"`
+	ProductTypeId     *openapi_types.UUID          `json:"product_type_id,omitempty"`
+	ShortDescription  *string                      `json:"short_description,omitempty"`
+	Sku               *string                      `json:"sku,omitempty"`
+	Status            *UpdateProductJSONBodyStatus `json:"status,omitempty"`
+	Version           int                          `json:"version"`
+	WholesaleCurrency *string                      `json:"wholesale_currency,omitempty"`
+	WholesalePriceSek *int                         `json:"wholesale_price_sek,omitempty"`
+}
+
+// UpdateProductJSONBodyStatus defines parameters for UpdateProduct.
+type UpdateProductJSONBodyStatus string
+
+// CreateProductDocumentJSONBody defines parameters for CreateProductDocument.
+type CreateProductDocumentJSONBody struct {
+	DocumentType string     `json:"document_type"`
+	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+	Title        string     `json:"title"`
+	TitleEn      *string    `json:"title_en,omitempty"`
+	Url          string     `json:"url"`
+}
+
+// UpdateProductDocumentJSONBody defines parameters for UpdateProductDocument.
+type UpdateProductDocumentJSONBody struct {
+	DocumentType *string    `json:"document_type,omitempty"`
+	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+	Title        *string    `json:"title,omitempty"`
+	TitleEn      *string    `json:"title_en,omitempty"`
+	Url          *string    `json:"url,omitempty"`
+	Version      int        `json:"version"`
+}
+
+// CreateProductImageJSONBody defines parameters for CreateProductImage.
+type CreateProductImageJSONBody struct {
+	IsMain    *bool  `json:"is_main,omitempty"`
+	SortOrder *int   `json:"sort_order,omitempty"`
+	Url       string `json:"url"`
+}
+
+// UpdateProductImageJSONBody defines parameters for UpdateProductImage.
+type UpdateProductImageJSONBody struct {
+	IsMain    *bool   `json:"is_main,omitempty"`
+	SortOrder *int    `json:"sort_order,omitempty"`
+	Url       *string `json:"url,omitempty"`
+	Version   int     `json:"version"`
+}
+
+// ListPurchaseOrdersParams defines parameters for ListPurchaseOrders.
+type ListPurchaseOrdersParams struct {
+	Status     *ListPurchaseOrdersParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	SupplierId *openapi_types.UUID             `form:"supplier_id,omitempty" json:"supplier_id,omitempty"`
+}
+
+// ListPurchaseOrdersParamsStatus defines parameters for ListPurchaseOrders.
+type ListPurchaseOrdersParamsStatus string
+
+// CreatePurchaseOrderJSONBody defines parameters for CreatePurchaseOrder.
+type CreatePurchaseOrderJSONBody struct {
+	Currency     *string             `json:"currency,omitempty"`
+	ExpectedDate *openapi_types.Date `json:"expected_date,omitempty"`
+	Notes        *string             `json:"notes,omitempty"`
+	OrderDate    *openapi_types.Date `json:"order_date,omitempty"`
+	OrderNumber  *string             `json:"order_number,omitempty"`
+	SupplierId   openapi_types.UUID  `json:"supplier_id"`
+}
+
+// UpdatePurchaseOrderJSONBody defines parameters for UpdatePurchaseOrder.
+type UpdatePurchaseOrderJSONBody struct {
+	ExpectedDate *openapi_types.Date                `json:"expected_date,omitempty"`
+	Notes        *string                            `json:"notes,omitempty"`
+	Status       *UpdatePurchaseOrderJSONBodyStatus `json:"status,omitempty"`
+	TotalAmount  *int                               `json:"total_amount,omitempty"`
+	Version      int                                `json:"version"`
+}
+
+// UpdatePurchaseOrderJSONBodyStatus defines parameters for UpdatePurchaseOrder.
+type UpdatePurchaseOrderJSONBodyStatus string
+
+// CreatePurchaseOrderLineJSONBody defines parameters for CreatePurchaseOrderLine.
+type CreatePurchaseOrderLineJSONBody struct {
+	ProductId    openapi_types.UUID `json:"product_id"`
+	Quantity     int                `json:"quantity"`
+	UnitCurrency *string            `json:"unit_currency,omitempty"`
+	UnitPrice    *int               `json:"unit_price,omitempty"`
+}
+
+// UpdatePurchaseOrderLineJSONBody defines parameters for UpdatePurchaseOrderLine.
+type UpdatePurchaseOrderLineJSONBody struct {
+	LineTotal *int `json:"line_total,omitempty"`
+	Quantity  *int `json:"quantity,omitempty"`
+	UnitPrice *int `json:"unit_price,omitempty"`
+	Version   int  `json:"version"`
+}
+
+// CreateShipmentJSONBody defines parameters for CreateShipment.
+type CreateShipmentJSONBody struct {
+	ActualArrival    *openapi_types.Date           `json:"actual_arrival,omitempty"`
+	BatchNumber      *string                       `json:"batch_number,omitempty"`
+	Carrier          *string                       `json:"carrier,omitempty"`
+	EstimatedArrival *openapi_types.Date           `json:"estimated_arrival,omitempty"`
+	FromLocation     *string                       `json:"from_location,omitempty"`
+	PurchaseOrderId  openapi_types.UUID            `json:"purchase_order_id"`
+	ShippedAt        *time.Time                    `json:"shipped_at,omitempty"`
+	Status           *CreateShipmentJSONBodyStatus `json:"status,omitempty"`
+	ToLocation       *string                       `json:"to_location,omitempty"`
+	TrackingNumber   *string                       `json:"tracking_number,omitempty"`
+}
+
+// CreateShipmentJSONBodyStatus defines parameters for CreateShipment.
+type CreateShipmentJSONBodyStatus string
+
+// UpdateShipmentJSONBody defines parameters for UpdateShipment.
+type UpdateShipmentJSONBody struct {
+	ActualArrival    *openapi_types.Date           `json:"actual_arrival,omitempty"`
+	BatchNumber      *string                       `json:"batch_number,omitempty"`
+	Carrier          *string                       `json:"carrier,omitempty"`
+	EstimatedArrival *openapi_types.Date           `json:"estimated_arrival,omitempty"`
+	FromLocation     *string                       `json:"from_location,omitempty"`
+	ShippedAt        *time.Time                    `json:"shipped_at,omitempty"`
+	Status           *UpdateShipmentJSONBodyStatus `json:"status,omitempty"`
+	ToLocation       *string                       `json:"to_location,omitempty"`
+	TrackingNumber   *string                       `json:"tracking_number,omitempty"`
+	Version          int                           `json:"version"`
+}
+
+// UpdateShipmentJSONBodyStatus defines parameters for UpdateShipment.
+type UpdateShipmentJSONBodyStatus string
+
+// ListStockMovementsParams defines parameters for ListStockMovements.
+type ListStockMovementsParams struct {
+	ProductId     *openapi_types.UUID                   `form:"product_id,omitempty" json:"product_id,omitempty"`
+	LocationId    *openapi_types.UUID                   `form:"location_id,omitempty" json:"location_id,omitempty"`
+	MovementType  *ListStockMovementsParamsMovementType `form:"movement_type,omitempty" json:"movement_type,omitempty"`
+	ReferenceType *string                               `form:"reference_type,omitempty" json:"reference_type,omitempty"`
+	ReferenceId   *openapi_types.UUID                   `form:"reference_id,omitempty" json:"reference_id,omitempty"`
+}
+
+// ListStockMovementsParamsMovementType defines parameters for ListStockMovements.
+type ListStockMovementsParamsMovementType string
+
+// CreateStockMovementJSONBody defines parameters for CreateStockMovement.
+type CreateStockMovementJSONBody struct {
+	BatchNumber       *string                                 `json:"batch_number,omitempty"`
+	BestBeforeDate    *openapi_types.Date                     `json:"best_before_date,omitempty"`
+	LocationId        openapi_types.UUID                      `json:"location_id"`
+	ManufacturingDate *openapi_types.Date                     `json:"manufacturing_date,omitempty"`
+	MovementType      CreateStockMovementJSONBodyMovementType `json:"movement_type"`
+	ProductId         openapi_types.UUID                      `json:"product_id"`
+	Quantity          int                                     `json:"quantity"`
+	Reason            *string                                 `json:"reason,omitempty"`
+	ReferenceId       *openapi_types.UUID                     `json:"reference_id,omitempty"`
+	ReferenceType     *string                                 `json:"reference_type,omitempty"`
+}
+
+// CreateStockMovementJSONBodyMovementType defines parameters for CreateStockMovement.
+type CreateStockMovementJSONBodyMovementType string
+
+// CreateSupplierJSONBody defines parameters for CreateSupplier.
+type CreateSupplierJSONBody struct {
+	Address       *string                     `json:"address,omitempty"`
+	City          *string                     `json:"city,omitempty"`
+	ContactEmail  *string                     `json:"contact_email,omitempty"`
+	ContactPhone  *string                     `json:"contact_phone,omitempty"`
+	Country       *string                     `json:"country,omitempty"`
+	Currency      *string                     `json:"currency,omitempty"`
+	DeliveryTerms *string                     `json:"delivery_terms,omitempty"`
+	LeadTimeDays  *int                        `json:"lead_time_days,omitempty"`
+	Moq           *int                        `json:"moq,omitempty"`
+	Name          string                      `json:"name"`
+	NameEn        *string                     `json:"name_en,omitempty"`
+	Notes         *string                     `json:"notes,omitempty"`
+	OrgNumber     *string                     `json:"org_number,omitempty"`
+	PaymentTerms  *string                     `json:"payment_terms,omitempty"`
+	PostalCode    *string                     `json:"postal_code,omitempty"`
+	Role          *CreateSupplierJSONBodyRole `json:"role,omitempty"`
+	VatNumber     *string                     `json:"vat_number,omitempty"`
+	Website       *string                     `json:"website,omitempty"`
+}
+
+// CreateSupplierJSONBodyRole defines parameters for CreateSupplier.
+type CreateSupplierJSONBodyRole string
+
+// UpdateSupplierJSONBody defines parameters for UpdateSupplier.
+type UpdateSupplierJSONBody struct {
+	Address       *string                     `json:"address,omitempty"`
+	City          *string                     `json:"city,omitempty"`
+	ContactEmail  *string                     `json:"contact_email,omitempty"`
+	ContactPhone  *string                     `json:"contact_phone,omitempty"`
+	Country       *string                     `json:"country,omitempty"`
+	Currency      *string                     `json:"currency,omitempty"`
+	DeliveryTerms *string                     `json:"delivery_terms,omitempty"`
+	LeadTimeDays  *int                        `json:"lead_time_days,omitempty"`
+	Moq           *int                        `json:"moq,omitempty"`
+	Name          *string                     `json:"name,omitempty"`
+	NameEn        *string                     `json:"name_en,omitempty"`
+	Notes         *string                     `json:"notes,omitempty"`
+	OrgNumber     *string                     `json:"org_number,omitempty"`
+	PaymentTerms  *string                     `json:"payment_terms,omitempty"`
+	PostalCode    *string                     `json:"postal_code,omitempty"`
+	Role          *UpdateSupplierJSONBodyRole `json:"role,omitempty"`
+	VatNumber     *string                     `json:"vat_number,omitempty"`
+	Version       int                         `json:"version"`
+	Website       *string                     `json:"website,omitempty"`
+}
+
+// UpdateSupplierJSONBodyRole defines parameters for UpdateSupplier.
+type UpdateSupplierJSONBodyRole string
+
+// CreateSupplierContactJSONBody defines parameters for CreateSupplierContact.
+type CreateSupplierContactJSONBody struct {
+	Email  *string `json:"email,omitempty"`
+	Name   string  `json:"name"`
+	NameEn *string `json:"name_en,omitempty"`
+	Phone  *string `json:"phone,omitempty"`
+	Role   *string `json:"role,omitempty"`
+}
+
+// UpdateSupplierContactJSONBody defines parameters for UpdateSupplierContact.
+type UpdateSupplierContactJSONBody struct {
+	Email   *string `json:"email,omitempty"`
+	Name    *string `json:"name,omitempty"`
+	NameEn  *string `json:"name_en,omitempty"`
+	Phone   *string `json:"phone,omitempty"`
+	Role    *string `json:"role,omitempty"`
+	Version int     `json:"version"`
+}
+
+// CreateSupplierProductJSONBody defines parameters for CreateSupplierProduct.
+type CreateSupplierProductJSONBody struct {
+	ProductId        openapi_types.UUID `json:"product_id"`
+	PurchaseCurrency *string            `json:"purchase_currency,omitempty"`
+	PurchasePrice    *int               `json:"purchase_price,omitempty"`
+}
 
 // LoginCallbackParams defines parameters for LoginCallback.
 type LoginCallbackParams struct {
@@ -102,11 +1727,509 @@ type LoginParams struct {
 	ReturnTo *string `form:"return_to,omitempty" json:"return_to,omitempty"`
 }
 
+// CreateBoardJSONRequestBody defines body for CreateBoard for application/json ContentType.
+type CreateBoardJSONRequestBody CreateBoardJSONBody
+
+// UpdateBoardJSONRequestBody defines body for UpdateBoard for application/json ContentType.
+type UpdateBoardJSONRequestBody UpdateBoardJSONBody
+
+// CreateCardJSONRequestBody defines body for CreateCard for application/json ContentType.
+type CreateCardJSONRequestBody CreateCardJSONBody
+
+// UpdateCardJSONRequestBody defines body for UpdateCard for application/json ContentType.
+type UpdateCardJSONRequestBody UpdateCardJSONBody
+
+// CreateChecklistItemJSONRequestBody defines body for CreateChecklistItem for application/json ContentType.
+type CreateChecklistItemJSONRequestBody CreateChecklistItemJSONBody
+
+// UpdateChecklistItemJSONRequestBody defines body for UpdateChecklistItem for application/json ContentType.
+type UpdateChecklistItemJSONRequestBody UpdateChecklistItemJSONBody
+
+// CreateCommentJSONRequestBody defines body for CreateComment for application/json ContentType.
+type CreateCommentJSONRequestBody CreateCommentJSONBody
+
+// CreateColumnJSONRequestBody defines body for CreateColumn for application/json ContentType.
+type CreateColumnJSONRequestBody CreateColumnJSONBody
+
+// UpdateColumnJSONRequestBody defines body for UpdateColumn for application/json ContentType.
+type UpdateColumnJSONRequestBody UpdateColumnJSONBody
+
+// CreateFieldDefinitionJSONRequestBody defines body for CreateFieldDefinition for application/json ContentType.
+type CreateFieldDefinitionJSONRequestBody CreateFieldDefinitionJSONBody
+
+// UpdateFieldDefinitionJSONRequestBody defines body for UpdateFieldDefinition for application/json ContentType.
+type UpdateFieldDefinitionJSONRequestBody UpdateFieldDefinitionJSONBody
+
+// CreateICalSourceJSONRequestBody defines body for CreateICalSource for application/json ContentType.
+type CreateICalSourceJSONRequestBody CreateICalSourceJSONBody
+
+// UpdateICalSourceJSONRequestBody defines body for UpdateICalSource for application/json ContentType.
+type UpdateICalSourceJSONRequestBody UpdateICalSourceJSONBody
+
+// CreateIdsEntryJSONRequestBody defines body for CreateIdsEntry for application/json ContentType.
+type CreateIdsEntryJSONRequestBody CreateIdsEntryJSONBody
+
+// UpdateIdsEntryJSONRequestBody defines body for UpdateIdsEntry for application/json ContentType.
+type UpdateIdsEntryJSONRequestBody UpdateIdsEntryJSONBody
+
+// ReleaseStockJSONRequestBody defines body for ReleaseStock for application/json ContentType.
+type ReleaseStockJSONRequestBody ReleaseStockJSONBody
+
+// ReserveStockJSONRequestBody defines body for ReserveStock for application/json ContentType.
+type ReserveStockJSONRequestBody ReserveStockJSONBody
+
+// WithdrawStockJSONRequestBody defines body for WithdrawStock for application/json ContentType.
+type WithdrawStockJSONRequestBody WithdrawStockJSONBody
+
+// CreateKioskDeviceJSONRequestBody defines body for CreateKioskDevice for application/json ContentType.
+type CreateKioskDeviceJSONRequestBody CreateKioskDeviceJSONBody
+
+// UpdateKioskDeviceJSONRequestBody defines body for UpdateKioskDevice for application/json ContentType.
+type UpdateKioskDeviceJSONRequestBody UpdateKioskDeviceJSONBody
+
+// PairKioskDeviceJSONRequestBody defines body for PairKioskDevice for application/json ContentType.
+type PairKioskDeviceJSONRequestBody PairKioskDeviceJSONBody
+
+// CreateKioskPlaylistJSONRequestBody defines body for CreateKioskPlaylist for application/json ContentType.
+type CreateKioskPlaylistJSONRequestBody CreateKioskPlaylistJSONBody
+
+// UpdateKioskPlaylistJSONRequestBody defines body for UpdateKioskPlaylist for application/json ContentType.
+type UpdateKioskPlaylistJSONRequestBody UpdateKioskPlaylistJSONBody
+
+// CreatePlaylistViewJSONRequestBody defines body for CreatePlaylistView for application/json ContentType.
+type CreatePlaylistViewJSONRequestBody CreatePlaylistViewJSONBody
+
+// UpdatePlaylistViewJSONRequestBody defines body for UpdatePlaylistView for application/json ContentType.
+type UpdatePlaylistViewJSONRequestBody UpdatePlaylistViewJSONBody
+
+// CreateLocationJSONRequestBody defines body for CreateLocation for application/json ContentType.
+type CreateLocationJSONRequestBody CreateLocationJSONBody
+
+// UpdateLocationJSONRequestBody defines body for UpdateLocation for application/json ContentType.
+type UpdateLocationJSONRequestBody UpdateLocationJSONBody
+
+// CreateProductTypeJSONRequestBody defines body for CreateProductType for application/json ContentType.
+type CreateProductTypeJSONRequestBody CreateProductTypeJSONBody
+
+// UpdateProductTypeJSONRequestBody defines body for UpdateProductType for application/json ContentType.
+type UpdateProductTypeJSONRequestBody UpdateProductTypeJSONBody
+
+// AssignFieldToProductTypeJSONRequestBody defines body for AssignFieldToProductType for application/json ContentType.
+type AssignFieldToProductTypeJSONRequestBody AssignFieldToProductTypeJSONBody
+
+// UpdateProductTypeFieldJSONRequestBody defines body for UpdateProductTypeField for application/json ContentType.
+type UpdateProductTypeFieldJSONRequestBody UpdateProductTypeFieldJSONBody
+
+// CreateProductJSONRequestBody defines body for CreateProduct for application/json ContentType.
+type CreateProductJSONRequestBody CreateProductJSONBody
+
+// UpdateProductJSONRequestBody defines body for UpdateProduct for application/json ContentType.
+type UpdateProductJSONRequestBody UpdateProductJSONBody
+
+// CreateProductDocumentJSONRequestBody defines body for CreateProductDocument for application/json ContentType.
+type CreateProductDocumentJSONRequestBody CreateProductDocumentJSONBody
+
+// UpdateProductDocumentJSONRequestBody defines body for UpdateProductDocument for application/json ContentType.
+type UpdateProductDocumentJSONRequestBody UpdateProductDocumentJSONBody
+
+// CreateProductImageJSONRequestBody defines body for CreateProductImage for application/json ContentType.
+type CreateProductImageJSONRequestBody CreateProductImageJSONBody
+
+// UpdateProductImageJSONRequestBody defines body for UpdateProductImage for application/json ContentType.
+type UpdateProductImageJSONRequestBody UpdateProductImageJSONBody
+
+// CreatePurchaseOrderJSONRequestBody defines body for CreatePurchaseOrder for application/json ContentType.
+type CreatePurchaseOrderJSONRequestBody CreatePurchaseOrderJSONBody
+
+// UpdatePurchaseOrderJSONRequestBody defines body for UpdatePurchaseOrder for application/json ContentType.
+type UpdatePurchaseOrderJSONRequestBody UpdatePurchaseOrderJSONBody
+
+// CreatePurchaseOrderLineJSONRequestBody defines body for CreatePurchaseOrderLine for application/json ContentType.
+type CreatePurchaseOrderLineJSONRequestBody CreatePurchaseOrderLineJSONBody
+
+// UpdatePurchaseOrderLineJSONRequestBody defines body for UpdatePurchaseOrderLine for application/json ContentType.
+type UpdatePurchaseOrderLineJSONRequestBody UpdatePurchaseOrderLineJSONBody
+
+// CreateShipmentJSONRequestBody defines body for CreateShipment for application/json ContentType.
+type CreateShipmentJSONRequestBody CreateShipmentJSONBody
+
+// UpdateShipmentJSONRequestBody defines body for UpdateShipment for application/json ContentType.
+type UpdateShipmentJSONRequestBody UpdateShipmentJSONBody
+
+// CreateStockMovementJSONRequestBody defines body for CreateStockMovement for application/json ContentType.
+type CreateStockMovementJSONRequestBody CreateStockMovementJSONBody
+
+// CreateSupplierJSONRequestBody defines body for CreateSupplier for application/json ContentType.
+type CreateSupplierJSONRequestBody CreateSupplierJSONBody
+
+// UpdateSupplierJSONRequestBody defines body for UpdateSupplier for application/json ContentType.
+type UpdateSupplierJSONRequestBody UpdateSupplierJSONBody
+
+// CreateSupplierContactJSONRequestBody defines body for CreateSupplierContact for application/json ContentType.
+type CreateSupplierContactJSONRequestBody CreateSupplierContactJSONBody
+
+// UpdateSupplierContactJSONRequestBody defines body for UpdateSupplierContact for application/json ContentType.
+type UpdateSupplierContactJSONRequestBody UpdateSupplierContactJSONBody
+
+// CreateSupplierProductJSONRequestBody defines body for CreateSupplierProduct for application/json ContentType.
+type CreateSupplierProductJSONRequestBody CreateSupplierProductJSONBody
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ListBoards List all boards (TAV-01)
+	// (GET /api/v1/boards)
+	ListBoards(w http.ResponseWriter, r *http.Request)
+	// CreateBoard Create a board (TAV-01)
+	// (POST /api/v1/boards)
+	CreateBoard(w http.ResponseWriter, r *http.Request)
+	// ArchiveBoard Archive a board (NFK-09)
+	// (DELETE /api/v1/boards/{board_id})
+	ArchiveBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// GetBoard Get a board by ID
+	// (GET /api/v1/boards/{board_id})
+	GetBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// UpdateBoard Update a board name (TAV-01)
+	// (PATCH /api/v1/boards/{board_id})
+	UpdateBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// ListCards List cards for a board (TAV-03)
+	// (GET /api/v1/boards/{board_id}/cards)
+	ListCards(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// CreateCard Create a card (TAV-03)
+	// (POST /api/v1/boards/{board_id}/cards)
+	CreateCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// ArchiveCard Archive a card (NFK-09)
+	// (DELETE /api/v1/boards/{board_id}/cards/{card_id})
+	ArchiveCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// GetCard Get a card (TAV-03)
+	// (GET /api/v1/boards/{board_id}/cards/{card_id})
+	GetCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// UpdateCard Update a card (TAV-04: move, rename, assign, due date, labels)
+	// (PATCH /api/v1/boards/{board_id}/cards/{card_id})
+	UpdateCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// ListChecklistItems Checklist items for a card (TAV-05)
+	// (GET /api/v1/boards/{board_id}/cards/{card_id}/checklist)
+	ListChecklistItems(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// CreateChecklistItem Add a checklist item (TAV-05)
+	// (POST /api/v1/boards/{board_id}/cards/{card_id}/checklist)
+	CreateChecklistItem(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// ArchiveChecklistItem Archive a checklist item (NFK-09)
+	// (DELETE /api/v1/boards/{board_id}/cards/{card_id}/checklist/{item_id})
+	ArchiveChecklistItem(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID, itemId openapi_types.UUID)
+	// UpdateChecklistItem Update a checklist item (TAV-05)
+	// (PATCH /api/v1/boards/{board_id}/cards/{card_id}/checklist/{item_id})
+	UpdateChecklistItem(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID, itemId openapi_types.UUID)
+	// ListComments Comments on a card (TAV-06)
+	// (GET /api/v1/boards/{board_id}/cards/{card_id}/comments)
+	ListComments(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// CreateComment Add a comment (TAV-06)
+	// (POST /api/v1/boards/{board_id}/cards/{card_id}/comments)
+	CreateComment(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID)
+	// ListColumns List columns for a board (TAV-02)
+	// (GET /api/v1/boards/{board_id}/columns)
+	ListColumns(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// CreateColumn Add a column (TAV-02)
+	// (POST /api/v1/boards/{board_id}/columns)
+	CreateColumn(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID)
+	// ArchiveColumn Archive a column (TAV-02)
+	// (DELETE /api/v1/boards/{board_id}/columns/{column_id})
+	ArchiveColumn(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, columnId openapi_types.UUID)
+	// UpdateColumn Update a column name or order (TAV-02)
+	// (PATCH /api/v1/boards/{board_id}/columns/{column_id})
+	UpdateColumn(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, columnId openapi_types.UUID)
+	// ListCalendarEvents List calendar events in a time range (KAL-02, KAL-03)
+	// (GET /api/v1/calendar/events)
+	ListCalendarEvents(w http.ResponseWriter, r *http.Request, params ListCalendarEventsParams)
+	// GetCalendarEvent Get a calendar event (KAL-04)
+	// (GET /api/v1/calendar/events/{event_id})
+	GetCalendarEvent(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID)
+	// SyncCalendar Sync all enabled iCal sources (KAL-01)
+	// (POST /api/v1/calendar/sync)
+	SyncCalendar(w http.ResponseWriter, r *http.Request)
+	// ListFieldDefinitions List field definitions (PRD-13)
+	// (GET /api/v1/field-definitions)
+	ListFieldDefinitions(w http.ResponseWriter, r *http.Request)
+	// CreateFieldDefinition Create a field definition (PRD-13)
+	// (POST /api/v1/field-definitions)
+	CreateFieldDefinition(w http.ResponseWriter, r *http.Request)
+	// ArchiveFieldDefinition Archive a field definition (PRD-18)
+	// (DELETE /api/v1/field-definitions/{field_definition_id})
+	ArchiveFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID)
+	// GetFieldDefinition Get a field definition by ID
+	// (GET /api/v1/field-definitions/{field_definition_id})
+	GetFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID)
+	// UpdateFieldDefinition Update a field definition (PRD-18)
+	// (PATCH /api/v1/field-definitions/{field_definition_id})
+	UpdateFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID)
+	// ListICalSources List all active iCal sources (KAL-01)
+	// (GET /api/v1/ical-sources)
+	ListICalSources(w http.ResponseWriter, r *http.Request)
+	// CreateICalSource Create an iCal source (KAL-01)
+	// (POST /api/v1/ical-sources)
+	CreateICalSource(w http.ResponseWriter, r *http.Request)
+	// ArchiveICalSource Archive an iCal source (NFK-09)
+	// (DELETE /api/v1/ical-sources/{source_id})
+	ArchiveICalSource(w http.ResponseWriter, r *http.Request, sourceId openapi_types.UUID, params ArchiveICalSourceParams)
+	// GetICalSource Get an iCal source (KAL-01)
+	// (GET /api/v1/ical-sources/{source_id})
+	GetICalSource(w http.ResponseWriter, r *http.Request, sourceId openapi_types.UUID)
+	// UpdateICalSource Update an iCal source (KAL-01)
+	// (PUT /api/v1/ical-sources/{source_id})
+	UpdateICalSource(w http.ResponseWriter, r *http.Request, sourceId openapi_types.UUID)
+	// ListIdsEntries List numbers and IDs (REG-01)
+	// (GET /api/v1/ids)
+	ListIdsEntries(w http.ResponseWriter, r *http.Request)
+	// CreateIdsEntry Create a number or ID entry (REG-01)
+	// (POST /api/v1/ids)
+	CreateIdsEntry(w http.ResponseWriter, r *http.Request)
+	// ArchiveIdsEntry Archive a number or ID entry (REG-01)
+	// (DELETE /api/v1/ids/{entry_id})
+	ArchiveIdsEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID)
+	// GetIdsEntry Get a number or ID entry
+	// (GET /api/v1/ids/{entry_id})
+	GetIdsEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID)
+	// UpdateIdsEntry Update a number or ID entry (REG-01)
+	// (PATCH /api/v1/ids/{entry_id})
+	UpdateIdsEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID)
+	// GetBalance Balance for a product (LAG-01, LAG-02)
+	// (GET /api/v1/inventory/balance/{product_id})
+	GetBalance(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// GetFEFOBatches Batches ordered FEFO (LAG-03)
+	// (GET /api/v1/inventory/fefo/{product_id}/{location_id})
+	GetFEFOBatches(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, locationId openapi_types.UUID)
+	// ReleaseStock Release a reservation (LAG-02)
+	// (POST /api/v1/inventory/release)
+	ReleaseStock(w http.ResponseWriter, r *http.Request)
+	// ReserveStock Reserve stock for an order (LAG-02)
+	// (POST /api/v1/inventory/reserve)
+	ReserveStock(w http.ResponseWriter, r *http.Request)
+	// GetInventoryValue Inventory value per product per location (LAG-05)
+	// (GET /api/v1/inventory/value)
+	GetInventoryValue(w http.ResponseWriter, r *http.Request)
+	// WithdrawStock Withdraw stock on shipment (LAG-02, LAG-03)
+	// (POST /api/v1/inventory/withdraw)
+	WithdrawStock(w http.ResponseWriter, r *http.Request)
+	// GetKioskData Get aggregated data for kiosk views (KIO-02, KIO-03, KIO-05)
+	// (GET /api/v1/kiosk/data)
+	GetKioskData(w http.ResponseWriter, r *http.Request, params GetKioskDataParams)
+	// ListKioskDevices List all kiosk devices (KIO-06)
+	// (GET /api/v1/kiosk/devices)
+	ListKioskDevices(w http.ResponseWriter, r *http.Request)
+	// CreateKioskDevice Register a kiosk device (KIO-06)
+	// (POST /api/v1/kiosk/devices)
+	CreateKioskDevice(w http.ResponseWriter, r *http.Request)
+	// ArchiveKioskDevice Revoke and archive a kiosk device (KIO-06)
+	// (DELETE /api/v1/kiosk/devices/{device_id})
+	ArchiveKioskDevice(w http.ResponseWriter, r *http.Request, deviceId openapi_types.UUID, params ArchiveKioskDeviceParams)
+	// GetKioskDevice Get a kiosk device (KIO-06)
+	// (GET /api/v1/kiosk/devices/{device_id})
+	GetKioskDevice(w http.ResponseWriter, r *http.Request, deviceId openapi_types.UUID)
+	// UpdateKioskDevice Update a kiosk device (KIO-06)
+	// (PUT /api/v1/kiosk/devices/{device_id})
+	UpdateKioskDevice(w http.ResponseWriter, r *http.Request, deviceId openapi_types.UUID)
+	// PairKioskDevice Pair a kiosk device with its pairing code (KIO-06)
+	// (POST /api/v1/kiosk/pair)
+	PairKioskDevice(w http.ResponseWriter, r *http.Request, params PairKioskDeviceParams)
+	// ListKioskPlaylists List all active playlists (KIO-01)
+	// (GET /api/v1/kiosk/playlists)
+	ListKioskPlaylists(w http.ResponseWriter, r *http.Request)
+	// CreateKioskPlaylist Create a playlist (KIO-01)
+	// (POST /api/v1/kiosk/playlists)
+	CreateKioskPlaylist(w http.ResponseWriter, r *http.Request)
+	// ArchiveKioskPlaylist Archive a playlist (NFK-09)
+	// (DELETE /api/v1/kiosk/playlists/{playlist_id})
+	ArchiveKioskPlaylist(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, params ArchiveKioskPlaylistParams)
+	// GetKioskPlaylist Get a playlist (KIO-01)
+	// (GET /api/v1/kiosk/playlists/{playlist_id})
+	GetKioskPlaylist(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID)
+	// UpdateKioskPlaylist Update a playlist (KIO-01)
+	// (PUT /api/v1/kiosk/playlists/{playlist_id})
+	UpdateKioskPlaylist(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID)
+	// ListPlaylistViews List views in a playlist (KIO-01)
+	// (GET /api/v1/kiosk/playlists/{playlist_id}/views)
+	ListPlaylistViews(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID)
+	// CreatePlaylistView Add a view to a playlist (KIO-01, KIO-04)
+	// (POST /api/v1/kiosk/playlists/{playlist_id}/views)
+	CreatePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID)
+	// ArchivePlaylistView Remove a view from a playlist (KIO-01)
+	// (DELETE /api/v1/kiosk/playlists/{playlist_id}/views/{view_id})
+	ArchivePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, viewId openapi_types.UUID, params ArchivePlaylistViewParams)
+	// UpdatePlaylistView Update a view in a playlist (KIO-01)
+	// (PUT /api/v1/kiosk/playlists/{playlist_id}/views/{view_id})
+	UpdatePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, viewId openapi_types.UUID)
+	// ListLocations List all active locations (LAG-01)
+	// (GET /api/v1/locations)
+	ListLocations(w http.ResponseWriter, r *http.Request)
+	// CreateLocation Create a location (LAG-01)
+	// (POST /api/v1/locations)
+	CreateLocation(w http.ResponseWriter, r *http.Request)
+	// ArchiveLocation Archive a location (NFK-09)
+	// (DELETE /api/v1/locations/{location_id})
+	ArchiveLocation(w http.ResponseWriter, r *http.Request, locationId openapi_types.UUID)
+	// GetLocation Get a location by ID
+	// (GET /api/v1/locations/{location_id})
+	GetLocation(w http.ResponseWriter, r *http.Request, locationId openapi_types.UUID)
+	// UpdateLocation Update a location (LAG-01)
+	// (PATCH /api/v1/locations/{location_id})
+	UpdateLocation(w http.ResponseWriter, r *http.Request, locationId openapi_types.UUID)
 	// GetMe Who is logged in
 	// (GET /api/v1/me)
 	GetMe(w http.ResponseWriter, r *http.Request)
+	// ListProductTypes List product types (PRD-15)
+	// (GET /api/v1/product-types)
+	ListProductTypes(w http.ResponseWriter, r *http.Request)
+	// CreateProductType Create a product type (PRD-15)
+	// (POST /api/v1/product-types)
+	CreateProductType(w http.ResponseWriter, r *http.Request)
+	// ArchiveProductType Archive a product type (PRD-15)
+	// (DELETE /api/v1/product-types/{product_type_id})
+	ArchiveProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID)
+	// GetProductType Get a product type by ID
+	// (GET /api/v1/product-types/{product_type_id})
+	GetProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID)
+	// UpdateProductType Update a product type (PRD-15)
+	// (PATCH /api/v1/product-types/{product_type_id})
+	UpdateProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID)
+	// ListProductTypeFields List fields assigned to a product type (PRD-15)
+	// (GET /api/v1/product-types/{product_type_id}/fields)
+	ListProductTypeFields(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID)
+	// AssignFieldToProductType Assign a field to a product type (PRD-15)
+	// (POST /api/v1/product-types/{product_type_id}/fields)
+	AssignFieldToProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID)
+	// ArchiveProductTypeField Remove a field from a product type (PRD-15)
+	// (DELETE /api/v1/product-types/{product_type_id}/fields/{ptf_id})
+	ArchiveProductTypeField(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID, ptfId openapi_types.UUID)
+	// UpdateProductTypeField Update a field assignment in a product type (PRD-15)
+	// (PATCH /api/v1/product-types/{product_type_id}/fields/{ptf_id})
+	UpdateProductTypeField(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID, ptfId openapi_types.UUID)
+	// ListProducts List products (PRD-01, PRD-16)
+	// (GET /api/v1/products)
+	ListProducts(w http.ResponseWriter, r *http.Request, params ListProductsParams)
+	// CreateProduct Create a product (PRD-01, PRD-08)
+	// (POST /api/v1/products)
+	CreateProduct(w http.ResponseWriter, r *http.Request)
+	// ArchiveProduct Archive a product (PRD-01)
+	// (DELETE /api/v1/products/{product_id})
+	ArchiveProduct(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// GetProduct Get a product by ID (PRD-16)
+	// (GET /api/v1/products/{product_id})
+	GetProduct(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// UpdateProduct Update a product (PRD-01, PRD-17)
+	// (PATCH /api/v1/products/{product_id})
+	UpdateProduct(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// ListProductDocuments List documents for a product (PRD-06)
+	// (GET /api/v1/products/{product_id}/documents)
+	ListProductDocuments(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// CreateProductDocument Add a document to a product (PRD-06)
+	// (POST /api/v1/products/{product_id}/documents)
+	CreateProductDocument(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// ArchiveProductDocument Remove a product document (PRD-06)
+	// (DELETE /api/v1/products/{product_id}/documents/{doc_id})
+	ArchiveProductDocument(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, docId openapi_types.UUID)
+	// UpdateProductDocument Update a product document (PRD-06)
+	// (PATCH /api/v1/products/{product_id}/documents/{doc_id})
+	UpdateProductDocument(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, docId openapi_types.UUID)
+	// ListProductImages List images for a product (PRD-03)
+	// (GET /api/v1/products/{product_id}/images)
+	ListProductImages(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// CreateProductImage Add an image to a product (PRD-03)
+	// (POST /api/v1/products/{product_id}/images)
+	CreateProductImage(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// ArchiveProductImage Remove an image from a product (PRD-03)
+	// (DELETE /api/v1/products/{product_id}/images/{image_id})
+	ArchiveProductImage(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, imageId openapi_types.UUID)
+	// UpdateProductImage Update a product image (PRD-03)
+	// (PATCH /api/v1/products/{product_id}/images/{image_id})
+	UpdateProductImage(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, imageId openapi_types.UUID)
+	// LockProductSKU Lock the SKU of a product (PRD-08)
+	// (POST /api/v1/products/{product_id}/lock-sku)
+	LockProductSKU(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID)
+	// ListPurchaseOrders List purchase orders (INK-01)
+	// (GET /api/v1/purchase-orders)
+	ListPurchaseOrders(w http.ResponseWriter, r *http.Request, params ListPurchaseOrdersParams)
+	// CreatePurchaseOrder Create a purchase order (INK-01)
+	// (POST /api/v1/purchase-orders)
+	CreatePurchaseOrder(w http.ResponseWriter, r *http.Request)
+	// ArchivePurchaseOrder Archive a purchase order (NFK-09)
+	// (DELETE /api/v1/purchase-orders/{po_id})
+	ArchivePurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID)
+	// GetPurchaseOrder Get a purchase order by ID
+	// (GET /api/v1/purchase-orders/{po_id})
+	GetPurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID)
+	// UpdatePurchaseOrder Update a purchase order (INK-01)
+	// (PATCH /api/v1/purchase-orders/{po_id})
+	UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID)
+	// ListPurchaseOrderLines List lines for a purchase order (INK-01)
+	// (GET /api/v1/purchase-orders/{po_id}/lines)
+	ListPurchaseOrderLines(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID)
+	// CreatePurchaseOrderLine Add a line to a purchase order (INK-01)
+	// (POST /api/v1/purchase-orders/{po_id}/lines)
+	CreatePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID)
+	// ArchivePurchaseOrderLine Archive a purchase order line (NFK-09)
+	// (DELETE /api/v1/purchase-orders/{po_id}/lines/{line_id})
+	ArchivePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID, lineId openapi_types.UUID)
+	// UpdatePurchaseOrderLine Update a purchase order line (INK-01)
+	// (PATCH /api/v1/purchase-orders/{po_id}/lines/{line_id})
+	UpdatePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID, lineId openapi_types.UUID)
+	// ListShipments List all shipments (INK-03)
+	// (GET /api/v1/shipments)
+	ListShipments(w http.ResponseWriter, r *http.Request)
+	// CreateShipment Create a shipment (INK-02)
+	// (POST /api/v1/shipments)
+	CreateShipment(w http.ResponseWriter, r *http.Request)
+	// ListShipmentsByPurchaseOrder List shipments for a purchase order (INK-03)
+	// (GET /api/v1/shipments/by-po/{po_id})
+	ListShipmentsByPurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID)
+	// ArchiveShipment Archive a shipment (NFK-09)
+	// (DELETE /api/v1/shipments/{shipment_id})
+	ArchiveShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID)
+	// GetShipment Get a shipment by ID
+	// (GET /api/v1/shipments/{shipment_id})
+	GetShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID)
+	// UpdateShipment Update a shipment (INK-02)
+	// (PATCH /api/v1/shipments/{shipment_id})
+	UpdateShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID)
+	// ListStockMovements List stock movements (LAG-01)
+	// (GET /api/v1/stockmovements)
+	ListStockMovements(w http.ResponseWriter, r *http.Request, params ListStockMovementsParams)
+	// CreateStockMovement Create a stock movement (LAG-01, LAG-04)
+	// (POST /api/v1/stockmovements)
+	CreateStockMovement(w http.ResponseWriter, r *http.Request)
+	// ListSuppliers List all active suppliers (LEV-01)
+	// (GET /api/v1/suppliers)
+	ListSuppliers(w http.ResponseWriter, r *http.Request)
+	// CreateSupplier Create a supplier (LEV-01)
+	// (POST /api/v1/suppliers)
+	CreateSupplier(w http.ResponseWriter, r *http.Request)
+	// ArchiveSupplier Archive a supplier (NFK-09)
+	// (DELETE /api/v1/suppliers/{supplier_id})
+	ArchiveSupplier(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// GetSupplier Get a supplier by ID
+	// (GET /api/v1/suppliers/{supplier_id})
+	GetSupplier(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// UpdateSupplier Update a supplier (LEV-01)
+	// (PATCH /api/v1/suppliers/{supplier_id})
+	UpdateSupplier(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// ListSupplierContacts List contacts for a supplier (LEV-01)
+	// (GET /api/v1/suppliers/{supplier_id}/contacts)
+	ListSupplierContacts(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// CreateSupplierContact Add a contact to a supplier (LEV-01)
+	// (POST /api/v1/suppliers/{supplier_id}/contacts)
+	CreateSupplierContact(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// ArchiveSupplierContact Archive a contact (NFK-09)
+	// (DELETE /api/v1/suppliers/{supplier_id}/contacts/{contact_id})
+	ArchiveSupplierContact(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID, contactId openapi_types.UUID)
+	// UpdateSupplierContact Update a contact (LEV-01)
+	// (PATCH /api/v1/suppliers/{supplier_id}/contacts/{contact_id})
+	UpdateSupplierContact(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID, contactId openapi_types.UUID)
+	// ListSupplierProducts List products delivered by a supplier (LEV-02)
+	// (GET /api/v1/suppliers/{supplier_id}/products)
+	ListSupplierProducts(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// CreateSupplierProduct Link a product to a supplier (LEV-02)
+	// (POST /api/v1/suppliers/{supplier_id}/products)
+	CreateSupplierProduct(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID)
+	// ArchiveSupplierProduct Remove a product link from a supplier (NFK-09)
+	// (DELETE /api/v1/suppliers/{supplier_id}/products/{sp_id})
+	ArchiveSupplierProduct(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID, spId openapi_types.UUID)
 	// GetVersion Which release is running
 	// (GET /api/v1/version)
 	GetVersion(w http.ResponseWriter, r *http.Request)
@@ -130,11 +2253,3157 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// ListBoards operation middleware
+func (siw *ServerInterfaceWrapper) ListBoards(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBoards(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateBoard operation middleware
+func (siw *ServerInterfaceWrapper) CreateBoard(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateBoard(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveBoard operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveBoard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveBoard(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBoard operation middleware
+func (siw *ServerInterfaceWrapper) GetBoard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBoard(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateBoard operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBoard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateBoard(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCards operation middleware
+func (siw *ServerInterfaceWrapper) ListCards(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCards(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCard operation middleware
+func (siw *ServerInterfaceWrapper) CreateCard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCard(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveCard operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveCard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveCard(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCard operation middleware
+func (siw *ServerInterfaceWrapper) GetCard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCard(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCard operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCard(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListChecklistItems operation middleware
+func (siw *ServerInterfaceWrapper) ListChecklistItems(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListChecklistItems(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateChecklistItem operation middleware
+func (siw *ServerInterfaceWrapper) CreateChecklistItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateChecklistItem(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveChecklistItem operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveChecklistItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "item_id" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "item_id", r.PathValue("item_id"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "item_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveChecklistItem(w, r, boardId, cardId, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateChecklistItem operation middleware
+func (siw *ServerInterfaceWrapper) UpdateChecklistItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "item_id" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "item_id", r.PathValue("item_id"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "item_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateChecklistItem(w, r, boardId, cardId, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListComments operation middleware
+func (siw *ServerInterfaceWrapper) ListComments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListComments(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateComment operation middleware
+func (siw *ServerInterfaceWrapper) CreateComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card_id" -------------
+	var cardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card_id", r.PathValue("card_id"), &cardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateComment(w, r, boardId, cardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListColumns operation middleware
+func (siw *ServerInterfaceWrapper) ListColumns(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListColumns(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateColumn operation middleware
+func (siw *ServerInterfaceWrapper) CreateColumn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateColumn(w, r, boardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveColumn operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveColumn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "column_id" -------------
+	var columnId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "column_id", r.PathValue("column_id"), &columnId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "column_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveColumn(w, r, boardId, columnId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateColumn operation middleware
+func (siw *ServerInterfaceWrapper) UpdateColumn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "board_id" -------------
+	var boardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "board_id", r.PathValue("board_id"), &boardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "board_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "column_id" -------------
+	var columnId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "column_id", r.PathValue("column_id"), &columnId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "column_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateColumn(w, r, boardId, columnId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCalendarEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListCalendarEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCalendarEventsParams
+
+	// ------------- Required query parameter "start_time" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "start_time", r.URL.Query(), &params.StartTime, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "start_time"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "start_time", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "end_time" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "end_time", r.URL.Query(), &params.EndTime, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "end_time"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "end_time", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCalendarEvents(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCalendarEvent operation middleware
+func (siw *ServerInterfaceWrapper) GetCalendarEvent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "event_id" -------------
+	var eventId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "event_id", r.PathValue("event_id"), &eventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "event_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCalendarEvent(w, r, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SyncCalendar operation middleware
+func (siw *ServerInterfaceWrapper) SyncCalendar(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SyncCalendar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFieldDefinitions operation middleware
+func (siw *ServerInterfaceWrapper) ListFieldDefinitions(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFieldDefinitions(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFieldDefinition operation middleware
+func (siw *ServerInterfaceWrapper) CreateFieldDefinition(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFieldDefinition(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveFieldDefinition operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveFieldDefinition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "field_definition_id" -------------
+	var fieldDefinitionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "field_definition_id", r.PathValue("field_definition_id"), &fieldDefinitionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "field_definition_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveFieldDefinition(w, r, fieldDefinitionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFieldDefinition operation middleware
+func (siw *ServerInterfaceWrapper) GetFieldDefinition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "field_definition_id" -------------
+	var fieldDefinitionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "field_definition_id", r.PathValue("field_definition_id"), &fieldDefinitionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "field_definition_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFieldDefinition(w, r, fieldDefinitionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFieldDefinition operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFieldDefinition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "field_definition_id" -------------
+	var fieldDefinitionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "field_definition_id", r.PathValue("field_definition_id"), &fieldDefinitionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "field_definition_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFieldDefinition(w, r, fieldDefinitionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListICalSources operation middleware
+func (siw *ServerInterfaceWrapper) ListICalSources(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListICalSources(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateICalSource operation middleware
+func (siw *ServerInterfaceWrapper) CreateICalSource(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateICalSource(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveICalSource operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveICalSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "source_id" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "source_id", r.PathValue("source_id"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "source_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ArchiveICalSourceParams
+
+	// ------------- Required query parameter "version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "version", r.URL.Query(), &params.Version, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveICalSource(w, r, sourceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetICalSource operation middleware
+func (siw *ServerInterfaceWrapper) GetICalSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "source_id" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "source_id", r.PathValue("source_id"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "source_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetICalSource(w, r, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateICalSource operation middleware
+func (siw *ServerInterfaceWrapper) UpdateICalSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "source_id" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "source_id", r.PathValue("source_id"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "source_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateICalSource(w, r, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIdsEntries operation middleware
+func (siw *ServerInterfaceWrapper) ListIdsEntries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIdsEntries(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateIdsEntry operation middleware
+func (siw *ServerInterfaceWrapper) CreateIdsEntry(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateIdsEntry(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveIdsEntry operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveIdsEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entry_id" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entry_id", r.PathValue("entry_id"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entry_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveIdsEntry(w, r, entryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIdsEntry operation middleware
+func (siw *ServerInterfaceWrapper) GetIdsEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entry_id" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entry_id", r.PathValue("entry_id"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entry_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIdsEntry(w, r, entryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIdsEntry operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIdsEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entry_id" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entry_id", r.PathValue("entry_id"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entry_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIdsEntry(w, r, entryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBalance operation middleware
+func (siw *ServerInterfaceWrapper) GetBalance(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBalance(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFEFOBatches operation middleware
+func (siw *ServerInterfaceWrapper) GetFEFOBatches(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "location_id" -------------
+	var locationId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "location_id", r.PathValue("location_id"), &locationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "location_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFEFOBatches(w, r, productId, locationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReleaseStock operation middleware
+func (siw *ServerInterfaceWrapper) ReleaseStock(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReleaseStock(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReserveStock operation middleware
+func (siw *ServerInterfaceWrapper) ReserveStock(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReserveStock(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInventoryValue operation middleware
+func (siw *ServerInterfaceWrapper) GetInventoryValue(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInventoryValue(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// WithdrawStock operation middleware
+func (siw *ServerInterfaceWrapper) WithdrawStock(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.WithdrawStock(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetKioskData operation middleware
+func (siw *ServerInterfaceWrapper) GetKioskData(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetKioskDataParams
+
+	// ------------- Optional query parameter "playlist_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "playlist_id", r.URL.Query(), &params.PlaylistId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "playlist_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "period_months" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period_months", r.URL.Query(), &params.PeriodMonths, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period_months"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_months", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetKioskData(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListKioskDevices operation middleware
+func (siw *ServerInterfaceWrapper) ListKioskDevices(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListKioskDevices(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateKioskDevice operation middleware
+func (siw *ServerInterfaceWrapper) CreateKioskDevice(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateKioskDevice(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveKioskDevice operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveKioskDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "device_id" -------------
+	var deviceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "device_id", r.PathValue("device_id"), &deviceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "device_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ArchiveKioskDeviceParams
+
+	// ------------- Required query parameter "version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "version", r.URL.Query(), &params.Version, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveKioskDevice(w, r, deviceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetKioskDevice operation middleware
+func (siw *ServerInterfaceWrapper) GetKioskDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "device_id" -------------
+	var deviceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "device_id", r.PathValue("device_id"), &deviceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "device_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetKioskDevice(w, r, deviceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateKioskDevice operation middleware
+func (siw *ServerInterfaceWrapper) UpdateKioskDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "device_id" -------------
+	var deviceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "device_id", r.PathValue("device_id"), &deviceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "device_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateKioskDevice(w, r, deviceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PairKioskDevice operation middleware
+func (siw *ServerInterfaceWrapper) PairKioskDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PairKioskDeviceParams
+
+	// ------------- Required query parameter "pairing_code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "pairing_code", r.URL.Query(), &params.PairingCode, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "pairing_code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pairing_code", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PairKioskDevice(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListKioskPlaylists operation middleware
+func (siw *ServerInterfaceWrapper) ListKioskPlaylists(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListKioskPlaylists(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateKioskPlaylist operation middleware
+func (siw *ServerInterfaceWrapper) CreateKioskPlaylist(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateKioskPlaylist(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveKioskPlaylist operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveKioskPlaylist(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ArchiveKioskPlaylistParams
+
+	// ------------- Required query parameter "version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "version", r.URL.Query(), &params.Version, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveKioskPlaylist(w, r, playlistId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetKioskPlaylist operation middleware
+func (siw *ServerInterfaceWrapper) GetKioskPlaylist(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetKioskPlaylist(w, r, playlistId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateKioskPlaylist operation middleware
+func (siw *ServerInterfaceWrapper) UpdateKioskPlaylist(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateKioskPlaylist(w, r, playlistId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPlaylistViews operation middleware
+func (siw *ServerInterfaceWrapper) ListPlaylistViews(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPlaylistViews(w, r, playlistId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePlaylistView operation middleware
+func (siw *ServerInterfaceWrapper) CreatePlaylistView(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePlaylistView(w, r, playlistId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchivePlaylistView operation middleware
+func (siw *ServerInterfaceWrapper) ArchivePlaylistView(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "view_id" -------------
+	var viewId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "view_id", r.PathValue("view_id"), &viewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "view_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ArchivePlaylistViewParams
+
+	// ------------- Required query parameter "version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "version", r.URL.Query(), &params.Version, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchivePlaylistView(w, r, playlistId, viewId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePlaylistView operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePlaylistView(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "playlist_id" -------------
+	var playlistId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "playlist_id", r.PathValue("playlist_id"), &playlistId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "playlist_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "view_id" -------------
+	var viewId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "view_id", r.PathValue("view_id"), &viewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "view_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePlaylistView(w, r, playlistId, viewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListLocations operation middleware
+func (siw *ServerInterfaceWrapper) ListLocations(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLocations(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLocation operation middleware
+func (siw *ServerInterfaceWrapper) CreateLocation(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLocation(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveLocation operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveLocation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "location_id" -------------
+	var locationId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "location_id", r.PathValue("location_id"), &locationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "location_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveLocation(w, r, locationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLocation operation middleware
+func (siw *ServerInterfaceWrapper) GetLocation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "location_id" -------------
+	var locationId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "location_id", r.PathValue("location_id"), &locationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "location_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLocation(w, r, locationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLocation operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLocation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "location_id" -------------
+	var locationId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "location_id", r.PathValue("location_id"), &locationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "location_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLocation(w, r, locationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetMe operation middleware
 func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProductTypes operation middleware
+func (siw *ServerInterfaceWrapper) ListProductTypes(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProductTypes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProductType operation middleware
+func (siw *ServerInterfaceWrapper) CreateProductType(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProductType(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveProductType operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProductType(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveProductType(w, r, productTypeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProductType operation middleware
+func (siw *ServerInterfaceWrapper) GetProductType(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProductType(w, r, productTypeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProductType operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProductType(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProductType(w, r, productTypeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProductTypeFields operation middleware
+func (siw *ServerInterfaceWrapper) ListProductTypeFields(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProductTypeFields(w, r, productTypeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AssignFieldToProductType operation middleware
+func (siw *ServerInterfaceWrapper) AssignFieldToProductType(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AssignFieldToProductType(w, r, productTypeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveProductTypeField operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProductTypeField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ptf_id" -------------
+	var ptfId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ptf_id", r.PathValue("ptf_id"), &ptfId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ptf_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveProductTypeField(w, r, productTypeId, ptfId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProductTypeField operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProductTypeField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_type_id" -------------
+	var productTypeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_type_id", r.PathValue("product_type_id"), &productTypeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_type_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ptf_id" -------------
+	var ptfId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ptf_id", r.PathValue("ptf_id"), &ptfId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ptf_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProductTypeField(w, r, productTypeId, ptfId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProducts operation middleware
+func (siw *ServerInterfaceWrapper) ListProducts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProductsParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProducts(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProduct operation middleware
+func (siw *ServerInterfaceWrapper) CreateProduct(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProduct(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveProduct operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveProduct(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProduct operation middleware
+func (siw *ServerInterfaceWrapper) GetProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProduct(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProduct operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProduct(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProductDocuments operation middleware
+func (siw *ServerInterfaceWrapper) ListProductDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProductDocuments(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProductDocument operation middleware
+func (siw *ServerInterfaceWrapper) CreateProductDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProductDocument(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveProductDocument operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProductDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "doc_id" -------------
+	var docId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "doc_id", r.PathValue("doc_id"), &docId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "doc_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveProductDocument(w, r, productId, docId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProductDocument operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProductDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "doc_id" -------------
+	var docId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "doc_id", r.PathValue("doc_id"), &docId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "doc_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProductDocument(w, r, productId, docId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProductImages operation middleware
+func (siw *ServerInterfaceWrapper) ListProductImages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProductImages(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProductImage operation middleware
+func (siw *ServerInterfaceWrapper) CreateProductImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProductImage(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveProductImage operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveProductImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "image_id" -------------
+	var imageId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "image_id", r.PathValue("image_id"), &imageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "image_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveProductImage(w, r, productId, imageId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProductImage operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProductImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "image_id" -------------
+	var imageId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "image_id", r.PathValue("image_id"), &imageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "image_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProductImage(w, r, productId, imageId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LockProductSKU operation middleware
+func (siw *ServerInterfaceWrapper) LockProductSKU(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "product_id" -------------
+	var productId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "product_id", r.PathValue("product_id"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LockProductSKU(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPurchaseOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPurchaseOrdersParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "supplier_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "supplier_id", r.URL.Query(), &params.SupplierId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "supplier_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPurchaseOrders(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseOrder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchivePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) ArchivePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchivePurchaseOrder(w, r, poId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) GetPurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPurchaseOrder(w, r, poId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePurchaseOrder(w, r, poId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPurchaseOrderLines operation middleware
+func (siw *ServerInterfaceWrapper) ListPurchaseOrderLines(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPurchaseOrderLines(w, r, poId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseOrderLine operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseOrderLine(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseOrderLine(w, r, poId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchivePurchaseOrderLine operation middleware
+func (siw *ServerInterfaceWrapper) ArchivePurchaseOrderLine(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "line_id" -------------
+	var lineId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "line_id", r.PathValue("line_id"), &lineId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "line_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchivePurchaseOrderLine(w, r, poId, lineId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePurchaseOrderLine operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePurchaseOrderLine(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "line_id" -------------
+	var lineId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "line_id", r.PathValue("line_id"), &lineId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "line_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePurchaseOrderLine(w, r, poId, lineId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListShipments operation middleware
+func (siw *ServerInterfaceWrapper) ListShipments(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListShipments(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateShipment operation middleware
+func (siw *ServerInterfaceWrapper) CreateShipment(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateShipment(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListShipmentsByPurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) ListShipmentsByPurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "po_id" -------------
+	var poId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "po_id", r.PathValue("po_id"), &poId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "po_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListShipmentsByPurchaseOrder(w, r, poId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveShipment operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveShipment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shipment_id" -------------
+	var shipmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shipment_id", r.PathValue("shipment_id"), &shipmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shipment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveShipment(w, r, shipmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetShipment operation middleware
+func (siw *ServerInterfaceWrapper) GetShipment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shipment_id" -------------
+	var shipmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shipment_id", r.PathValue("shipment_id"), &shipmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shipment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetShipment(w, r, shipmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateShipment operation middleware
+func (siw *ServerInterfaceWrapper) UpdateShipment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shipment_id" -------------
+	var shipmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shipment_id", r.PathValue("shipment_id"), &shipmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shipment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateShipment(w, r, shipmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListStockMovements operation middleware
+func (siw *ServerInterfaceWrapper) ListStockMovements(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListStockMovementsParams
+
+	// ------------- Optional query parameter "product_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "product_id", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "product_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "location_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "location_id", r.URL.Query(), &params.LocationId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "location_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "location_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "movement_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "movement_type", r.URL.Query(), &params.MovementType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "movement_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "movement_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "reference_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "reference_type", r.URL.Query(), &params.ReferenceType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "reference_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reference_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "reference_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "reference_id", r.URL.Query(), &params.ReferenceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "reference_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reference_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStockMovements(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateStockMovement operation middleware
+func (siw *ServerInterfaceWrapper) CreateStockMovement(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateStockMovement(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSuppliers operation middleware
+func (siw *ServerInterfaceWrapper) ListSuppliers(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSuppliers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSupplier operation middleware
+func (siw *ServerInterfaceWrapper) CreateSupplier(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSupplier(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveSupplier operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveSupplier(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveSupplier(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSupplier operation middleware
+func (siw *ServerInterfaceWrapper) GetSupplier(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSupplier(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSupplier operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSupplier(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSupplier(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSupplierContacts operation middleware
+func (siw *ServerInterfaceWrapper) ListSupplierContacts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSupplierContacts(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSupplierContact operation middleware
+func (siw *ServerInterfaceWrapper) CreateSupplierContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSupplierContact(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveSupplierContact operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveSupplierContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", r.PathValue("contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveSupplierContact(w, r, supplierId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSupplierContact operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSupplierContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", r.PathValue("contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSupplierContact(w, r, supplierId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSupplierProducts operation middleware
+func (siw *ServerInterfaceWrapper) ListSupplierProducts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSupplierProducts(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSupplierProduct operation middleware
+func (siw *ServerInterfaceWrapper) CreateSupplierProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSupplierProduct(w, r, supplierId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveSupplierProduct operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveSupplierProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "supplier_id" -------------
+	var supplierId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "supplier_id", r.PathValue("supplier_id"), &supplierId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "supplier_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sp_id" -------------
+	var spId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sp_id", r.PathValue("sp_id"), &spId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sp_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveSupplierProduct(w, r, supplierId, spId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -384,11 +5653,128 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards", wrapper.ListBoards)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/boards", wrapper.CreateBoard)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/boards/{board_id}", wrapper.ArchiveBoard)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards/{board_id}", wrapper.GetBoard)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/boards/{board_id}", wrapper.UpdateBoard)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards/{board_id}/columns", wrapper.ListColumns)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/boards/{board_id}/columns", wrapper.CreateColumn)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/boards/{board_id}/columns/{column_id}", wrapper.ArchiveColumn)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/boards/{board_id}/columns/{column_id}", wrapper.UpdateColumn)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards", wrapper.ListCards)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards", wrapper.CreateCard)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}", wrapper.ArchiveCard)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}", wrapper.GetCard)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}", wrapper.UpdateCard)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}/checklist", wrapper.ListChecklistItems)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}/checklist", wrapper.CreateChecklistItem)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}/checklist/{item_id}", wrapper.ArchiveChecklistItem)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}/checklist/{item_id}", wrapper.UpdateChecklistItem)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}/comments", wrapper.ListComments)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/boards/{board_id}/cards/{card_id}/comments", wrapper.CreateComment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/callback", wrapper.LoginCallback)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/logout", wrapper.Logout)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/me", wrapper.GetMe)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/version", wrapper.GetVersion)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/field-definitions", wrapper.ListFieldDefinitions)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/field-definitions", wrapper.CreateFieldDefinition)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/field-definitions/{field_definition_id}", wrapper.ArchiveFieldDefinition)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/field-definitions/{field_definition_id}", wrapper.GetFieldDefinition)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/field-definitions/{field_definition_id}", wrapper.UpdateFieldDefinition)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/product-types", wrapper.ListProductTypes)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/product-types", wrapper.CreateProductType)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}", wrapper.ArchiveProductType)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}", wrapper.GetProductType)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}", wrapper.UpdateProductType)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}/fields", wrapper.ListProductTypeFields)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}/fields", wrapper.AssignFieldToProductType)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}/fields/{ptf_id}", wrapper.ArchiveProductTypeField)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/product-types/{product_type_id}/fields/{ptf_id}", wrapper.UpdateProductTypeField)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/products", wrapper.ListProducts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/products", wrapper.CreateProduct)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/products/{product_id}", wrapper.ArchiveProduct)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/products/{product_id}", wrapper.GetProduct)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/products/{product_id}", wrapper.UpdateProduct)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/products/{product_id}/lock-sku", wrapper.LockProductSKU)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/products/{product_id}/images", wrapper.ListProductImages)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/products/{product_id}/images", wrapper.CreateProductImage)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/products/{product_id}/images/{image_id}", wrapper.ArchiveProductImage)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/products/{product_id}/images/{image_id}", wrapper.UpdateProductImage)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/products/{product_id}/documents", wrapper.ListProductDocuments)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/products/{product_id}/documents", wrapper.CreateProductDocument)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/products/{product_id}/documents/{doc_id}", wrapper.ArchiveProductDocument)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/products/{product_id}/documents/{doc_id}", wrapper.UpdateProductDocument)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/ids", wrapper.ListIdsEntries)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/ids", wrapper.CreateIdsEntry)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/ids/{entry_id}", wrapper.ArchiveIdsEntry)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/ids/{entry_id}", wrapper.GetIdsEntry)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/ids/{entry_id}", wrapper.UpdateIdsEntry)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/suppliers", wrapper.ListSuppliers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/suppliers", wrapper.CreateSupplier)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}", wrapper.ArchiveSupplier)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}", wrapper.GetSupplier)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}", wrapper.UpdateSupplier)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/contacts", wrapper.ListSupplierContacts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/contacts", wrapper.CreateSupplierContact)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/contacts/{contact_id}", wrapper.ArchiveSupplierContact)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/contacts/{contact_id}", wrapper.UpdateSupplierContact)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/products", wrapper.ListSupplierProducts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/products", wrapper.CreateSupplierProduct)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/suppliers/{supplier_id}/products/{sp_id}", wrapper.ArchiveSupplierProduct)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/purchase-orders", wrapper.ListPurchaseOrders)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/purchase-orders", wrapper.CreatePurchaseOrder)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}", wrapper.ArchivePurchaseOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}", wrapper.GetPurchaseOrder)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}", wrapper.UpdatePurchaseOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}/lines", wrapper.ListPurchaseOrderLines)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}/lines", wrapper.CreatePurchaseOrderLine)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}/lines/{line_id}", wrapper.ArchivePurchaseOrderLine)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/purchase-orders/{po_id}/lines/{line_id}", wrapper.UpdatePurchaseOrderLine)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/shipments", wrapper.ListShipments)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/shipments", wrapper.CreateShipment)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/shipments/{shipment_id}", wrapper.ArchiveShipment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/shipments/{shipment_id}", wrapper.GetShipment)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/shipments/{shipment_id}", wrapper.UpdateShipment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/shipments/by-po/{po_id}", wrapper.ListShipmentsByPurchaseOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/locations", wrapper.ListLocations)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/locations", wrapper.CreateLocation)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/locations/{location_id}", wrapper.ArchiveLocation)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/locations/{location_id}", wrapper.GetLocation)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/locations/{location_id}", wrapper.UpdateLocation)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/stockmovements", wrapper.ListStockMovements)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/stockmovements", wrapper.CreateStockMovement)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/inventory/balance/{product_id}", wrapper.GetBalance)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/inventory/fefo/{product_id}/{location_id}", wrapper.GetFEFOBatches)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/inventory/value", wrapper.GetInventoryValue)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/inventory/reserve", wrapper.ReserveStock)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/inventory/release", wrapper.ReleaseStock)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/inventory/withdraw", wrapper.WithdrawStock)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/ical-sources", wrapper.ListICalSources)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/ical-sources", wrapper.CreateICalSource)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/ical-sources/{source_id}", wrapper.ArchiveICalSource)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/ical-sources/{source_id}", wrapper.GetICalSource)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/ical-sources/{source_id}", wrapper.UpdateICalSource)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/calendar/events", wrapper.ListCalendarEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/calendar/events/{event_id}", wrapper.GetCalendarEvent)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/calendar/sync", wrapper.SyncCalendar)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/playlists", wrapper.ListKioskPlaylists)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/kiosk/playlists", wrapper.CreateKioskPlaylist)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}", wrapper.ArchiveKioskPlaylist)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}", wrapper.GetKioskPlaylist)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}", wrapper.UpdateKioskPlaylist)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}/views", wrapper.ListPlaylistViews)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}/views", wrapper.CreatePlaylistView)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}/views/{view_id}", wrapper.ArchivePlaylistView)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/kiosk/playlists/{playlist_id}/views/{view_id}", wrapper.UpdatePlaylistView)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/devices", wrapper.ListKioskDevices)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/kiosk/devices", wrapper.CreateKioskDevice)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/kiosk/devices/{device_id}", wrapper.ArchiveKioskDevice)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/devices/{device_id}", wrapper.GetKioskDevice)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/kiosk/devices/{device_id}", wrapper.UpdateKioskDevice)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/kiosk/pair", wrapper.PairKioskDevice)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/data", wrapper.GetKioskData)
 
 	return m
 }
@@ -398,43 +5784,180 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
