@@ -196,7 +196,7 @@ func testHandlers(t *testing.T) (public, internal http.Handler, health *httpx.He
 	if err != nil {
 		t.Fatal(err)
 	}
-	public, internal = newHandlers(discardLogger(), metrics, health, tp, authHandler)
+	public, internal = newHandlers(discardLogger(), metrics, health, tp, authHandler, nil, rec, sessions)
 	return public, internal, health
 }
 

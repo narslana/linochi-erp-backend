@@ -22,6 +22,21 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for AcceptOrderStatus.
+const (
+	AcceptOrderStatusAccepted AcceptOrderStatus = "accepted"
+)
+
+// Valid indicates whether the value is a known member of the AcceptOrderStatus enum.
+func (e AcceptOrderStatus) Valid() bool {
+	switch e {
+	case AcceptOrderStatusAccepted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalendarEventSourceType.
 const (
 	Ical     CalendarEventSourceType = "ical"
@@ -34,6 +49,66 @@ func (e CalendarEventSourceType) Valid() bool {
 	case Ical:
 		return true
 	case Internal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CancelOrderStatus.
+const (
+	CancelOrderStatusCancelled CancelOrderStatus = "cancelled"
+)
+
+// Valid indicates whether the value is a known member of the CancelOrderStatus enum.
+func (e CancelOrderStatus) Valid() bool {
+	switch e {
+	case CancelOrderStatusCancelled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateLeadStatus.
+const (
+	CreateLeadStatusContacted   CreateLeadStatus = "contacted"
+	CreateLeadStatusCustomer    CreateLeadStatus = "customer"
+	CreateLeadStatusInterested  CreateLeadStatus = "interested"
+	CreateLeadStatusNew         CreateLeadStatus = "new"
+	CreateLeadStatusNotRelevant CreateLeadStatus = "not_relevant"
+)
+
+// Valid indicates whether the value is a known member of the CreateLeadStatus enum.
+func (e CreateLeadStatus) Valid() bool {
+	switch e {
+	case CreateLeadStatusContacted:
+		return true
+	case CreateLeadStatusCustomer:
+		return true
+	case CreateLeadStatusInterested:
+		return true
+	case CreateLeadStatusNew:
+		return true
+	case CreateLeadStatusNotRelevant:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateReminderReminderType.
+const (
+	CreateReminderReminderTypeExternal CreateReminderReminderType = "external"
+	CreateReminderReminderTypeIdsEntry CreateReminderReminderType = "ids_entry"
+)
+
+// Valid indicates whether the value is a known member of the CreateReminderReminderType enum.
+func (e CreateReminderReminderType) Valid() bool {
+	switch e {
+	case CreateReminderReminderTypeExternal:
+		return true
+	case CreateReminderReminderTypeIdsEntry:
 		return true
 	default:
 		return false
@@ -61,6 +136,33 @@ func (e KioskPlaylistViewViewType) Valid() bool {
 	case KioskPlaylistViewViewTypeMap:
 		return true
 	case KioskPlaylistViewViewTypeOrders:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LeadStatus.
+const (
+	LeadStatusContacted   LeadStatus = "contacted"
+	LeadStatusCustomer    LeadStatus = "customer"
+	LeadStatusInterested  LeadStatus = "interested"
+	LeadStatusNew         LeadStatus = "new"
+	LeadStatusNotRelevant LeadStatus = "not_relevant"
+)
+
+// Valid indicates whether the value is a known member of the LeadStatus enum.
+func (e LeadStatus) Valid() bool {
+	switch e {
+	case LeadStatusContacted:
+		return true
+	case LeadStatusCustomer:
+		return true
+	case LeadStatusInterested:
+		return true
+	case LeadStatusNew:
+		return true
+	case LeadStatusNotRelevant:
 		return true
 	default:
 		return false
@@ -103,6 +205,39 @@ func (e PurchaseOrderStatus) Valid() bool {
 	case PurchaseOrderStatusOrdered:
 		return true
 	case PurchaseOrderStatusPaid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReminderReminderType.
+const (
+	ReminderReminderTypeExternal ReminderReminderType = "external"
+	ReminderReminderTypeIdsEntry ReminderReminderType = "ids_entry"
+)
+
+// Valid indicates whether the value is a known member of the ReminderReminderType enum.
+func (e ReminderReminderType) Valid() bool {
+	switch e {
+	case ReminderReminderTypeExternal:
+		return true
+	case ReminderReminderTypeIdsEntry:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ShipOrderStatus.
+const (
+	ShipOrderStatusShipped ShipOrderStatus = "shipped"
+)
+
+// Valid indicates whether the value is a known member of the ShipOrderStatus enum.
+func (e ShipOrderStatus) Valid() bool {
+	switch e {
+	case ShipOrderStatusShipped:
 		return true
 	default:
 		return false
@@ -187,6 +322,51 @@ func (e SupplierRole) Valid() bool {
 	case SupplierRoleFreight:
 		return true
 	case SupplierRoleManufacturer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateLeadStatus.
+const (
+	UpdateLeadStatusContacted   UpdateLeadStatus = "contacted"
+	UpdateLeadStatusCustomer    UpdateLeadStatus = "customer"
+	UpdateLeadStatusInterested  UpdateLeadStatus = "interested"
+	UpdateLeadStatusNew         UpdateLeadStatus = "new"
+	UpdateLeadStatusNotRelevant UpdateLeadStatus = "not_relevant"
+)
+
+// Valid indicates whether the value is a known member of the UpdateLeadStatus enum.
+func (e UpdateLeadStatus) Valid() bool {
+	switch e {
+	case UpdateLeadStatusContacted:
+		return true
+	case UpdateLeadStatusCustomer:
+		return true
+	case UpdateLeadStatusInterested:
+		return true
+	case UpdateLeadStatusNew:
+		return true
+	case UpdateLeadStatusNotRelevant:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateReminderReminderType.
+const (
+	UpdateReminderReminderTypeExternal UpdateReminderReminderType = "external"
+	UpdateReminderReminderTypeIdsEntry UpdateReminderReminderType = "ids_entry"
+)
+
+// Valid indicates whether the value is a known member of the UpdateReminderReminderType enum.
+func (e UpdateReminderReminderType) Valid() bool {
+	switch e {
+	case UpdateReminderReminderTypeExternal:
+		return true
+	case UpdateReminderReminderTypeIdsEntry:
 		return true
 	default:
 		return false
@@ -337,6 +517,33 @@ func (e UpdatePlaylistViewJSONBodyViewType) Valid() bool {
 	case UpdatePlaylistViewJSONBodyViewTypeMap:
 		return true
 	case UpdatePlaylistViewJSONBodyViewTypeOrders:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListOrdersParamsStatus.
+const (
+	ListOrdersParamsStatusAccepted  ListOrdersParamsStatus = "accepted"
+	ListOrdersParamsStatusCancelled ListOrdersParamsStatus = "cancelled"
+	ListOrdersParamsStatusDelivered ListOrdersParamsStatus = "delivered"
+	ListOrdersParamsStatusDraft     ListOrdersParamsStatus = "draft"
+	ListOrdersParamsStatusShipped   ListOrdersParamsStatus = "shipped"
+)
+
+// Valid indicates whether the value is a known member of the ListOrdersParamsStatus enum.
+func (e ListOrdersParamsStatus) Valid() bool {
+	switch e {
+	case ListOrdersParamsStatusAccepted:
+		return true
+	case ListOrdersParamsStatusCancelled:
+		return true
+	case ListOrdersParamsStatusDelivered:
+		return true
+	case ListOrdersParamsStatusDraft:
+		return true
+	case ListOrdersParamsStatusShipped:
 		return true
 	default:
 		return false
@@ -496,6 +703,30 @@ func (e UpdateShipmentJSONBodyStatus) Valid() bool {
 	}
 }
 
+// Defines values for GetRevenueParamsPeriod.
+const (
+	Daily   GetRevenueParamsPeriod = "daily"
+	Monthly GetRevenueParamsPeriod = "monthly"
+	Weekly  GetRevenueParamsPeriod = "weekly"
+	Yearly  GetRevenueParamsPeriod = "yearly"
+)
+
+// Valid indicates whether the value is a known member of the GetRevenueParamsPeriod enum.
+func (e GetRevenueParamsPeriod) Valid() bool {
+	switch e {
+	case Daily:
+		return true
+	case Monthly:
+		return true
+	case Weekly:
+		return true
+	case Yearly:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListStockMovementsParamsMovementType.
 const (
 	ListStockMovementsParamsMovementTypeAdjustmentIn  ListStockMovementsParamsMovementType = "adjustment_in"
@@ -610,6 +841,15 @@ func (e UpdateSupplierJSONBodyRole) Valid() bool {
 	}
 }
 
+// AcceptOrder defines model for AcceptOrder.
+type AcceptOrder struct {
+	Reason *string           `json:"reason,omitempty"`
+	Status AcceptOrderStatus `json:"status"`
+}
+
+// AcceptOrderStatus defines model for AcceptOrder.Status.
+type AcceptOrderStatus string
+
 // Balance defines model for Balance.
 type Balance struct {
 	Available  int                `json:"available"`
@@ -651,6 +891,15 @@ type CalendarEvent struct {
 
 // CalendarEventSourceType defines model for CalendarEvent.SourceType.
 type CalendarEventSourceType string
+
+// CancelOrder defines model for CancelOrder.
+type CancelOrder struct {
+	Reason string            `json:"reason"`
+	Status CancelOrderStatus `json:"status"`
+}
+
+// CancelOrderStatus defines model for CancelOrder.Status.
+type CancelOrderStatus string
 
 // Card defines model for Card.
 type Card struct {
@@ -703,6 +952,176 @@ type Column struct {
 	SortOrder  int                `json:"sort_order"`
 	UpdatedAt  time.Time          `json:"updated_at"`
 	Version    int                `json:"version"`
+}
+
+// Contact defines model for Contact.
+type Contact struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	CustomerId openapi_types.UUID `json:"customer_id"`
+	Email      string             `json:"email"`
+	FirstName  string             `json:"first_name"`
+	Id         openapi_types.UUID `json:"id"`
+	LastName   string             `json:"last_name"`
+	Phone      *string            `json:"phone,omitempty"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// CreateContact defines model for CreateContact.
+type CreateContact struct {
+	CustomerId openapi_types.UUID `json:"customer_id"`
+	Email      string             `json:"email"`
+	FirstName  string             `json:"first_name"`
+	LastName   string             `json:"last_name"`
+	Phone      *string            `json:"phone,omitempty"`
+}
+
+// CreateCustomer defines model for CreateCustomer.
+type CreateCustomer struct {
+	Address  *string `json:"address,omitempty"`
+	City     *string `json:"city,omitempty"`
+	Country  *string `json:"country,omitempty"`
+	Currency *string `json:"currency,omitempty"`
+	Eori     *string `json:"eori,omitempty"`
+	Epr      *string `json:"epr,omitempty"`
+	Name     string  `json:"name"`
+	Notes    *string `json:"notes,omitempty"`
+	TypeCode string  `json:"type_code"`
+}
+
+// CreateLead defines model for CreateLead.
+type CreateLead struct {
+	Address     *string           `json:"address,omitempty"`
+	City        *string           `json:"city,omitempty"`
+	Company     string            `json:"company"`
+	ContactName *string           `json:"contact_name,omitempty"`
+	Country     *string           `json:"country,omitempty"`
+	Email       string            `json:"email"`
+	Notes       *string           `json:"notes,omitempty"`
+	Phone       *string           `json:"phone,omitempty"`
+	Status      *CreateLeadStatus `json:"status,omitempty"`
+}
+
+// CreateLeadStatus defines model for CreateLead.Status.
+type CreateLeadStatus string
+
+// CreateOrder defines model for CreateOrder.
+type CreateOrder struct {
+	BillingAddress     *string            `json:"billing_address,omitempty"`
+	BillingCity        *string            `json:"billing_city,omitempty"`
+	BillingCountry     *string            `json:"billing_country,omitempty"`
+	BillingName        *string            `json:"billing_name,omitempty"`
+	BillingPostalCode  *string            `json:"billing_postal_code,omitempty"`
+	Carrier            *string            `json:"carrier,omitempty"`
+	Channel            string             `json:"channel"`
+	CommissionSek      *int               `json:"commission_sek,omitempty"`
+	Currency           string             `json:"currency"`
+	CustomerId         openapi_types.UUID `json:"customer_id"`
+	ExchangeRateSek    float32            `json:"exchange_rate_sek"`
+	ExternalId         *string            `json:"external_id,omitempty"`
+	FreightSek         *int               `json:"freight_sek,omitempty"`
+	Lines              []CreateOrderLine  `json:"lines"`
+	Notes              *string            `json:"notes,omitempty"`
+	ShippingAddress    *string            `json:"shipping_address,omitempty"`
+	ShippingCity       *string            `json:"shipping_city,omitempty"`
+	ShippingCountry    *string            `json:"shipping_country,omitempty"`
+	ShippingLabelUrl   *string            `json:"shipping_label_url,omitempty"`
+	ShippingName       *string            `json:"shipping_name,omitempty"`
+	ShippingPostalCode *string            `json:"shipping_postal_code,omitempty"`
+	SubtotalSek        *int               `json:"subtotal_sek,omitempty"`
+	TaxSek             *int               `json:"tax_sek,omitempty"`
+	TotalSek           *int               `json:"total_sek,omitempty"`
+	TrackingNumber     *string            `json:"tracking_number,omitempty"`
+}
+
+// CreateOrderLine defines model for CreateOrderLine.
+type CreateOrderLine struct {
+	ProductId    openapi_types.UUID `json:"product_id"`
+	Quantity     int                `json:"quantity"`
+	TaxRate      *float32           `json:"tax_rate,omitempty"`
+	UnitPriceSek int                `json:"unit_price_sek"`
+}
+
+// CreateReminder defines model for CreateReminder.
+type CreateReminder struct {
+	Description     *string                    `json:"description,omitempty"`
+	DueDate         openapi_types.Date         `json:"due_date"`
+	ExternalRefId   *openapi_types.UUID        `json:"external_ref_id,omitempty"`
+	ExternalRefType *string                    `json:"external_ref_type,omitempty"`
+	IdsEntryId      *openapi_types.UUID        `json:"ids_entry_id,omitempty"`
+	ReminderType    CreateReminderReminderType `json:"reminder_type"`
+	Title           string                     `json:"title"`
+	TitleEn         *string                    `json:"title_en,omitempty"`
+}
+
+// CreateReminderReminderType defines model for CreateReminder.ReminderType.
+type CreateReminderReminderType string
+
+// CreateWorkflowCondition defines model for CreateWorkflowCondition.
+type CreateWorkflowCondition struct {
+	Config       map[string]interface{} `json:"config"`
+	Kind         string                 `json:"kind"`
+	TransitionId openapi_types.UUID     `json:"transition_id"`
+}
+
+// CreateWorkflowEffect defines model for CreateWorkflowEffect.
+type CreateWorkflowEffect struct {
+	Config       map[string]interface{} `json:"config"`
+	Kind         string                 `json:"kind"`
+	TransitionId openapi_types.UUID     `json:"transition_id"`
+}
+
+// CreateWorkflowStep defines model for CreateWorkflowStep.
+type CreateWorkflowStep struct {
+	IsEnd     *bool   `json:"is_end,omitempty"`
+	IsStart   *bool   `json:"is_start,omitempty"`
+	Key       string  `json:"key"`
+	Name      string  `json:"name"`
+	NameEn    *string `json:"name_en,omitempty"`
+	SortOrder *int    `json:"sort_order,omitempty"`
+}
+
+// CreateWorkflowTransition defines model for CreateWorkflowTransition.
+type CreateWorkflowTransition struct {
+	FromKey   string  `json:"from_key"`
+	Label     string  `json:"label"`
+	LabelEn   *string `json:"label_en,omitempty"`
+	SortOrder *int    `json:"sort_order,omitempty"`
+	StepKey   string  `json:"step_key"`
+	ToKey     string  `json:"to_key"`
+}
+
+// Customer defines model for Customer.
+type Customer struct {
+	Address    string             `json:"address"`
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	City       string             `json:"city"`
+	Country    string             `json:"country"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Currency   string             `json:"currency"`
+	Eori       string             `json:"eori"`
+	Epr        string             `json:"epr"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	Notes      *string            `json:"notes,omitempty"`
+	TypeCode   string             `json:"type_code"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// EANSeries defines model for EANSeries.
+type EANSeries struct {
+	ArchivedAt    *time.Time         `json:"archived_at,omitempty"`
+	AssignedCount *int               `json:"assigned_count,omitempty"`
+	CreatedAt     time.Time          `json:"created_at"`
+	Description   *string            `json:"description,omitempty"`
+	EndCode       string             `json:"end_code"`
+	Id            openapi_types.UUID `json:"id"`
+	Prefix        string             `json:"prefix"`
+	StartCode     string             `json:"start_code"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	Version       int                `json:"version"`
 }
 
 // FEFOBatch defines model for FEFOBatch.
@@ -766,6 +1185,18 @@ type IdsEntry struct {
 	Version     int                 `json:"version"`
 }
 
+// InventoryStats defines model for InventoryStats.
+type InventoryStats struct {
+	Items *[]struct {
+		ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
+		ProductName *string             `json:"product_name,omitempty"`
+		Quantity    *int                `json:"quantity,omitempty"`
+		Value       *int                `json:"value,omitempty"`
+	} `json:"items,omitempty"`
+	LowStockCount *int `json:"low_stock_count,omitempty"`
+	TotalValue    *int `json:"total_value,omitempty"`
+}
+
 // InventoryValue defines model for InventoryValue.
 type InventoryValue struct {
 	InStock     int                `json:"in_stock"`
@@ -773,6 +1204,16 @@ type InventoryValue struct {
 	ProductId   openapi_types.UUID `json:"product_id"`
 	ProductName string             `json:"product_name"`
 	Value       int                `json:"value"`
+}
+
+// KeyFigures defines model for KeyFigures.
+type KeyFigures struct {
+	Countries       *int `json:"countries,omitempty"`
+	Customers       *int `json:"customers,omitempty"`
+	InventoryValue  *int `json:"inventory_value,omitempty"`
+	LowStockCount   *int `json:"low_stock_count,omitempty"`
+	OrdersThisYear  *int `json:"orders_this_year,omitempty"`
+	RevenueThisYear *int `json:"revenue_this_year,omitempty"`
 }
 
 // KioskData Aggregated data for kiosk views.
@@ -845,6 +1286,28 @@ type Label struct {
 	Name  string `json:"name"`
 }
 
+// Lead defines model for Lead.
+type Lead struct {
+	Address             *string             `json:"address,omitempty"`
+	ArchivedAt          *time.Time          `json:"archived_at,omitempty"`
+	City                *string             `json:"city,omitempty"`
+	Company             string              `json:"company"`
+	ContactName         *string             `json:"contact_name,omitempty"`
+	ConvertedCustomerId *openapi_types.UUID `json:"converted_customer_id,omitempty"`
+	Country             *string             `json:"country,omitempty"`
+	CreatedAt           time.Time           `json:"created_at"`
+	Email               string              `json:"email"`
+	Id                  openapi_types.UUID  `json:"id"`
+	Notes               *string             `json:"notes,omitempty"`
+	Phone               *string             `json:"phone,omitempty"`
+	Status              LeadStatus          `json:"status"`
+	UpdatedAt           time.Time           `json:"updated_at"`
+	Version             int                 `json:"version"`
+}
+
+// LeadStatus defines model for Lead.Status.
+type LeadStatus string
+
 // Location defines model for Location.
 type Location struct {
 	Address       *string            `json:"address,omitempty"`
@@ -872,6 +1335,60 @@ type Me struct {
 
 // MeRoles defines model for Me.Roles.
 type MeRoles string
+
+// Order defines model for Order.
+type Order struct {
+	ArchivedAt         *time.Time         `json:"archived_at,omitempty"`
+	BillingAddress     *string            `json:"billing_address,omitempty"`
+	BillingCity        *string            `json:"billing_city,omitempty"`
+	BillingCountry     *string            `json:"billing_country,omitempty"`
+	BillingName        *string            `json:"billing_name,omitempty"`
+	BillingPostalCode  *string            `json:"billing_postal_code,omitempty"`
+	Carrier            *string            `json:"carrier,omitempty"`
+	Channel            string             `json:"channel"`
+	CommissionSek      int                `json:"commission_sek"`
+	CreatedAt          time.Time          `json:"created_at"`
+	Currency           string             `json:"currency"`
+	CustomerId         openapi_types.UUID `json:"customer_id"`
+	DeliveredAt        *time.Time         `json:"delivered_at,omitempty"`
+	ExchangeRateSek    float32            `json:"exchange_rate_sek"`
+	ExternalId         string             `json:"external_id"`
+	FreightSek         int                `json:"freight_sek"`
+	Id                 openapi_types.UUID `json:"id"`
+	Lines              *[]OrderLine       `json:"lines,omitempty"`
+	Notes              *string            `json:"notes,omitempty"`
+	ShippedAt          *time.Time         `json:"shipped_at,omitempty"`
+	ShippingAddress    *string            `json:"shipping_address,omitempty"`
+	ShippingCity       *string            `json:"shipping_city,omitempty"`
+	ShippingCountry    *string            `json:"shipping_country,omitempty"`
+	ShippingLabelUrl   *string            `json:"shipping_label_url,omitempty"`
+	ShippingName       *string            `json:"shipping_name,omitempty"`
+	ShippingPostalCode *string            `json:"shipping_postal_code,omitempty"`
+	Status             string             `json:"status"`
+	SubtotalSek        int                `json:"subtotal_sek"`
+	TaxSek             int                `json:"tax_sek"`
+	TotalSek           int                `json:"total_sek"`
+	TrackingNumber     *string            `json:"tracking_number,omitempty"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	Version            int                `json:"version"`
+}
+
+// OrderLine defines model for OrderLine.
+type OrderLine struct {
+	ArchivedAt      *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt       time.Time          `json:"created_at"`
+	Id              openapi_types.UUID `json:"id"`
+	OrderId         openapi_types.UUID `json:"order_id"`
+	ProductId       openapi_types.UUID `json:"product_id"`
+	Quantity        int                `json:"quantity"`
+	QuantityShipped int                `json:"quantity_shipped"`
+	TaxAmountSek    int                `json:"tax_amount_sek"`
+	TaxRate         float32            `json:"tax_rate"`
+	TotalSek        int                `json:"total_sek"`
+	UnitPriceSek    int                `json:"unit_price_sek"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+	Version         int                `json:"version"`
+}
 
 // Problem RFC 9457 problem details.
 type Problem struct {
@@ -1000,6 +1517,52 @@ type PurchaseOrderLine struct {
 	Version         int                `json:"version"`
 }
 
+// RegisterEANSeries defines model for RegisterEANSeries.
+type RegisterEANSeries struct {
+	Description *string `json:"description,omitempty"`
+	EndCode     string  `json:"end_code"`
+	Prefix      string  `json:"prefix"`
+	StartCode   string  `json:"start_code"`
+}
+
+// Reminder defines model for Reminder.
+type Reminder struct {
+	ArchivedAt      *time.Time           `json:"archived_at,omitempty"`
+	CalendarEventId *openapi_types.UUID  `json:"calendar_event_id,omitempty"`
+	CreatedAt       time.Time            `json:"created_at"`
+	Description     *string              `json:"description,omitempty"`
+	DueDate         openapi_types.Date   `json:"due_date"`
+	ExternalRefId   *openapi_types.UUID  `json:"external_ref_id,omitempty"`
+	ExternalRefType *string              `json:"external_ref_type,omitempty"`
+	Id              openapi_types.UUID   `json:"id"`
+	IdsEntryId      *openapi_types.UUID  `json:"ids_entry_id,omitempty"`
+	Notified        bool                 `json:"notified"`
+	NotifiedAt      *time.Time           `json:"notified_at,omitempty"`
+	ReminderType    ReminderReminderType `json:"reminder_type"`
+	Title           string               `json:"title"`
+	TitleEn         *string              `json:"title_en,omitempty"`
+	UpdatedAt       time.Time            `json:"updated_at"`
+	Version         int                  `json:"version"`
+}
+
+// ReminderReminderType defines model for Reminder.ReminderType.
+type ReminderReminderType string
+
+// RevenuePoint defines model for RevenuePoint.
+type RevenuePoint struct {
+	Orders  *int    `json:"orders,omitempty"`
+	Period  *string `json:"period,omitempty"`
+	Revenue *int    `json:"revenue,omitempty"`
+}
+
+// ShipOrder defines model for ShipOrder.
+type ShipOrder struct {
+	Status ShipOrderStatus `json:"status"`
+}
+
+// ShipOrderStatus defines model for ShipOrder.Status.
+type ShipOrderStatus string
+
 // Shipment defines model for Shipment.
 type Shipment struct {
 	ActualArrival    *openapi_types.Date       `json:"actual_arrival,omitempty"`
@@ -1022,6 +1585,13 @@ type Shipment struct {
 
 // ShipmentStatus defines model for Shipment.Status.
 type ShipmentStatus string
+
+// StatsCard defines model for StatsCard.
+type StatsCard struct {
+	Change *string `json:"change,omitempty"`
+	Title  *string `json:"title,omitempty"`
+	Value  *string `json:"value,omitempty"`
+}
 
 // StockMovement defines model for StockMovement.
 type StockMovement struct {
@@ -1102,6 +1672,123 @@ type SupplierProduct struct {
 	Version          int                `json:"version"`
 }
 
+// UpdateCustomer defines model for UpdateCustomer.
+type UpdateCustomer struct {
+	Address  *string            `json:"address,omitempty"`
+	City     *string            `json:"city,omitempty"`
+	Country  *string            `json:"country,omitempty"`
+	Currency *string            `json:"currency,omitempty"`
+	Eori     *string            `json:"eori,omitempty"`
+	Epr      *string            `json:"epr,omitempty"`
+	Id       openapi_types.UUID `json:"id"`
+	Name     *string            `json:"name,omitempty"`
+	Notes    *string            `json:"notes,omitempty"`
+	TypeCode *string            `json:"type_code,omitempty"`
+	Version  int                `json:"version"`
+}
+
+// UpdateLead defines model for UpdateLead.
+type UpdateLead struct {
+	Address     *string            `json:"address,omitempty"`
+	City        *string            `json:"city,omitempty"`
+	Company     *string            `json:"company,omitempty"`
+	ContactName *string            `json:"contact_name,omitempty"`
+	Country     *string            `json:"country,omitempty"`
+	Email       *string            `json:"email,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Notes       *string            `json:"notes,omitempty"`
+	Phone       *string            `json:"phone,omitempty"`
+	Status      *UpdateLeadStatus  `json:"status,omitempty"`
+	Version     int                `json:"version"`
+}
+
+// UpdateLeadStatus defines model for UpdateLead.Status.
+type UpdateLeadStatus string
+
+// UpdateOrder defines model for UpdateOrder.
+type UpdateOrder struct {
+	BillingAddress     *string             `json:"billing_address,omitempty"`
+	BillingCity        *string             `json:"billing_city,omitempty"`
+	BillingCountry     *string             `json:"billing_country,omitempty"`
+	BillingName        *string             `json:"billing_name,omitempty"`
+	BillingPostalCode  *string             `json:"billing_postal_code,omitempty"`
+	Carrier            *string             `json:"carrier,omitempty"`
+	Channel            *string             `json:"channel,omitempty"`
+	CommissionSek      *int                `json:"commission_sek,omitempty"`
+	Currency           *string             `json:"currency,omitempty"`
+	CustomerId         *openapi_types.UUID `json:"customer_id,omitempty"`
+	ExchangeRateSek    *float32            `json:"exchange_rate_sek,omitempty"`
+	ExternalId         *string             `json:"external_id,omitempty"`
+	FreightSek         *int                `json:"freight_sek,omitempty"`
+	Id                 openapi_types.UUID  `json:"id"`
+	Notes              *string             `json:"notes,omitempty"`
+	ShippingAddress    *string             `json:"shipping_address,omitempty"`
+	ShippingCity       *string             `json:"shipping_city,omitempty"`
+	ShippingCountry    *string             `json:"shipping_country,omitempty"`
+	ShippingLabelUrl   *string             `json:"shipping_label_url,omitempty"`
+	ShippingName       *string             `json:"shipping_name,omitempty"`
+	ShippingPostalCode *string             `json:"shipping_postal_code,omitempty"`
+	SubtotalSek        *int                `json:"subtotal_sek,omitempty"`
+	TaxSek             *int                `json:"tax_sek,omitempty"`
+	TotalSek           *int                `json:"total_sek,omitempty"`
+	TrackingNumber     *string             `json:"tracking_number,omitempty"`
+	Version            int                 `json:"version"`
+}
+
+// UpdateOrderLine defines model for UpdateOrderLine.
+type UpdateOrderLine struct {
+	Id           openapi_types.UUID `json:"id"`
+	OrderId      openapi_types.UUID `json:"order_id"`
+	Quantity     *int               `json:"quantity,omitempty"`
+	TaxRate      *float32           `json:"tax_rate,omitempty"`
+	UnitPriceSek *int               `json:"unit_price_sek,omitempty"`
+	Version      int                `json:"version"`
+}
+
+// UpdateOrderStatus defines model for UpdateOrderStatus.
+type UpdateOrderStatus struct {
+	Status string `json:"status"`
+}
+
+// UpdateReminder defines model for UpdateReminder.
+type UpdateReminder struct {
+	Description     *string                     `json:"description,omitempty"`
+	DueDate         *openapi_types.Date         `json:"due_date,omitempty"`
+	ExternalRefId   *openapi_types.UUID         `json:"external_ref_id,omitempty"`
+	ExternalRefType *string                     `json:"external_ref_type,omitempty"`
+	Id              openapi_types.UUID          `json:"id"`
+	IdsEntryId      *openapi_types.UUID         `json:"ids_entry_id,omitempty"`
+	ReminderType    *UpdateReminderReminderType `json:"reminder_type,omitempty"`
+	Title           *string                     `json:"title,omitempty"`
+	TitleEn         *string                     `json:"title_en,omitempty"`
+	Version         int                         `json:"version"`
+}
+
+// UpdateReminderReminderType defines model for UpdateReminder.ReminderType.
+type UpdateReminderReminderType string
+
+// UpdateWorkflowStep defines model for UpdateWorkflowStep.
+type UpdateWorkflowStep struct {
+	Id        openapi_types.UUID `json:"id"`
+	IsEnd     *bool              `json:"is_end,omitempty"`
+	IsStart   *bool              `json:"is_start,omitempty"`
+	Name      *string            `json:"name,omitempty"`
+	NameEn    *string            `json:"name_en,omitempty"`
+	SortOrder *int               `json:"sort_order,omitempty"`
+	Version   int                `json:"version"`
+}
+
+// UpdateWorkflowTransition defines model for UpdateWorkflowTransition.
+type UpdateWorkflowTransition struct {
+	FromKey   *string            `json:"from_key,omitempty"`
+	Id        openapi_types.UUID `json:"id"`
+	Label     *string            `json:"label,omitempty"`
+	LabelEn   *string            `json:"label_en,omitempty"`
+	SortOrder *int               `json:"sort_order,omitempty"`
+	ToKey     *string            `json:"to_key,omitempty"`
+	Version   int                `json:"version"`
+}
+
 // Version defines model for Version.
 type Version struct {
 	// Commit The short commit the build was made from.
@@ -1113,6 +1800,60 @@ type Version struct {
 	//
 	// Examples: 0.1.0
 	Version string `json:"version"`
+}
+
+// WorkflowCondition defines model for WorkflowCondition.
+type WorkflowCondition struct {
+	ArchivedAt   *time.Time             `json:"archived_at,omitempty"`
+	Config       map[string]interface{} `json:"config"`
+	CreatedAt    time.Time              `json:"created_at"`
+	Id           openapi_types.UUID     `json:"id"`
+	Kind         string                 `json:"kind"`
+	TransitionId openapi_types.UUID     `json:"transition_id"`
+	UpdatedAt    time.Time              `json:"updated_at"`
+	Version      int                    `json:"version"`
+}
+
+// WorkflowEffect defines model for WorkflowEffect.
+type WorkflowEffect struct {
+	ArchivedAt   *time.Time             `json:"archived_at,omitempty"`
+	Config       map[string]interface{} `json:"config"`
+	CreatedAt    time.Time              `json:"created_at"`
+	Id           openapi_types.UUID     `json:"id"`
+	Kind         string                 `json:"kind"`
+	TransitionId openapi_types.UUID     `json:"transition_id"`
+	UpdatedAt    time.Time              `json:"updated_at"`
+	Version      int                    `json:"version"`
+}
+
+// WorkflowStep defines model for WorkflowStep.
+type WorkflowStep struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	Id         openapi_types.UUID `json:"id"`
+	IsEnd      *bool              `json:"is_end,omitempty"`
+	IsStart    *bool              `json:"is_start,omitempty"`
+	Key        string             `json:"key"`
+	Name       string             `json:"name"`
+	NameEn     *string            `json:"name_en,omitempty"`
+	SortOrder  int                `json:"sort_order"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
+}
+
+// WorkflowTransition defines model for WorkflowTransition.
+type WorkflowTransition struct {
+	ArchivedAt *time.Time         `json:"archived_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	FromKey    string             `json:"from_key"`
+	Id         openapi_types.UUID `json:"id"`
+	Label      string             `json:"label"`
+	LabelEn    *string            `json:"label_en,omitempty"`
+	SortOrder  int                `json:"sort_order"`
+	StepKey    string             `json:"step_key"`
+	ToKey      string             `json:"to_key"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	Version    int                `json:"version"`
 }
 
 // BadRequest RFC 9457 problem details.
@@ -1198,6 +1939,12 @@ type UpdateColumnJSONBody struct {
 type ListCalendarEventsParams struct {
 	StartTime time.Time `form:"start_time" json:"start_time"`
 	EndTime   time.Time `form:"end_time" json:"end_time"`
+}
+
+// ListCustomersParams defines parameters for ListCustomers.
+type ListCustomersParams struct {
+	// Q Search by name, email, org number or EAN
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
 }
 
 // CreateFieldDefinitionJSONBody defines parameters for CreateFieldDefinition.
@@ -1414,6 +2161,26 @@ type UpdateLocationJSONBody struct {
 	Version       *int    `json:"version,omitempty"`
 }
 
+// ListOrdersParams defines parameters for ListOrders.
+type ListOrdersParams struct {
+	// Status Filter by order status
+	Status *ListOrdersParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// CustomerId Filter by customer ID
+	CustomerId *openapi_types.UUID `form:"customer_id,omitempty" json:"customer_id,omitempty"`
+}
+
+// ListOrdersParamsStatus defines parameters for ListOrders.
+type ListOrdersParamsStatus string
+
+// BatchExportOrdersJSONBody defines parameters for BatchExportOrders.
+type BatchExportOrdersJSONBody struct {
+	CustomerId *openapi_types.UUID `json:"customer_id,omitempty"`
+	FromDate   *openapi_types.Date `json:"from_date,omitempty"`
+	Status     *string             `json:"status,omitempty"`
+	ToDate     *openapi_types.Date `json:"to_date,omitempty"`
+}
+
 // CreateProductTypeJSONBody defines parameters for CreateProductType.
 type CreateProductTypeJSONBody struct {
 	Name     string `json:"name"`
@@ -1601,6 +2368,17 @@ type UpdateShipmentJSONBody struct {
 // UpdateShipmentJSONBodyStatus defines parameters for UpdateShipment.
 type UpdateShipmentJSONBodyStatus string
 
+// GetRevenueParams defines parameters for GetRevenue.
+type GetRevenueParams struct {
+	// Period daily, weekly, monthly, yearly
+	Period   *GetRevenueParamsPeriod `form:"period,omitempty" json:"period,omitempty"`
+	FromDate *openapi_types.Date     `form:"from_date,omitempty" json:"from_date,omitempty"`
+	ToDate   *openapi_types.Date     `form:"to_date,omitempty" json:"to_date,omitempty"`
+}
+
+// GetRevenueParamsPeriod defines parameters for GetRevenue.
+type GetRevenueParamsPeriod string
+
 // ListStockMovementsParams defines parameters for ListStockMovements.
 type ListStockMovementsParams struct {
 	ProductId     *openapi_types.UUID                   `form:"product_id,omitempty" json:"product_id,omitempty"`
@@ -1754,6 +2532,21 @@ type CreateColumnJSONRequestBody CreateColumnJSONBody
 // UpdateColumnJSONRequestBody defines body for UpdateColumn for application/json ContentType.
 type UpdateColumnJSONRequestBody UpdateColumnJSONBody
 
+// CreateCustomerJSONRequestBody defines body for CreateCustomer for application/json ContentType.
+type CreateCustomerJSONRequestBody = CreateCustomer
+
+// UpdateCustomerJSONRequestBody defines body for UpdateCustomer for application/json ContentType.
+type UpdateCustomerJSONRequestBody = UpdateCustomer
+
+// CreateCustomerContactJSONRequestBody defines body for CreateCustomerContact for application/json ContentType.
+type CreateCustomerContactJSONRequestBody = CreateContact
+
+// RegisterCustomerEANSeriesJSONRequestBody defines body for RegisterCustomerEANSeries for application/json ContentType.
+type RegisterCustomerEANSeriesJSONRequestBody = RegisterEANSeries
+
+// RegisterEANSeriesJSONRequestBody defines body for RegisterEANSeries for application/json ContentType.
+type RegisterEANSeriesJSONRequestBody = RegisterEANSeries
+
 // CreateFieldDefinitionJSONRequestBody defines body for CreateFieldDefinition for application/json ContentType.
 type CreateFieldDefinitionJSONRequestBody CreateFieldDefinitionJSONBody
 
@@ -1802,11 +2595,44 @@ type CreatePlaylistViewJSONRequestBody CreatePlaylistViewJSONBody
 // UpdatePlaylistViewJSONRequestBody defines body for UpdatePlaylistView for application/json ContentType.
 type UpdatePlaylistViewJSONRequestBody UpdatePlaylistViewJSONBody
 
+// CreateLeadJSONRequestBody defines body for CreateLead for application/json ContentType.
+type CreateLeadJSONRequestBody = CreateLead
+
+// UpdateLeadJSONRequestBody defines body for UpdateLead for application/json ContentType.
+type UpdateLeadJSONRequestBody = UpdateLead
+
 // CreateLocationJSONRequestBody defines body for CreateLocation for application/json ContentType.
 type CreateLocationJSONRequestBody CreateLocationJSONBody
 
 // UpdateLocationJSONRequestBody defines body for UpdateLocation for application/json ContentType.
 type UpdateLocationJSONRequestBody UpdateLocationJSONBody
+
+// CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
+type CreateOrderJSONRequestBody = CreateOrder
+
+// BatchExportOrdersJSONRequestBody defines body for BatchExportOrders for application/json ContentType.
+type BatchExportOrdersJSONRequestBody BatchExportOrdersJSONBody
+
+// UpdateOrderJSONRequestBody defines body for UpdateOrder for application/json ContentType.
+type UpdateOrderJSONRequestBody = UpdateOrder
+
+// CreateOrderLineJSONRequestBody defines body for CreateOrderLine for application/json ContentType.
+type CreateOrderLineJSONRequestBody = CreateOrderLine
+
+// UpdateOrderLineJSONRequestBody defines body for UpdateOrderLine for application/json ContentType.
+type UpdateOrderLineJSONRequestBody = UpdateOrderLine
+
+// UpdateOrderStatusJSONRequestBody defines body for UpdateOrderStatus for application/json ContentType.
+type UpdateOrderStatusJSONRequestBody = UpdateOrderStatus
+
+// AcceptOrderJSONRequestBody defines body for AcceptOrder for application/json ContentType.
+type AcceptOrderJSONRequestBody = AcceptOrder
+
+// CancelOrderJSONRequestBody defines body for CancelOrder for application/json ContentType.
+type CancelOrderJSONRequestBody = CancelOrder
+
+// ShipOrderJSONRequestBody defines body for ShipOrder for application/json ContentType.
+type ShipOrderJSONRequestBody = ShipOrder
 
 // CreateProductTypeJSONRequestBody defines body for CreateProductType for application/json ContentType.
 type CreateProductTypeJSONRequestBody CreateProductTypeJSONBody
@@ -1850,6 +2676,12 @@ type CreatePurchaseOrderLineJSONRequestBody CreatePurchaseOrderLineJSONBody
 // UpdatePurchaseOrderLineJSONRequestBody defines body for UpdatePurchaseOrderLine for application/json ContentType.
 type UpdatePurchaseOrderLineJSONRequestBody UpdatePurchaseOrderLineJSONBody
 
+// CreateReminderJSONRequestBody defines body for CreateReminder for application/json ContentType.
+type CreateReminderJSONRequestBody = CreateReminder
+
+// UpdateReminderJSONRequestBody defines body for UpdateReminder for application/json ContentType.
+type UpdateReminderJSONRequestBody = UpdateReminder
+
 // CreateShipmentJSONRequestBody defines body for CreateShipment for application/json ContentType.
 type CreateShipmentJSONRequestBody CreateShipmentJSONBody
 
@@ -1873,6 +2705,24 @@ type UpdateSupplierContactJSONRequestBody UpdateSupplierContactJSONBody
 
 // CreateSupplierProductJSONRequestBody defines body for CreateSupplierProduct for application/json ContentType.
 type CreateSupplierProductJSONRequestBody CreateSupplierProductJSONBody
+
+// CreateWorkflowStepJSONRequestBody defines body for CreateWorkflowStep for application/json ContentType.
+type CreateWorkflowStepJSONRequestBody = CreateWorkflowStep
+
+// UpdateWorkflowStepJSONRequestBody defines body for UpdateWorkflowStep for application/json ContentType.
+type UpdateWorkflowStepJSONRequestBody = UpdateWorkflowStep
+
+// CreateWorkflowTransitionJSONRequestBody defines body for CreateWorkflowTransition for application/json ContentType.
+type CreateWorkflowTransitionJSONRequestBody = CreateWorkflowTransition
+
+// UpdateWorkflowTransitionJSONRequestBody defines body for UpdateWorkflowTransition for application/json ContentType.
+type UpdateWorkflowTransitionJSONRequestBody = UpdateWorkflowTransition
+
+// CreateWorkflowTransitionConditionJSONRequestBody defines body for CreateWorkflowTransitionCondition for application/json ContentType.
+type CreateWorkflowTransitionConditionJSONRequestBody = CreateWorkflowCondition
+
+// CreateWorkflowTransitionEffectJSONRequestBody defines body for CreateWorkflowTransitionEffect for application/json ContentType.
+type CreateWorkflowTransitionEffectJSONRequestBody = CreateWorkflowEffect
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1945,6 +2795,42 @@ type ServerInterface interface {
 	// SyncCalendar Sync all enabled iCal sources (KAL-01)
 	// (POST /api/v1/calendar/sync)
 	SyncCalendar(w http.ResponseWriter, r *http.Request)
+	// ListCustomers List customers (KUN-01)
+	// (GET /api/v1/customers)
+	ListCustomers(w http.ResponseWriter, r *http.Request, params ListCustomersParams)
+	// CreateCustomer Create a customer (KUN-01)
+	// (POST /api/v1/customers)
+	CreateCustomer(w http.ResponseWriter, r *http.Request)
+	// ArchiveCustomer Archive a customer (KUN-02)
+	// (DELETE /api/v1/customers/{id})
+	ArchiveCustomer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// GetCustomer Get a customer (KUN-01)
+	// (GET /api/v1/customers/{id})
+	GetCustomer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// UpdateCustomer Update a customer (KUN-01)
+	// (PUT /api/v1/customers/{id})
+	UpdateCustomer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListCustomerContacts List contacts for a customer (KUN-03)
+	// (GET /api/v1/customers/{id}/contacts)
+	ListCustomerContacts(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// CreateCustomerContact Create a contact for a customer (KUN-03)
+	// (POST /api/v1/customers/{id}/contacts)
+	CreateCustomerContact(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListCustomerEANSeries List EAN series registered by a customer (KUN-07)
+	// (GET /api/v1/customers/{id}/ean-series)
+	ListCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// RegisterCustomerEANSeries Register an EAN series for a customer (KUN-07)
+	// (POST /api/v1/customers/{id}/ean-series)
+	RegisterCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListCustomerLeads List leads linked to a customer (KUN-05)
+	// (GET /api/v1/customers/{id}/leads)
+	ListCustomerLeads(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListEANSeries List all EAN series (REG-04)
+	// (GET /api/v1/ean-series)
+	ListEANSeries(w http.ResponseWriter, r *http.Request)
+	// RegisterEANSeries Register a new EAN series (REG-04)
+	// (POST /api/v1/ean-series)
+	RegisterEANSeries(w http.ResponseWriter, r *http.Request)
 	// ListFieldDefinitions List field definitions (PRD-13)
 	// (GET /api/v1/field-definitions)
 	ListFieldDefinitions(w http.ResponseWriter, r *http.Request)
@@ -2056,6 +2942,21 @@ type ServerInterface interface {
 	// UpdatePlaylistView Update a view in a playlist (KIO-01)
 	// (PUT /api/v1/kiosk/playlists/{playlist_id}/views/{view_id})
 	UpdatePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, viewId openapi_types.UUID)
+	// ListLeads List all leads (KUN-05)
+	// (GET /api/v1/leads)
+	ListLeads(w http.ResponseWriter, r *http.Request)
+	// CreateLead Create a lead (KUN-05)
+	// (POST /api/v1/leads)
+	CreateLead(w http.ResponseWriter, r *http.Request)
+	// ArchiveLead Archive a lead (KUN-05)
+	// (DELETE /api/v1/leads/{id})
+	ArchiveLead(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// GetLead Get a lead (KUN-05)
+	// (GET /api/v1/leads/{id})
+	GetLead(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// UpdateLead Update a lead (KUN-05)
+	// (PUT /api/v1/leads/{id})
+	UpdateLead(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ListLocations List all active locations (LAG-01)
 	// (GET /api/v1/locations)
 	ListLocations(w http.ResponseWriter, r *http.Request)
@@ -2074,6 +2975,51 @@ type ServerInterface interface {
 	// GetMe Who is logged in
 	// (GET /api/v1/me)
 	GetMe(w http.ResponseWriter, r *http.Request)
+	// ListOrders List orders (ORD-01)
+	// (GET /api/v1/orders)
+	ListOrders(w http.ResponseWriter, r *http.Request, params ListOrdersParams)
+	// CreateOrder Create an order (ORD-01)
+	// (POST /api/v1/orders)
+	CreateOrder(w http.ResponseWriter, r *http.Request)
+	// BatchExportOrders Batch export orders as CSV (ORD-13)
+	// (POST /api/v1/orders/batch-export)
+	BatchExportOrders(w http.ResponseWriter, r *http.Request)
+	// ArchiveOrder Archive an order (ORD-08)
+	// (DELETE /api/v1/orders/{id})
+	ArchiveOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// GetOrder Get an order with lines (ORD-01)
+	// (GET /api/v1/orders/{id})
+	GetOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// UpdateOrder Update an order (ORD-01)
+	// (PUT /api/v1/orders/{id})
+	UpdateOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ExportOrder Export an order as PDF (ORD-09)
+	// (GET /api/v1/orders/{id}/export)
+	ExportOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListOrderLines List order lines (ORD-01)
+	// (GET /api/v1/orders/{id}/lines)
+	ListOrderLines(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// CreateOrderLine Add a line to an order (ORD-01)
+	// (POST /api/v1/orders/{id}/lines)
+	CreateOrderLine(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// DeleteOrderLine Remove a line from an order (ORD-01)
+	// (DELETE /api/v1/orders/{id}/lines/{line_id})
+	DeleteOrderLine(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, lineId openapi_types.UUID)
+	// UpdateOrderLine Update an order line (ORD-01)
+	// (PUT /api/v1/orders/{id}/lines/{line_id})
+	UpdateOrderLine(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, lineId openapi_types.UUID)
+	// UpdateOrderStatus Update order status (ORD-02)
+	// (POST /api/v1/orders/{id}/status)
+	UpdateOrderStatus(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// AcceptOrder Accept an order with preview and optional override (ORD-04, WF-05)
+	// (POST /api/v1/orders/{id}/status/accept)
+	AcceptOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// CancelOrder Cancel an order (ORD-07, WF-05)
+	// (POST /api/v1/orders/{id}/status/cancel)
+	CancelOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ShipOrder Ship an order (ORD-06)
+	// (POST /api/v1/orders/{id}/status/ship)
+	ShipOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ListProductTypes List product types (PRD-15)
 	// (GET /api/v1/product-types)
 	ListProductTypes(w http.ResponseWriter, r *http.Request)
@@ -2170,6 +3116,24 @@ type ServerInterface interface {
 	// UpdatePurchaseOrderLine Update a purchase order line (INK-01)
 	// (PATCH /api/v1/purchase-orders/{po_id}/lines/{line_id})
 	UpdatePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID, lineId openapi_types.UUID)
+	// ListReminders List active reminders (REG-05)
+	// (GET /api/v1/reminders)
+	ListReminders(w http.ResponseWriter, r *http.Request)
+	// CreateReminder Create a reminder (REG-05)
+	// (POST /api/v1/reminders)
+	CreateReminder(w http.ResponseWriter, r *http.Request)
+	// ArchiveReminder Archive a reminder (REG-05)
+	// (DELETE /api/v1/reminders/{id})
+	ArchiveReminder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// GetReminder Get a reminder (REG-05)
+	// (GET /api/v1/reminders/{id})
+	GetReminder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// UpdateReminder Update a reminder (REG-05)
+	// (PUT /api/v1/reminders/{id})
+	UpdateReminder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// MarkReminderNotified Mark a reminder as notified (REG-05)
+	// (POST /api/v1/reminders/{id}/notify)
+	MarkReminderNotified(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ListShipments List all shipments (INK-03)
 	// (GET /api/v1/shipments)
 	ListShipments(w http.ResponseWriter, r *http.Request)
@@ -2188,6 +3152,18 @@ type ServerInterface interface {
 	// UpdateShipment Update a shipment (INK-02)
 	// (PATCH /api/v1/shipments/{shipment_id})
 	UpdateShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID)
+	// GetStatsCards Summary cards (STA-03)
+	// (GET /api/v1/stats/cards)
+	GetStatsCards(w http.ResponseWriter, r *http.Request)
+	// GetInventoryStats Inventory value and low-stock count (STA-02)
+	// (GET /api/v1/stats/inventory)
+	GetInventoryStats(w http.ResponseWriter, r *http.Request)
+	// GetKeyFigures Key figures (STA-01)
+	// (GET /api/v1/stats/key-figures)
+	GetKeyFigures(w http.ResponseWriter, r *http.Request)
+	// GetRevenue Revenue trend (STA-01)
+	// (GET /api/v1/stats/revenue)
+	GetRevenue(w http.ResponseWriter, r *http.Request, params GetRevenueParams)
 	// ListStockMovements List stock movements (LAG-01)
 	// (GET /api/v1/stockmovements)
 	ListStockMovements(w http.ResponseWriter, r *http.Request, params ListStockMovementsParams)
@@ -2233,6 +3209,48 @@ type ServerInterface interface {
 	// GetVersion Which release is running
 	// (GET /api/v1/version)
 	GetVersion(w http.ResponseWriter, r *http.Request)
+	// ListWorkflowSteps List workflow steps (WF-01)
+	// (GET /api/v1/workflow/steps)
+	ListWorkflowSteps(w http.ResponseWriter, r *http.Request)
+	// CreateWorkflowStep Create a workflow step (WF-01)
+	// (POST /api/v1/workflow/steps)
+	CreateWorkflowStep(w http.ResponseWriter, r *http.Request)
+	// ArchiveWorkflowStep Archive a workflow step (WF-01)
+	// (DELETE /api/v1/workflow/steps/{id})
+	ArchiveWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// GetWorkflowStep Get a workflow step (WF-01)
+	// (GET /api/v1/workflow/steps/{id})
+	GetWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// UpdateWorkflowStep Update a workflow step (WF-01)
+	// (PUT /api/v1/workflow/steps/{id})
+	UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListWorkflowTransitions List workflow transitions (WF-02)
+	// (GET /api/v1/workflow/transitions)
+	ListWorkflowTransitions(w http.ResponseWriter, r *http.Request)
+	// CreateWorkflowTransition Create a workflow transition (WF-02)
+	// (POST /api/v1/workflow/transitions)
+	CreateWorkflowTransition(w http.ResponseWriter, r *http.Request)
+	// ArchiveWorkflowTransition Archive a workflow transition (WF-02)
+	// (DELETE /api/v1/workflow/transitions/{id})
+	ArchiveWorkflowTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// GetWorkflowTransition Get a workflow transition (WF-02)
+	// (GET /api/v1/workflow/transitions/{id})
+	GetWorkflowTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// UpdateWorkflowTransition Update a workflow transition (WF-02)
+	// (PUT /api/v1/workflow/transitions/{id})
+	UpdateWorkflowTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListWorkflowTransitionConditions List conditions for a transition (WF-03)
+	// (GET /api/v1/workflow/transitions/{id}/conditions)
+	ListWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// CreateWorkflowTransitionCondition Add a condition to a transition (WF-03)
+	// (POST /api/v1/workflow/transitions/{id}/conditions)
+	CreateWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListWorkflowTransitionEffects List effects for a transition (WF-04)
+	// (GET /api/v1/workflow/transitions/{id}/effects)
+	ListWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// CreateWorkflowTransitionEffect Add an effect to a transition (WF-04)
+	// (POST /api/v1/workflow/transitions/{id}/effects)
+	CreateWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// LoginCallback Finish a login
 	// (GET /auth/callback)
 	LoginCallback(w http.ResponseWriter, r *http.Request, params LoginCallbackParams)
@@ -2943,6 +3961,289 @@ func (siw *ServerInterfaceWrapper) SyncCalendar(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SyncCalendar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomers operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCustomersParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCustomer operation middleware
+func (siw *ServerInterfaceWrapper) CreateCustomer(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCustomer(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveCustomer operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveCustomer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveCustomer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCustomer operation middleware
+func (siw *ServerInterfaceWrapper) GetCustomer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCustomer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCustomer operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCustomer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCustomer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomerContacts operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomerContacts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomerContacts(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCustomerContact operation middleware
+func (siw *ServerInterfaceWrapper) CreateCustomerContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCustomerContact(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomerEANSeries operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomerEANSeries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomerEANSeries(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterCustomerEANSeries operation middleware
+func (siw *ServerInterfaceWrapper) RegisterCustomerEANSeries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterCustomerEANSeries(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomerLeads operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomerLeads(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomerLeads(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEANSeries operation middleware
+func (siw *ServerInterfaceWrapper) ListEANSeries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEANSeries(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterEANSeries operation middleware
+func (siw *ServerInterfaceWrapper) RegisterEANSeries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterEANSeries(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3864,6 +5165,112 @@ func (siw *ServerInterfaceWrapper) UpdatePlaylistView(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// ListLeads operation middleware
+func (siw *ServerInterfaceWrapper) ListLeads(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLeads(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLead operation middleware
+func (siw *ServerInterfaceWrapper) CreateLead(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLead(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveLead operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveLead(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveLead(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLead operation middleware
+func (siw *ServerInterfaceWrapper) GetLead(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLead(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLead operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLead(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLead(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListLocations operation middleware
 func (siw *ServerInterfaceWrapper) ListLocations(w http.ResponseWriter, r *http.Request) {
 
@@ -3975,6 +5382,410 @@ func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListOrders(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrdersParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "customer_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "customer_id", r.URL.Query(), &params.CustomerId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "customer_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "customer_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrders(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrder operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrder(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BatchExportOrders operation middleware
+func (siw *ServerInterfaceWrapper) BatchExportOrders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BatchExportOrders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveOrder operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrder operation middleware
+func (siw *ServerInterfaceWrapper) GetOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateOrder operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportOrder operation middleware
+func (siw *ServerInterfaceWrapper) ExportOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrderLines operation middleware
+func (siw *ServerInterfaceWrapper) ListOrderLines(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrderLines(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrderLine operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrderLine(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrderLine(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOrderLine operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrderLine(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "line_id" -------------
+	var lineId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "line_id", r.PathValue("line_id"), &lineId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "line_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrderLine(w, r, id, lineId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateOrderLine operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrderLine(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "line_id" -------------
+	var lineId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "line_id", r.PathValue("line_id"), &lineId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "line_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateOrderLine(w, r, id, lineId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateOrderStatus operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateOrderStatus(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptOrder operation middleware
+func (siw *ServerInterfaceWrapper) AcceptOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelOrder operation middleware
+func (siw *ServerInterfaceWrapper) CancelOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ShipOrder operation middleware
+func (siw *ServerInterfaceWrapper) ShipOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ShipOrder(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4867,6 +6678,138 @@ func (siw *ServerInterfaceWrapper) UpdatePurchaseOrderLine(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListReminders operation middleware
+func (siw *ServerInterfaceWrapper) ListReminders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReminders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateReminder operation middleware
+func (siw *ServerInterfaceWrapper) CreateReminder(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateReminder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveReminder operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveReminder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveReminder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReminder operation middleware
+func (siw *ServerInterfaceWrapper) GetReminder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReminder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateReminder operation middleware
+func (siw *ServerInterfaceWrapper) UpdateReminder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateReminder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkReminderNotified operation middleware
+func (siw *ServerInterfaceWrapper) MarkReminderNotified(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkReminderNotified(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListShipments operation middleware
 func (siw *ServerInterfaceWrapper) ListShipments(w http.ResponseWriter, r *http.Request) {
 
@@ -4990,6 +6933,107 @@ func (siw *ServerInterfaceWrapper) UpdateShipment(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateShipment(w, r, shipmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetStatsCards operation middleware
+func (siw *ServerInterfaceWrapper) GetStatsCards(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetStatsCards(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInventoryStats operation middleware
+func (siw *ServerInterfaceWrapper) GetInventoryStats(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInventoryStats(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetKeyFigures operation middleware
+func (siw *ServerInterfaceWrapper) GetKeyFigures(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetKeyFigures(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRevenue operation middleware
+func (siw *ServerInterfaceWrapper) GetRevenue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRevenueParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "from_date" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from_date", r.URL.Query(), &params.FromDate, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from_date"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from_date", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "to_date" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to_date", r.URL.Query(), &params.ToDate, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to_date"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to_date", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRevenue(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5427,6 +7471,322 @@ func (siw *ServerInterfaceWrapper) GetVersion(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListWorkflowSteps operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkflowSteps(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkflowSteps(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkflowStep operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkflowStep(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkflowStep(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveWorkflowStep operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveWorkflowStep(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveWorkflowStep(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkflowStep operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkflowStep(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkflowStep(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWorkflowStep operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWorkflowStep(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWorkflowTransitions operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkflowTransitions(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkflowTransition operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkflowTransition(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkflowTransition(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveWorkflowTransition operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveWorkflowTransition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveWorkflowTransition(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkflowTransition operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkflowTransition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkflowTransition(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWorkflowTransition operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWorkflowTransition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWorkflowTransition(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWorkflowTransitionConditions operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkflowTransitionConditions(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkflowTransitionCondition operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkflowTransitionCondition(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWorkflowTransitionEffects operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkflowTransitionEffects(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkflowTransitionEffect operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkflowTransitionEffect(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // LoginCallback operation middleware
 func (siw *ServerInterfaceWrapper) LoginCallback(w http.ResponseWriter, r *http.Request) {
 
@@ -5775,6 +8135,62 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/kiosk/devices/{device_id}", wrapper.UpdateKioskDevice)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/kiosk/pair", wrapper.PairKioskDevice)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/kiosk/data", wrapper.GetKioskData)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/customers", wrapper.ListCustomers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/customers", wrapper.CreateCustomer)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/customers/{id}", wrapper.ArchiveCustomer)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/customers/{id}", wrapper.GetCustomer)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/customers/{id}", wrapper.UpdateCustomer)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/customers/{id}/contacts", wrapper.ListCustomerContacts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/customers/{id}/contacts", wrapper.CreateCustomerContact)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/customers/{id}/leads", wrapper.ListCustomerLeads)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/leads", wrapper.ListLeads)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/leads", wrapper.CreateLead)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/leads/{id}", wrapper.ArchiveLead)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/leads/{id}", wrapper.GetLead)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/leads/{id}", wrapper.UpdateLead)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/customers/{id}/ean-series", wrapper.ListCustomerEANSeries)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/customers/{id}/ean-series", wrapper.RegisterCustomerEANSeries)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/workflow/steps", wrapper.ListWorkflowSteps)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/workflow/steps", wrapper.CreateWorkflowStep)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/workflow/steps/{id}", wrapper.ArchiveWorkflowStep)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/workflow/steps/{id}", wrapper.GetWorkflowStep)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/workflow/steps/{id}", wrapper.UpdateWorkflowStep)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/workflow/transitions", wrapper.ListWorkflowTransitions)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/workflow/transitions", wrapper.CreateWorkflowTransition)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}", wrapper.ArchiveWorkflowTransition)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}", wrapper.GetWorkflowTransition)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}", wrapper.UpdateWorkflowTransition)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}/conditions", wrapper.ListWorkflowTransitionConditions)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}/conditions", wrapper.CreateWorkflowTransitionCondition)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}/effects", wrapper.ListWorkflowTransitionEffects)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/workflow/transitions/{id}/effects", wrapper.CreateWorkflowTransitionEffect)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/orders", wrapper.ListOrders)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders", wrapper.CreateOrder)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/orders/{id}", wrapper.ArchiveOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/orders/{id}", wrapper.GetOrder)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/orders/{id}", wrapper.UpdateOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/orders/{id}/lines", wrapper.ListOrderLines)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders/{id}/lines", wrapper.CreateOrderLine)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/orders/{id}/lines/{line_id}", wrapper.DeleteOrderLine)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/orders/{id}/lines/{line_id}", wrapper.UpdateOrderLine)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders/{id}/status", wrapper.UpdateOrderStatus)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders/{id}/status/accept", wrapper.AcceptOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders/{id}/status/ship", wrapper.ShipOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders/{id}/status/cancel", wrapper.CancelOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/orders/{id}/export", wrapper.ExportOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/orders/batch-export", wrapper.BatchExportOrders)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/stats/key-figures", wrapper.GetKeyFigures)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/stats/revenue", wrapper.GetRevenue)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/stats/inventory", wrapper.GetInventoryStats)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/stats/cards", wrapper.GetStatsCards)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/reminders", wrapper.ListReminders)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/reminders", wrapper.CreateReminder)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/reminders/{id}", wrapper.ArchiveReminder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/reminders/{id}", wrapper.GetReminder)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/reminders/{id}", wrapper.UpdateReminder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/reminders/{id}/notify", wrapper.MarkReminderNotified)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/ean-series", wrapper.ListEANSeries)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/ean-series", wrapper.RegisterEANSeries)
 
 	return m
 }
@@ -5784,180 +8200,246 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"7L1pbxs7lgD6V4iaASYXU7bsbH3bwMODr5P0BMlNguQuwOtkZLqKktgukXVJlh2NO//9gVvtC0trSdaH",
+	"xJKKxeXw7Dw858EL6DymBBHBvYsHjyEeU8KR+vILDD+jvxLEhfwWUCIQUR9hHEc4gAJTMooZvYnQ/L//",
+	"xSmRz3gwQ3MoP/0nQxPvwvuPUTbESD/lo0/6Le/Hjx++FyIeMBzL7rwL77cZAkwPC25ouACYA0zuYITD",
+	"U8/3ZgiGiKn5XcFghk6uKBGMRsWxA0rkrD1CT7igDHm+JxYx8i48LhgmUznwD9+7YpTzjwxPMXlD2Q0O",
+	"Q0S2udbLdKUTRucAEipmiAGqZnQKPlAxw2QK7iEHwQySKVo/CD5Q8YYmJNzRFqMQMMRpwgKklkmoABM5",
+	"n7Uv9HcCEzFDRMhloW2vlyGJx4SChMObCAGOOMeUXMifAkpvMfIBZYASBMQMCtk4IbeE3hMfIBKiEFD2",
+	"lUwoA5AAyIIZvkMhSDhip0CCExJ+jxgg6A4xwOGCg/sZDman4NJ0n3ZL6FcypTSUn4MIQYbC069k3dD+",
+	"AzG5vitKJhEOts5A7vTwgCTzG8TkUrmAEQJPaCzwHHOBAxDR4BaT6U9rxrQfvnlD9XYZBCgWH1mImPwa",
+	"MxojJjAy3BaaRc/h9/eITMXMu3h6dnbmeySJIoko3oVgCaqM43tcQJGoXhBJ5t7FPz2ohkKh9606Ld+T",
+	"9IYZCmVL827Wjt78CwVCdvsLjCAJUHWu8A5iM6MH+xomAk0Rk+9hMuaCBrf1TyOqN3uMFd1NKJtD4V14",
+	"SYJDr2ZxMaNhEgjX5gxxxO40TZcHLy0913NxWrkl5Dr0c+uuBReFLKwBliHQMRSFBYRQoBOB56huFQFD",
+	"UPR8xxFABM7z+5Y9SOKw95iGthyArSajxs7eKqyzMIE6+F7BCJEQstd3hnOU4BxF4xAuclO5oTRCkMh3",
+	"l9sEGlFWC6pltqfAmGr6RCQcq3ede0QsHkeY3LqSRtpeP6mZAw5gNE5wWP/QbRQtwMf9WtsZWf4lJ6LI",
+	"UCBGYOR9q+d6TPQEmcAi2hn259dqp1JYRg4J/BSflycXEqCov7RxkC6B6jrqIV58O2L9TNfGNyHneEqQ",
+	"M/rdSJ7t2jigUTJ3llsr8ojxvJ4KwwSNZR+VTlcQCRG8QZECOhZozrv0rfeyufcj7QgyBhc7p650K/Mb",
+	"lZGZWePy1MTCKzqf14uepVA1ETPK3BE1XDShRNAHhzenWGxhj4N0iy088nBcem9nKLiNMBdvBZqvS4Hr",
+	"xVfmcYQECut1lw1uGadMjKkVEVVdfacEnW22peEMUIWpL73vik2sacP7SZIdqPdde71dFm0sgbXsIhEw",
+	"EDs0vIKECzpHzrwczSGOavdoghkX48YtdBbnbZ3EM0p2R9M5UBWWm5+1hdDSGKHaNuLF0tuVV5VfvPS7",
+	"ti/X/Pzpz743xyT93rVrPd9N9zT33svnXbp5r81oAbTppoYCw5Ahzp1gF2CxqFt5tSFNiGCObRPGEAnK",
+	"jZ8VAPqsbs8pw6WXntfZRihmLs1qtlVBoWNbCRWIuxlp8odxQMPyMM+edmGB2eWsg+adfo9guLVdnseQ",
+	"LJYAWqDpftwE85UQyp0X9Ng7R+qts8QJuvfSJaPQukzUYUqO3XpqPmOGInQHieg22y34u6m/wcFwg6MI",
+	"k+m4D3LYd5yRJH2hxw7ad5zRw74QU3lsUEdjT8/qDQCGEXND9hkkBEUuKBDQ+Ryr46IxRw0e9qW5Xm/J",
+	"+F2fRI4ZFKg0H33aoltpJ57ptRMaE4bwdCaa1xdhgty9FTk0fY8JqvNb9KBVPsNx3Bex05ecMTt7owdq",
+	"py8pX8c4YWWMetG+JGeSSN/oSRM8uRFUvtC4tQJ+b3nY8S6D6hBvbFCvG2St+pAlyhw91WG8RccODqlQ",
+	"r8Ile55t/ZVAIiwKYYLnyTwvA0twZMZLWCHIhGAxjhkOUppNOzvzex2apROqdNoMjs9ojkmtzCidkHQT",
+	"Yy9faMqGGJo0ALzzoLXQh37azbJxyMdIEvGyozIDseopie3Zy6ZWe1SS+nE6mYFqOUbEoXEJMYqzzJw2",
+	"6SY1o8SflN1OInp/RUmI7faXjDZKJnhq1E3VBkafci0KoMv6v8UkdNkjwSDh2P1YurT24utmWN9Ounvh",
+	"rycTVGuqHvSqvwgUV9eMJU43uEIxH6vjsvqnt2hRs+ouG2s5i1u+ViWTBrnc6nkrAVUuwsyqG4K/pTtQ",
+	"haOMIhvXg6T+AMhpLarlehbue1yg2HWKgrq1rJw/miH8DCBpZ3bhtYB28WpUZrmcz9GI9DbLdE2Oysww",
+	"aHR5NPk41u6QTrXudmfGDuNUsnn46a6b7co2x0BOw6mgLC7nvXx9+eELYpmCuKYj8VCbEg0W44biWRr3",
+	"0Dn2C03w99oedNjELpHETK4wldyyl93/N6/ffPwFimBW41SRP+fMm6qvAnExvkETyvoECaw1XG8OSTKB",
+	"gUjkD+6T6GUJucfxFSCWW2ot4DGKwldogkmDRF2Ouc8oDkruilqGl3dILEOPEzn95tCuKaNJ3HwqNENR",
+	"PBbou1iFXOeQhFBQ1hCE1ywJMmWqxtdA78eUjAMTJFTtVlqeOxYUdgGFXSjAfFlu8PYKRl9U3Ni68HGt",
+	"QY2ISMu1SVsPYOqFWr/20IYzCxKM5b6xOxjt7LTb7HsKhfK8MugtjRwhf20VxLXErAg0pWvUN0MaJHNE",
+	"xKpIgDlPGiReq3ZZ+4Dek4a+lsIJeRdpLE0LJzGnmwvq2jipX0PvSBqzsVkEtup6abwjMgSbssUXAUWN",
+	"npoKuvTDSm5P27xxr/N+0Sqpl8GYB1VlaWVJHNF7rTK0qc/aMd1rnBSEf9i3SiDc5R2KToC3LTWPfUVl",
+	"rKCnFcYoXLjQndfh3Tu0eIOnCauzjbQ5hhGvm1Z2tNXwGNvtaN5FR1xQ7g4+FjPMxwsEGzwfDN0hkqD2",
+	"ZnV48w5TfvsKClhxmHuX0ylDU0m3IIQCAnlB7FY2B3cY3fNTzy+BzGnRt2gxnmwG6BsGVZ/tihEbzykR",
+	"sxaulT6vihQWNi7STH9Z/mNXf7MY506JG2aYa1FziLDCPJoxEd3hWtU0jhm9a1IMtxaZh77HmCG+iTjL",
+	"CJIxJVFfUyeGmOlz3QbHRRzBhYxFHg8n6tqw6MLU/WyLc7BYVqFQuPTJrHyPr9C1GSVDv15X2IM/MLrf",
+	"4T6ECdN6A0dBg8B21GR6UhNHQmAy5b2P3LYcXe17UqZXDoTnMFZuBxjPvJxS46UiStoC+hZldwyYVtNy",
+	"AMwPWgrdLmzYshj43p5ClZWMJo9FAx3WBzjqbmrH7Qpr3PgxTxrr2BnNWNfgDjEJ1Y7orc4wg3WfNjWH",
+	"ubuy2cYDouYY9g2GSG4nQL4UeOlnNyiXJCpjgm0DwbX6Ob5JJpMmPri1s87DEOUlkC6LBL/WqOgh5pK5",
+	"N3OWlemX0agmsEtnfJGPwD1ltzKbSWJy3ogZApcyMUuEIVDOc5m6BBEgbT+bJkWlhpnDEEmDNjWELLXD",
+	"cI5JLfFWLJoKzC3FFSBjl1EH1obY5+Xuj1UDpjsDpF0CojsDoF0DntsinNsimpcLYV53dEPf0OYQRfgO",
+	"sfYpOMQLLhEg3T8g2tVk7RU37RYxXR8bvCLY6oKsu4OqnYKoHYOmu4OknYOiW1SU3QdI70K05dE9H2ad",
+	"Kjod8dYFIGUQKdJJhc3koVO+h7icUG2J6x6aw0KZaRs6LGg/fLFPx4YvNGM1nEsqbcf8xpD2DsyvRrzv",
+	"5EQ43Qa/MYy+Aq/K5HOQqACuiOTLobXNplbR2z6/uQJ/f/7ib8BkaQMhEhBHNQcL+kG96ki4sEnFqmph",
+	"DMUM0IlSBE1SQN/kscOCg78SxBannu/AU52SGEiGiJqkrv6hPMvrmRAxvxiNEItPI3hzalMU2dx1fPQ1",
+	"OTt7Fkj2rz6h6+5A6kpGoKaUbJ802qwrNFAIhm8Sgfr7u5ZyCECyUnQRZ/G4VclTLRoJvNknb2hRPnB2",
+	"FM6k+6srBpLfJk2/j2XKwaYDkhYVYe2OxPuZtG9ghNphmzVr5aMttqwERhXYObmfQ8cCiFbgZHKoVyYK",
+	"ZZf+bDOF5vC8DZ5U9ZTnLewydzdoLXjZpGz3DsTNydL02lEB5HqsFRHp7RxO90DZw3w8h5jUc5aeyLCJ",
+	"Y41N7Lre3cKRhAXDipv+2yLegz1fyo05lGsWWfRsNqM17JqK597h1ulQ4DANKHelOf1e445mj5v2dbVI",
+	"8L6x3mN6hxjDIWpnOL2Uq92nqqqqKXXbuZYEVp8SFswgR+v0Jq//dtj3GMnjs7Xnnmz2JGpr2Xk83bzF",
+	"tVU9GgwZnAhrlytFM4ZqliElyPNb85z6Hk9k5nJ3v4o2zbW1vjO8zk+64GnLQXvlM8cCRu+Hh0z6xsdq",
+	"h+q3pm8ErYHAuJfnrd2VpvxArUSaeYp2xzcrC/cdUkZ45dUVNmRZNPyMppgLxFpuVDannKhPj9B6qTG7",
+	"rVhKwNVxl7z1KmPlrlvrpcN6MDQl3FjylogOIBrLgFKxdLDJBm6cDiMdyNJm26ppQggVeIKbXEr26UoH",
+	"c2vMRLJ570JPztWZvyQH4eU5kgrC/kRxnTuqLYw8RgzTcB2R3V9mOG5QNasakj2FWKWMiBywwf8WiESq",
+	"RIxhc1Gvk2yXi63oujfdGsqwgr+v9tpvc7A/4gLP9WA9QKLyWkS5MK+lHYVLKS0OB/4OqngcyWPg0Ev7",
+	"03eCTIoZT248wzraPEQRXDTo5IK2Q2IgR+B1WlKqc5furC/HadTNvPrCCvpEXX7q5PfN3LrpbmItx5GX",
+	"cH6ld6ieC2wmq8EmbYXtpESYG4hVhK3FHs/35IGM53sw/FfChWqMSfE7TYRnMj1NENOP02/6oa5wpJak",
+	"vkVIdv5t06EBWQ2SGpE2QdIQcPYYZS80qmFbdBrVJKIobmbBDFqSwI0hv9vAdR2c3hwpals0B2xvNceR",
+	"iepbjAViDak4XHkAgrpSj6zR06CzzelfPU+i27y6bY6yVnkWw4XGvMY1d0WsyQjYQv0fGy3o5ZkbYlkM",
+	"1vrC56FoW1v7yTa64Vg4GNX5wwi11jWkcbL0ufvyBKvfw1gGXZsp3mLTyg7VrbtLV7pfZxFivSE8G1Rz",
+	"lnV5tnLgtFWLm3LweFBMZFBcUR0glkWZ39XjY32FzmY9Gdk6k/f3KLzQG+ts82bcGEZFhqHWYOh7BLkf",
+	"pRo2gEbHIg57VMRhX8s2rJ8aj8UYDqgYw6bYWn38wSYuzuykPMMql1AcIfgllWVNx0VLnw3pUR5hSYjt",
+	"HAkPtHLEBki9o6aAc+T0kqUHmqoIbLBuwAaBuK6yAn3KT2+/+oBrRYG1AvqPrKtylpv5HIsKz1PX4tRl",
+	"I6BbqLtxNwmOwjQRgkqecKooGcoCuVzO5CUKn56d33TZD9XBzPmPr/IH2ut64Prs9Pz07PoUXIfo7lo9",
+	"g2YaNBEchwhcvS3PQb3THTuQc45oINQBzqFGzJL5kJcqsbJBv5ut3rJyuZateMbai8As6/nqKoxz3OqD",
+	"2+p6yT3Ay1WrVSdaU4bz3d+QyBUqWss1CBflY3t3d3JazspqTasas1LRpJYqSTs5JXEptrQGZJFQQEHC",
+	"sFh8kdlqjDmq80M1qFD6IQgovcXIBxwJcLMA1yOYiNkogFF0A4Pb61NwCe4ZFlqnApBQMUMMUIanmHwl",
+	"mAOGJglHIbjHYgaenz0D9zMoVIYCqZjp7gGHC376VS4KE+/C079aarnwxuP/oVycRJjQYIbHSN1a5wYM",
+	"Zq0wxu/QwvshF4vJhNYv6/LTW5kv4b3uCbz+/OkUyN/v0Q2AcQwgCX0QQYGYD8jPBMiFAixOv5Kv5DVj",
+	"lHEAGQLXUB5v6XgVm8jgv//FKbkGT2zah590z9dyftdyUJgmgsD8K1kmMYIv52fgFiI9FS6kRQsoCdBX",
+	"Eic3EeYzFJ6C1zJuIx1RO2Y5gODaJnG4BmIGBZhgEvJ8AgmACXhPb/FXIgf7Dc1jqpb/nk4xAVi3lVhA",
+	"Gf4/BQE1GyB5kd7lT++uXgM4hVIZTvOT+SCkBEkcEjP0lUjsQSS80Oo5o/ccMZO5giM1UUFvEfGBzJOr",
+	"GhUxUmOLsba93H7KLc6RyYVRqn/4Ho0RgTH2Lrxn6iffk+kzFCmMYIxHd+ejGwpZqH6ZIkX2kpmqNb4N",
+	"1TBc/KKbqCiwmBKuaenp2ZmpPyhMzF4eQ/5l4rZ0qijnjFJqqJpUbOXQfu8yigAMBL5DQK9AGhYzBG14",
+	"9BUMZuhERlYwGhUnElDChXfhEXrCBWU1XE2N9/zsvGm2KRxGvxOJFogIuW4UFviOd/HPHMf557cf33yP",
+	"J/M5ZAsDWCBJTU8fPPnt8o+Ts/OfPN8TcKpsI/3E+2bCb6qboyv9aZhpXovkboWLXhtTlJ9LFTusS6da",
+	"w5MLzaQq/aOCU+e9pu6ASlXUkSyKoHsNeE2+IZrAJJL2c5TMyXpxqZhfM3u1HufOunHuFxh+1lvtbR5N",
+	"NYoBaKDVhqU//BJTGT2ov2Mc/tCiKULa61rE4kutsVk0jiGDcyQU7P/5oKWj5FqZbLS9emV08nPg7aoP",
+	"9m1FdrY06lkFVUN0IGxLvve8+70PVLyhCemDQGZ3Mwz68ObdydnfG/hcrQz6BxKPBTkeB078A4kUH24W",
+	"4O2rBqFnSxwW0UE7oneBETuTr33MrFIE4nJieEvobky4/UZ7+cLfu18wbv0rSiYRLpmo7eSiET6lGLnB",
+	"SwviUdCp7l8ZbX9PeK2TXXHlaFaotaujC/FouLGyRIJ04UVV79kSBsnVfnJmUwXZ+UKRNhZcW+fwbDwP",
+	"V7+crjxl7qmadeGMmguldaf3Koqoj8GnO8mDZNfW31WH8Resm7L7mXnD4gCpkRd0EX63aBk9BO4233Y5",
+	"hV/bdTBwe+HKxZYMHpcpGSxvSR5RbjWUCx6PgRo4qEFtJupBodpRw1q7htXTyN+pGX/lYMUHRyPewYjP",
+	"cZXnF0Be+vcBQ5JcfaAJxAdhgmSBXuQDjYQr62KjYIaCW1s6s9n0t63eKow/iklH70IebE5uBvsCUP0f",
+	"vDwtrdf4GXKU8GIZN0MB6kc5m7t10RXWvD6bf+d2fpH0Wgz+AgoeTX9rU4UhgCXgtNLkclJn9CA7dvUK",
+	"HBph1/dsIDJcK9CFtDIPxOboa+C+iBLttHol2u3FI95vXVRKfJDMqKnKzrKSdK9sOxdCT428g6DzLZp7",
+	"mxKtdJ6mD22252yjoyXnfk5sgOZkxxn4Akp0jPJjcI7mF10w4l4uY8Tpzo7mWz6nCg0XxoPZxyCzrw3h",
+	"6DWloRaDTDc5WmJFS0xDpZWi2uWEDmHuEAu6zYHF+KhVubFttX4gtTukQhAzPe+RhPsYCFQDfp4uxcRl",
+	"b4cRjClv93cV42g1CoZ4F8KSRhs3li2OzLjEjCVQWgnDhRePHtKDTCf315apqUEjslMern+qFakzx9T6",
+	"MXvgDqlurO1yRB0aBg5VVgzbLdRKX6k/aK/Ja4t+IE2VKnifyuviIWKuksXW0xqpelpd0fu67eu7FseP",
+	"qpKfUZouFGZu+DuQWktCgB9+/RCIhGsaYEt+oBwUXe8j690BWPuC5PQBg2SKTr0tXSe2eJKbCczNAzx5",
+	"d/n+5OypD9TfQkybfbUV8UYPtqDbj0YcVCGWeeC5SBHb7YAjIgv40BQamQf/Cru++cDG/EQNWjzvgQ58",
+	"QQIlIWuNwi8LEliArZo1oCiDkcpH0ZD0ZEECFNY9qxekxf2TcwbpYdA2KFaNKBMAICLTWYQAX8EIcJqw",
+	"AHGzJ+cOe2Iy+3ZIhbRVhRxLcEBScZYuER2RpjJp+4CyKdDpR6Xwen35wfNr2fxfXp5iO/LvbYmVm6W7",
+	"cPFfpVaMyRSkUN3LtBLp7MGTd79/KKORfdjt1jEtV8gt0boxxUG27RIpjNvgFDFttuIWycQbw424M9j0",
+	"EBZUXRhXx7lGD46OkQwfu1WKtSsTz6vpleyEUmfD0Qzq9k4UEeVpM2tqVC93igZnW+NAG+E+A75t48hB",
+	"fC9ORKPnatu4sX6xWFrItp0+HUiZun02h5xbknFD9hWtKkxHpoaMm1FwZRvvAUN1PAlWC3I7CtZrT3M+",
+	"PBqua86Bc8uvIN6z1ewGuw37y4vNeiw6bfvQNjds06mtavKImPASlomGUU8Mb2atCJITjhhGbsz19eWH",
+	"L7r1oXDXbEUO/PX15QegofVIOWwOAAxNMReI6ZCjCi7+rS+3/Wz62x2qrZ/j2jXlkGy7XLc0cD3fzTb1",
+	"yHqreG/3EEACSvTvjvTNDFjW1Xbjve9Vy0Phu3I1LixXrfqRcluFGyDC5BaFQNAqvr1wwDdHCZ9ntwOT",
+	"uvI0eqM8ajupsXPM48nn1/8onVHi0EU4FnfpKLD2V2AtIX9Ka2/Gohz1TzCKwpMQTTBRJUbamcAb2fpV",
+	"rvE2eEFp0J758tUCQW6Be8kfKqsATz59fnVyXrDoTBX2bpdFGaJru146ozhAxSRCtfXBs73zPbW0Sj1G",
+	"VeFtLNB34fleRMnUfpZ/xjFi4wiSaQKnyPPT2AeJBgGew8jzPTinCZEvmIRHC8THhHq+maTne/MkEjiO",
+	"0Dj9RUpS+QYNEnWfp65U3JTRJB43hEdWWs9QFOuZl4pAntdVQ59DEkJB2aJfTcWOoMxeFRZn9H5MyVje",
+	"EKufREJweTHnL51KJGQzKWx6AaS7vjpQ4TXNQqZMkscyClVvVBlGHVyrTS6NHjTOZD85XjCoMrtuA6lm",
+	"qMEerDqibHpDoIq3B3ny3oB6PzcKzKYD+CP+KPzZJdr0PFuvbH256kJRUWq7GzKYzT+qZ3urng1CIetT",
+	"U2MoxTQcOZMN0jhowZZGS/SUazmVCgcwOjER161W/tsrGH0x7bZh4Gfj9bTt8zHkp94WXXU143fEsLcb",
+	"5DkIrI3Z04gyrR6ram8SHs9ufn46eamEmBCIEe/C+9//+OfZyd/hyeTy5M23h5c//rO2xm8Ao3HCos4c",
+	"HduxURckGEvexe5gVFjh+QvJpL/juRRS58+fn6lxzVffsZRQuthd26J5smg2Q3M4WLJAD8GCJPn1uV8T",
+	"ybO60YP+4GguFkixW9lL+17LleDS/ZKsFHBz1xWk3qSt0I6Sl2lc+JBvjJdQqprAsMC1m6zCnaDJ7rZW",
+	"cpsCpxmq8deHYbTGVu9ug9cq/XtKenM7r6Gc/+pqwHoFfw9ZP+jcA920Z22cKg3uffyMtWyWFfUd0TFv",
+	"Q/6aiK0FLpjhFj0tGaSnuDUjRt9u5arc/NtX9qj43D3gwNgtdrVr41tQoKnxsHQ5b6wfyLKkSgPMeYJY",
+	"qatmNrSM2UIFcnId0XuCmMui7mCEw/GE0blT1RbdXFDXxsnKifDTHfLT2quq251bSynhNdtKksoWx3O6",
+	"6jlddtn97SsNpWaOUOS9owfV3NW4yvhFt0plOx6uytyBcumRm8G7gzxn64M6LebUo0KMreNDzwO06p7W",
+	"6QVt52Y72s9DVEEOVek4gAOqLjq3Vtvh8f/0OGpZzYHcISIoW4xuYARJgEYP5tCqK93WL7q9E2PJuhz+",
+	"fQe7Lge70TQFMWIgMurnvkW12jXoazJmo8CT95cSdXyg/hayZaQY04RIEzShBSwaPVjgdOHUm9dvPv4i",
+	"xZnjZbI14VV9ItDcpIePtSnk3PBWgVhng9TXAuX7+4e6xWXINRjMfdYLYxmKEOSoObXcZ93gi6DB7dpc",
+	"LHn8cik0m0N2l+Z/JZAIBcO6tHUMTRBDJHAuipu9oB89dLgnCqRZJKV0ZqVpbEOLKG4BF1AkvH4xnbn7",
+	"DFKE2/X/9riOoqYHIGCIS0+9DlJZgqHr91vJQzU4kseRPPLkoZBiuOShpge4RFqt/RCbHnkJGkmtq0bH",
+	"im36h2q5lSOQ4pAOikH6BlDr2TeFoDR9pZdbjTavo5sdftFrh++xmIUM3jezwT9NiyMfPPLBjKYsVpCB",
+	"MkI7P8MJKQF8hmNdDUozQh8469S3mPLbUQgFbOOF72SrV7KRU574OIKLCHODJCsHc8WIYRqO55SIGS90",
+	"mMUvPvW3G8+VQaTueHo6ZWiqHFgSslpYRRG4w+geyGnyFVFrLUv4xOhNVF/I8y1RnkrpnEoIjGNG5WHM",
+	"5ae34BYtTsu4WvWD16xfIZqCgAz4fftR55eXf5+ZvwXurprXoiq6w11h2HpzTMNtCO7cgK7hCxoeZjVb",
+	"DcEujGz24mUd7NsjGPJr3mDtlO5ggiEW0iogRPOxut4EIDUVEEPMVEpxGh5SPHIuyUIe8drwronmRw/6",
+	"g+OReRFBu32TaeePIiC5A0M/ozt6O9CAZD03FYEF09N0V+TyO5ScbePLDvdYcqE82AZ8ru6+uy2ByTvc",
+	"4HUIR6uH1YcYo+8xZoiPoXCtkNTj4Dyv0LsYlQOOGHagCXv4XKCKg4kWXl4MSw2l2ZnyCWLWTWFl004r",
+	"PWOp9LjIxk1QFR7fokXfItr2te37NuaIczhFSzo35C6h8BR8RiJhhAOGYHhCSbQABnEGbpl+oAKkBill",
+	"ABtLtdMulQsvI7/Su7HgBd27H0kYxuhgj35Km27NIrVD9gypTxe1i5vB6eBmH86XtEzTte/UNu1zTWew",
+	"dmyGRs2WrN22A7xJm66tDSObOcPoIac9OdutOfR1iKop+Fsfie3ahpX7cZ82h1jVu7SO9upO8GSneys5",
+	"TsZtBmuxujCNbmt1d9u7SZG50l3WoduWXbhrrcsSDh+OfblOcTlSB0atyrWF9x+q5T6xwf6KvFyjqzKv",
+	"j9pMkek1MMx+Gn06ujMnbFHoC8vfS04YJnpRY46CwsH1s7Nc4p1nZ/m7+C/q7uJzJAQmU9UpDEOVyApG",
+	"n3KD6TWW+KDvccrEWIVL1QeOyA2rJKubw1hlmYWxBG4WQuB7qifu+bm75V0GTTbCoKwaTVPNlo2c9gFZ",
+	"NZdhCKCJRKA11GkO45+vzrVHD2rH3YyenZF4/VUCM/PHZ001UcNnNKd3gz0PlHOzWC0v461D/z5AjNyY",
+	"OBuGBGs2DDYl3oZjbbRJMWtxaEl2YNaGonlnPTMnwbrLQ9myUMMp2ZRz0qvp723FHjX7rlJL7UaBgtkm",
+	"y3nqTdmuZpqNWa+MSrg9gso8qetdrrdHRS7ZXFd/c1A5DQLtoOjbcz27cjG2NO3JvtZg22LyFBfEaHad",
+	"727rz7bCKjbEJoboZ3dDhBY9f6u4sH5ZlVvElvXPNgS0Kud+y6sBZw/pKxiNx6pD4U1bbUXpNaP1VXzt",
+	"JPdW+S0vxCbvaLqu1aEHWzCuLSIuDBni9TVOghkkBEXjm2QyabLDg+LlxNzLNFE5f+qerR5dswfRNBnG",
+	"t2j4m0hLcyDJFkvXgc8d7jfaV3g1p02XeZDRVbduMJTUM6tgX5p0cWCZkbYRiZNhVjUSp8iKG02Kx4Yu",
+	"jwZLjJ1hMaRcEq0kqdtyO+4OR/ZeL+gh+QcdItRFVanhtOfUtUVLqL9SMG9N/PLrysle2hDgV9TMUKdT",
+	"FJ5gAhKO2L5ZN3/OKMDcLAJgktsF2WVxA8zxWpst+tGewJU4ZRFub3AkEJM8WXUJTOIPv/bkPX2Ywc6e",
+	"BIYMToTnezAIUCwX7nt8huNYfQpRhO8QU58DSAIURSisPRBsnp61y7XsqJudbdE3acZWotDUbrgY6r9K",
+	"+Sev0ugt3ksbXU8dPPn4+VWJn+gnnSa5htYmz6bMfmzXfM0NWm+7KvA8ouOpNP9YC6ZUuN7oRpLICfoe",
+	"Uyaar1OqXJmvVaOUFa4pTXeO0bhc5pUBNWMpbJ2yVjemXvI9QV27WY+WJsvTjgJ+1+HzKGPz1Zc/gN6d",
+	"R4DKCs3Mci3jgxxIGDz5WKk434LVjoeuljUO49RVzeZ47NqjAmCe4f3cIBqbFOsd7v3ZdoSgho66Vhxh",
+	"gvjj8I2Qyrq7dKfm09jt4simjmN7qGdbwkzrV9hzFW24fojldEEpNUeZKljLOXNK4PCYZxxOihiTdn+D",
+	"CWSLmgGqOSlevQG2HszBc0y9mxm+QA7k+jXa/L0P2ihO2+1Dea+a7YHUdXdEyCW5OCO0evc4JHHmuXAT",
+	"wV3uCwXj/ZXD5ZXswlWSDdziLlG79YgEcs+LahI66qLaCvJV0cPoQf7pOvt/pX7fKgE01LLRk92WCazA",
+	"zOwdr6MZ3H7PTEFL3zNzQctug+dAcG2j5pQ7Gz/bHhsvmFWPjZVv3bZSdLeEAMh80vVqTw7LvtgzwgNw",
+	"QJi1HN0Qj4dU8qfghlKe9qeUkT4GbyaYS/V83311+VUMiUhsEMKRStZ+kKEgW/JYxwypS8QynziN9XV0",
+	"QO8QYzi04ua5D/58U7pq4UhLOmKkmZau1PN9p6X8KoZES2m8zpGY1k1MesvLJtDflqcUGXHVTCdfZjje",
+	"dyrJ1jAkGjGRbkcKWTeFyO0u08fLLsIwBdZOJCw7Mt/plr+phttwvucG7JtSWr9ZKH61+UC+wqjgyScZ",
+	"z1JgTKZBt0s8v/INZsd8+XzJfNIvn9c0lT/ozPrFxsVrdU/VpQWBGPEuvP/95+XJ//ftv//Tc8pOnc0m",
+	"P9iub9kVsLQlY3UOOY6X7WqyXufg00E7TdwrKyqvsMMxE1yB1NxLypshBhs45ICW6Q28Im4eZAKPHujV",
+	"HFH2iHFlVyjSNw12fpvLV+eK4rft5tzON3qDAn9DIt5FqHddlSukbzUtv+34Bp0DbaQptg+VjWa5tjch",
+	"pEcTjKLQ2fZ4o1vvG//ta/GoZbqYPRoequitWB+j7mf56B0EkHM8JSg0qX77iNwGx7/qUK3wN3oQTFlB",
+	"ahyiCSa4T9X2OSQhFJQtxtZVXF+Xrz1raYnH1k1mQOaUIYEG5VWhho7hHGI4kZoegJo0ehNEb+45eojF",
+	"pL/Jo0G8bWqqjwvRC9gHJbkdMa1VtRsM3V5YksZsm/+6F7N31L0PETvXIUTWIwz2XBtvJUKrkh8oDaYK",
+	"uabBbJUmNfUqgsZJEe/MlPAFST4oTXBJPz748u53WT/z9eWHhnwEf3md9Ve3pH0vd9aw9WMGc8IgS2io",
+	"HX65yknD+rL5CcHwTSJQ/4T7CFYqcj2r04Q5i8dBwhgiwaL0QmN7jm7rWWCNk+Tpi5edxyJleeOiwvOZ",
+	"ZMcFPCqM++L8ad1bt0l5kU87p5dFIFYzjkik9XwvxFxuMSaJfOdbTSf3MxohDiPUB9rZSzGT1cwbAF9/",
+	"vCPXWoXtQCwSh8Od47lO87lOgVkV73K3i6PM5Oll3fRSG4dvdrie4Rz48Y3BomVPbh4JUuwAF5Y8p1FH",
+	"NOBJlwLjYC9ufWuP2lKmLQ1OP1pdI/I9y1prlaPW6k9b1JwGZpg7HpEd9ulY0S7725KqzsjmKHAyyF+l",
+	"jfdIxPWxyu0CXazzfMBCCsWt2efpiOpMrowWK5npKRD2UdhZuKR18bqiDdD3GDPEx1BUcridCDyvzQcn",
+	"sIjcRJRqWY17qG+csKg76b8e2y8tVL88ECM2o6JmYzbLjTLYa/p2isVztXYCc+e3o4eQBv2szV0QZv05",
+	"hZ760C2XLjxMzdpBI2N6FFYWNt283sGiOTycOkqRaIkE8gNW97vI2Kr9u6Di7ev9jtTfKYjwHE7d7uK8",
+	"1S0PVOVXq+ur72vgbU3Z18PVavrPVtH09dr3Uc3HfDyHmCwXkeCkZw9InzYo2qxMK/wYriZN9ATr9Ohn",
+	"q7Gv0YP620+N3jrW1+s7duZD16JbsS9VoYeLglZ/tlhYiiXrZKMOSvTBYdRAWfQeK7GtVGQ12K0T0fbV",
+	"V02DKzL/iAa3J+ZMpl7NeU+DWwP5L+9+f1wnsiZnOQ1uUShD4g4KoeTGqisoKtZvUmHkLjEfCQtmkKMT",
+	"h4pNn0zbpspNS5ZkUiMjHXWssCikBDlUYqodLpH4NNAaSwX4ucY8zm29JbtT+1x4qbQG8OTth3fl4BLd",
+	"RIXIdRluBXiur3qO8wEy+h6jQKDQvXgOoQLxUs/nZ0/rvGgKRO496+Ykmd8gVhqg1kmXpxQXJaugT+Rf",
+	"3rldWKSqlpDBAvIdIwdrIgcLEOqkzmYxMnqIqasdWiJiB92EDlotcUHH1FLcVEamg4tGLGFmtYhzSW40",
+	"hiU+RnTbIOcbbj3nEspUUlOU9IxWz8aukGYd+sxGlZTmIL9ltHrfE1TAaAznNNELPYgbdC4kmobrHQSp",
+	"btGVsm6VxaHqTmFD3avv7F6Q9LdSXQvxSEt1SGV4+pmlaub2RLEfQvWwUJ1rQAxIeOT8gN3D+t5fCSRC",
+	"wbzWj02w6BOfrdqr0GwHbl/wWKbzGJRx2lUuaO3VJfbbLC3VB9oUq3erG1RnrW6RoLdZQ+hs+9if2sMb",
+	"KrBy4OawLpvSaRO72ziHg9nrEIJqMsoyqZdrDlKvUYrtvUHjUjzpSNVLmDKaqN2FHENzTDrP8D6nrbZh",
+	"S9jRnEwIndwjXcZeWhKwtAjw5PPrf5SKJaQPO82HFHybLKGZ7dF2VePiuPUasQXV/tYs6H8IY9fchTp1",
+	"pK+qbTiosTnE2kHV4JoilXZCqSZ4FBedSqArojQfhuwWDc62xko2yEaGePLhjhgtZUu3jhubqpTYT75t",
+	"Dymtcrz/Mm7AOvXKwnREqMCTRXNw5a+Q3dqt/iDbYhQeMj+1z8AcsluV7xEQs+yjzG5AR4kjeWTMwawH",
+	"YvIZjruzU3xJW23DwLOj9czgmC5lP428KMpWYEz0Qvh2+rDTwkvht7b8RoFI5Ak6Y/gORgVG0nTcfyPd",
+	"gvWRg+dPf655IZC9O7ZFXOC5BHKvKclrKeMod3bRnf7IOE/0PQr3BEiqMF6vm8rVkIc4goQorm/683wP",
+	"k7FgkHAst1YtXf0cogguGmMf+i1ZMBjcYjJ137rykVkFZrs+LsvYSbNPwBLX8aSs6juwsDFM6WkTU6qT",
+	"KqObxUlM85Gb3TLml8U+xtNtRLJlAsHWBRlSBE8/AVdcS8PJ67NeyPVgPzoetOYEYzdK5foerE7dxdrS",
+	"I9CN8LfD9IBl7K569lnUwZo8YI8OzfYdu3q6wlIMKYf/llT0tpPx3eHI0SBY3iB4ZKr9PsYRdPEq6yE9",
+	"SkRXd+cy+r+Ago8CyFrqAUpBKZtdqVZb0b7tcC7q9xcNCKAWoVTWEPLZDYUs3Df1u7iUJ19+uywr2gLW",
+	"7yAmd4gIyhZtu/jWNlLw9TZI26WRanYtbQHkAjAXONg7d2C2hjsYJQhAEoKI3sspBbcgoAkRZhOfOm3i",
+	"LVqcTPA0YaiVGN+hxRvTaoNbmBulZvveoQUwU00tXh3bLUCMGKZ7R3v5FelNO3faNIbuEElQ24Z9Nk06",
+	"SjiFEEcLH9wjdCv/zikRM/lhgSCLFg1lnDSwC9kOQjSBSSS8C8904fnZ/Sw5hud7ehDPzzUxw7hnW1Ba",
+	"mVHZalTbemWuqTNB+3f1bTtBbGrzPlHs5g0y7YFgiIQghALuGyUUV+BKCzS4lcmlHI6oZNNf06ZOeUQK",
+	"1zv6RxeXerPK+Jq6s8u26aeruU6sB00+hCplNQz/lXCh3sKk+J0mwlM2AOETxPTj9Jt+yBBH7E6tQX2L",
+	"kOzcnXIZmiCGSICqU+7dwxBTrRRQzEmHVBI7xd/9dNsW1wCevL/8R4lwMy2x82SyAMF1eSPKroWq7wFx",
+	"Mb5BE8qQ+4XlPDk7lnZOJtIxIn9wH6ZI5gOgbn+99/MYgrzgQMheLFC7y0glBtOZYbTA34vsucxdB3O5",
+	"r8RkWo4sC4R5PLisObgsQMhyLh+ov8+bOFhe/TAZiTo0j7TVVoSQGa1vcIyd5N4Gx5QXAp68f/1HWYW0",
+	"D7slkWm5vhiZMGSIcydPbGC4ZbcPnBIBAzFGc4gjt67NG/GMEuRSUUv5E5jjdNyvWYcowneILcYCsTl3",
+	"6j1CMBxLL/o4hAteL03m9K+1FoCVr7mm/e+VZq3By167BTFcaFHkDCqJ2TAaBzQsL/q8buaMRgXVIiVR",
+	"L6+2KGKYMISnM1FfLA2KHqu6RzccC5fyC3VVZHcuhlM22yKBTZuj7K2RvQY2XVy6TtqOHnKpAJ3iOjJm",
+	"7nCYWsjmOdAD9w7sy+I6NoGCBxrXkWJkTVxHQW9oPK56bGi279jVN67DYkglrqOoVrbGdewMR45K7MEq",
+	"sUe1dXtqa3tF4GV12sFEx3Rw/DQ65qhXuEbHrE3RHRm25+ZturKN90kZ6eXhMivs6eiyQNxLP5edvAmR",
+	"d8UtN1eXhedeaibuykONEK2XRvVCtL6tsyZiZVZ7pvwhezxSsmt2fBg0Pfo9SmkFDVx0ZsENCIbRg/nU",
+	"0y+yC8qvT8GWzX/wRnEHHaQumE0Qw2F6YCx5dDpgnCzsw0Tqo6w8iEsIbjzEWltHFuJobKUcZGWRmhYu",
+	"c7G1PtnGB2trpXXv3GwtCz0TpI350BwGPSuI2eUYhx8KpQu4osI9Xc3+sjDeS/urZ0xYmgWih7c1fWeJ",
+	"7OxDMZ466keahOy3R8spR4DkNldjUtAedNeDz48eeNzTatoFvdYrmDxetd9tGEwduJ9Px357VHU6ammn",
+	"BCGhZStqux5h5+gipzsbNae6M6aNumgW0PkcCy3TbxIcheAecjCHoS7r7afXsuaIJLI8rPx8j26+EhjH",
+	"8obol5Ozv/10Ct5QBmJE4wiB+xkFkCEQ0elUlmAmp1+J51eP1w3QNnn7zA7RgKIsIURWRTXB0fumy/w5",
+	"w8HMTh5gbteTwxLZdRFB7im7nUT0fsQFitvV4T9N0y+q5TbU0/yIrrqpXRBQC9pLfbS4BPDkzzclY8c2",
+	"6NQ9CwDcZMLv4k5tV/mqjt0UMY/ix5T0u4BG7VjUyBBck3+XEG0YCcDlZI7Jv90dtD0QpjlKbveYcLZV",
+	"zrIhrjLEALle+NGSBnwnKLKpVOD9Jd928TMN6dlr6Tdgp/SKYtakfcKUuGnfv+Xab1MHz8btrYnnlrjf",
+	"+nhuIXqjn66kledAug3dPL+Du9HQyzOo19MzKD9KbT1bfjuOdTCTvpp7ARmHob9nUzpq8Uto8a6I1K3L",
+	"7xo3znbAiTbKhQat3bvjjYOOvwPU2bSm31eO7gJ7rdZ/CLJ0H3T/dQrtUUBJuJRFcJW9uAd8upf5kS7N",
+	"xfrI4JCeVz0idm6vEuRBACsY+mxNpku2MfvL34try6Habsyk0gQag/DDx8bY+8fjaxDpsBJXCnDi0Wgy",
+	"QV3xg1VieW3eOjTurNflwpoNBB4tX0a59VdR8vmamLLZj0PhyBa9dsOO86PX82K9qUdG3MCIiQFQPRt+",
+	"3saGEzEbBTCKbmBw2xjE9OcMMQQu5ZoiDAFHJOSKudwwes9lQgcY3J6CtzKR2D1ccAAJv0eMg3ssZqqG",
+	"YogZCsTFVyKoejGGU6Q+RHSKCeACMmlNqTis+xkiAGuvMAp9FTZFxQyxe8wR0B18JffoBsA4/i8OEGOU",
+	"qR5PwW+5SWEOBI2knJrg7+oWQKiTfRN0hyRzCJGAOPpKnsiJ6C9cRVJhYufm6yXIb9eCQZVK8fqni6/k",
+	"K/k3uJY9XoN/g18RJBz8+yv598nJifqnHhN6AoMAcS7byJnFiHFK5MQIVUnX6L0K2LoAhAJGIyQXmwXy",
+	"wUDlXfDlU46ksAXySj5lPqAstx0Qh4DQU6BHRd9jSb52TA1gQemt/A9ElMhFQQ5gxBAMFyDhKJT9YQ4S",
+	"ckvoPTkFX+R+ADiFmNhuJxBHutdLshAzGcaFIo7U40q02Xs56JVFq44E2nKWEg8pw/+nulA7ddqQOVs+",
+	"K6SuzV/COXv+c23MZ92psjQwMwyUELFYKLf8FEjuxAElQeNUVB8rzuWSGPxV2KnwP93YJ9cafcYhIhiF",
+	"1zo4EBMuIAnQTxJN4wgGSIYJwlagqSEaZ/riZYPYyfH9Z2fPavzHncSsMNXQfC3Fbi5QuwRnIKWypWwz",
+	"lVPwkQCJ2AlD4Hqkpn+iJvf/Smj+P9eKXeTo2M+RF2UpUZy252L2viBxckXpLUbViV1FCDLNTa/H4/+h",
+	"XJxEmNBghseIxWM1p2sQqLcNLySAJ2o+gCPBNTuse9cIDfu2Dgtti18vSp2CnHmDCeaSl6sJNUQ8SmGi",
+	"nzdJki8V0SFoivCn4NKyqxkUIIBEskmZ1hzcIItWmiN/JSmVhPSeFAjDB2oQKBqxDkT4VoqCxVeiBAvQ",
+	"+6gHv6jDBLvRkvFnXFXG8Ep5bTE8XZOcviUDLFIZUr9NpS2+V1GmlEQL1acVzlIaoFjw0yZ228VmaylA",
+	"znxK5f9wIhDLqPg0Y/NqNVpmfSVQ96ICkzFXXTyRMuuG0ygRCPz++b0PrkejGeXi2gdQqQY8gnzmm/tl",
+	"jEZfSTCDDAYCMVkwgUnuAQl4cf4UpA/4T3JMhhSHU/eFrkfXevH1mc1FwshY0AKKo+9wHkdIIWp2VeH5",
+	"U3mfJccBX5w/XZ4DWkQcDqszE/ovXhKriIQxxUSombYg+Qrc7DcXNqYx6gZbVmBVFBMVr4nodHleZbQX",
+	"F1ZF9QGLNf5KprSdoGGkNhzf2GM6nj9j34bLgrdaddXaL00EgF/JHYxwaPvRbFzc48BwdKsuPz17Ltkd",
+	"WwCB57onRQOThBt5+pVAw7Iow1NM1FbanzgWchZJpDiZmlMi2RFNRAPXSDOXdxwUv9dXC2RH68XiFSRj",
+	"Wbp14Is0wZ51m2BXjHL+UcH2DWU3OAwR8dqQ7T2dAg3GMpqpl9id5cYJi7wLbyZEzC9GI8Ti0wjenGIi",
+	"ECMw8n58S3uogb7caY2uCmHklQ/MsxsfGR9Ug1fVzHeQ3EACVHkt7oOARsmcyA/m+wwFtxHmgqeXVHQx",
+	"gt8u5T1gSZvq099+ykbSfdWMZW/z+mCCURSCEE0w0a49P7uHtoiRHiykQWJG+/T5lRlNfjr/+0+VUiJ1",
+	"431Qucd0Z29fSXqZYi7YwlTpV/2pT89+yntl6rpKU40bMJhsQeY6tOxIfcp3lN0LqoFEoQSv7jTCBNn6",
+	"8+c+UH+f5xeq39F3NivzS2v8ymtLSCkecWkQU0XOdP3M/H3xU7XcZd2UrVjhfqUyhZz9DYykimVzvSuI",
+	"XP6j2H2W7L3aPb6CkVRpEAkhA5wmLDBoINU8Cep3l+9Nx+pTHjT2vTr8xpTfSmtoobDYB3cY3Rv8QndY",
+	"DvLk3duPtue3H4u4fCtfr+n2KuGCzhHjfoYMahMRlJXe3v3+wfYoP/2cn6t9s6bXPwvXT/x81JufP1dS",
+	"YDHuTB32KIf6883J+VlupNSjUx3oY4Z2Cjks8n1M6Ux+Os+js2pXSxppvTfV32217pbsT316/lPRRq7r",
+	"7jOaY6JmJ1V3ZVQplwIRDMsuP78uYRWzL3g/vv34/wcA",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

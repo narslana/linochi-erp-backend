@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type AuditLog struct {
@@ -30,6 +31,256 @@ type AuditLog struct {
 	RedactedAt *time.Time      `json:"redacted_at"`
 }
 
+type Board struct {
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type BoardColumn struct {
+	ID         uuid.UUID  `json:"id"`
+	BoardID    uuid.UUID  `json:"board_id"`
+	Name       string     `json:"name"`
+	SortOrder  int32      `json:"sort_order"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type CalendarEvent struct {
+	ID          uuid.UUID  `json:"id"`
+	SourceType  string     `json:"source_type"`
+	SourceID    *uuid.UUID `json:"source_id"`
+	IcalUid     *string    `json:"ical_uid"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	StartTime   time.Time  `json:"start_time"`
+	EndTime     time.Time  `json:"end_time"`
+	AllDay      bool       `json:"all_day"`
+	Color       string     `json:"color"`
+	ErpLinkType *string    `json:"erp_link_type"`
+	ErpLinkID   *uuid.UUID `json:"erp_link_id"`
+	Archived    bool       `json:"archived"`
+	ArchivedAt  *time.Time `json:"archived_at"`
+	Version     int32      `json:"version"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+type Card struct {
+	ID            uuid.UUID       `json:"id"`
+	BoardID       uuid.UUID       `json:"board_id"`
+	ColumnID      uuid.UUID       `json:"column_id"`
+	Title         string          `json:"title"`
+	DescriptionMd *string         `json:"description_md"`
+	AssigneeID    *uuid.UUID      `json:"assignee_id"`
+	DueDate       pgtype.Date     `json:"due_date"`
+	Labels        json.RawMessage `json:"labels"`
+	ArchivedAt    *time.Time      `json:"archived_at"`
+	Version       int32           `json:"version"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
+}
+
+type CardChecklistItem struct {
+	ID         uuid.UUID  `json:"id"`
+	CardID     uuid.UUID  `json:"card_id"`
+	Title      string     `json:"title"`
+	Completed  bool       `json:"completed"`
+	SortOrder  int32      `json:"sort_order"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type CardComment struct {
+	ID         uuid.UUID  `json:"id"`
+	CardID     uuid.UUID  `json:"card_id"`
+	BodyMd     string     `json:"body_md"`
+	AuthorID   uuid.UUID  `json:"author_id"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type Contact struct {
+	ID         uuid.UUID  `json:"id"`
+	CustomerID uuid.UUID  `json:"customer_id"`
+	FirstName  string     `json:"first_name"`
+	LastName   string     `json:"last_name"`
+	Email      string     `json:"email"`
+	Phone      string     `json:"phone"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type Customer struct {
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	TypeCode   string     `json:"type_code"`
+	Address    string     `json:"address"`
+	City       string     `json:"city"`
+	Country    string     `json:"country"`
+	Eori       string     `json:"eori"`
+	Epr        string     `json:"epr"`
+	Currency   string     `json:"currency"`
+	Notes      string     `json:"notes"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type EanSeries struct {
+	ID            uuid.UUID  `json:"id"`
+	Prefix        string     `json:"prefix"`
+	StartCode     string     `json:"start_code"`
+	EndCode       string     `json:"end_code"`
+	Description   string     `json:"description"`
+	AssignedCount int32      `json:"assigned_count"`
+	Archived      bool       `json:"archived"`
+	ArchivedAt    *time.Time `json:"archived_at"`
+	Version       int32      `json:"version"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+type FieldDefinition struct {
+	ID         uuid.UUID       `json:"id"`
+	Name       string          `json:"name"`
+	NameEn     string          `json:"name_en"`
+	FieldType  string          `json:"field_type"`
+	GroupName  string          `json:"group_name"`
+	HelpText   string          `json:"help_text"`
+	Mandatory  bool            `json:"mandatory"`
+	Choices    json.RawMessage `json:"choices"`
+	Unit       string          `json:"unit"`
+	ShowOnCard bool            `json:"show_on_card"`
+	Archived   bool            `json:"archived"`
+	ArchivedAt *time.Time      `json:"archived_at"`
+	Version    int32           `json:"version"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+}
+
+type IcalSource struct {
+	ID           uuid.UUID  `json:"id"`
+	Name         string     `json:"name"`
+	NameEn       string     `json:"name_en"`
+	IcalUrl      string     `json:"ical_url"`
+	Color        string     `json:"color"`
+	SyncInterval int32      `json:"sync_interval"`
+	Enabled      bool       `json:"enabled"`
+	Archived     bool       `json:"archived"`
+	ArchivedAt   *time.Time `json:"archived_at"`
+	Version      int32      `json:"version"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}
+
+type IdsEntry struct {
+	ID          uuid.UUID   `json:"id"`
+	Category    string      `json:"category"`
+	Name        string      `json:"name"`
+	Value       string      `json:"value"`
+	Issuer      string      `json:"issuer"`
+	ValidFrom   pgtype.Date `json:"valid_from"`
+	ValidTo     pgtype.Date `json:"valid_to"`
+	Owner       string      `json:"owner"`
+	Note        string      `json:"note"`
+	DocumentUrl *string     `json:"document_url"`
+	Archived    bool        `json:"archived"`
+	ArchivedAt  *time.Time  `json:"archived_at"`
+	Version     int32       `json:"version"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+}
+
+type KioskDevice struct {
+	ID          uuid.UUID  `json:"id"`
+	Name        string     `json:"name"`
+	PairingCode string     `json:"pairing_code"`
+	ApiKeyHash  string     `json:"api_key_hash"`
+	Approved    bool       `json:"approved"`
+	PlaylistID  *uuid.UUID `json:"playlist_id"`
+	ExpiresAt   *time.Time `json:"expires_at"`
+	LanOnly     bool       `json:"lan_only"`
+	Archived    bool       `json:"archived"`
+	ArchivedAt  *time.Time `json:"archived_at"`
+	Version     int32      `json:"version"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+type KioskPlaylist struct {
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	NameEn     string     `json:"name_en"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type KioskPlaylistView struct {
+	ID          uuid.UUID       `json:"id"`
+	PlaylistID  uuid.UUID       `json:"playlist_id"`
+	ViewType    string          `json:"view_type"`
+	SortOrder   int32           `json:"sort_order"`
+	DurationSec int32           `json:"duration_sec"`
+	Settings    json.RawMessage `json:"settings"`
+	Archived    bool            `json:"archived"`
+	ArchivedAt  *time.Time      `json:"archived_at"`
+	Version     int32           `json:"version"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+}
+
+type Lead struct {
+	ID                  uuid.UUID  `json:"id"`
+	Company             string     `json:"company"`
+	ContactName         string     `json:"contact_name"`
+	Email               string     `json:"email"`
+	Phone               string     `json:"phone"`
+	Address             string     `json:"address"`
+	City                string     `json:"city"`
+	Country             string     `json:"country"`
+	Status              string     `json:"status"`
+	Notes               string     `json:"notes"`
+	ConvertedCustomerID *uuid.UUID `json:"converted_customer_id"`
+	Archived            bool       `json:"archived"`
+	ArchivedAt          *time.Time `json:"archived_at"`
+	Version             int32      `json:"version"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
+type Location struct {
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	NameEn        string     `json:"name_en"`
+	Address       string     `json:"address"`
+	City          string     `json:"city"`
+	Country       string     `json:"country"`
+	ChannelBuffer int32      `json:"channel_buffer"`
+	Archived      bool       `json:"archived"`
+	ArchivedAt    *time.Time `json:"archived_at"`
+	Version       int32      `json:"version"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
 type OidcLoginAttempt struct {
 	ID           uuid.UUID `json:"id"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -41,6 +292,185 @@ type OidcLoginAttempt struct {
 	CodeVerifier string    `json:"code_verifier"`
 	ReturnTo     string    `json:"return_to"`
 	ExpiresAt    time.Time `json:"expires_at"`
+}
+
+type Order struct {
+	ID                 uuid.UUID      `json:"id"`
+	ExternalID         string         `json:"external_id"`
+	Channel            string         `json:"channel"`
+	Status             string         `json:"status"`
+	Currency           string         `json:"currency"`
+	ExchangeRateSek    pgtype.Numeric `json:"exchange_rate_sek"`
+	SubtotalSek        int64          `json:"subtotal_sek"`
+	TaxSek             int64          `json:"tax_sek"`
+	FreightSek         int64          `json:"freight_sek"`
+	CommissionSek      int64          `json:"commission_sek"`
+	TotalSek           int64          `json:"total_sek"`
+	CustomerID         uuid.UUID      `json:"customer_id"`
+	ShippingName       string         `json:"shipping_name"`
+	ShippingAddress    string         `json:"shipping_address"`
+	ShippingCity       string         `json:"shipping_city"`
+	ShippingPostalCode string         `json:"shipping_postal_code"`
+	ShippingCountry    string         `json:"shipping_country"`
+	BillingName        string         `json:"billing_name"`
+	BillingAddress     string         `json:"billing_address"`
+	BillingCity        string         `json:"billing_city"`
+	BillingPostalCode  string         `json:"billing_postal_code"`
+	BillingCountry     string         `json:"billing_country"`
+	TrackingNumber     string         `json:"tracking_number"`
+	Carrier            string         `json:"carrier"`
+	ShippingLabelUrl   string         `json:"shipping_label_url"`
+	DeliveredAt        *time.Time     `json:"delivered_at"`
+	ShippedAt          *time.Time     `json:"shipped_at"`
+	Notes              string         `json:"notes"`
+	Archived           bool           `json:"archived"`
+	ArchivedAt         *time.Time     `json:"archived_at"`
+	Version            int32          `json:"version"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+}
+
+type OrderLine struct {
+	ID              uuid.UUID      `json:"id"`
+	OrderID         uuid.UUID      `json:"order_id"`
+	ProductID       uuid.UUID      `json:"product_id"`
+	Quantity        int32          `json:"quantity"`
+	QuantityShipped int32          `json:"quantity_shipped"`
+	UnitPriceSek    int64          `json:"unit_price_sek"`
+	TaxRate         pgtype.Numeric `json:"tax_rate"`
+	TaxAmountSek    int64          `json:"tax_amount_sek"`
+	TotalSek        int64          `json:"total_sek"`
+	Archived        bool           `json:"archived"`
+	ArchivedAt      *time.Time     `json:"archived_at"`
+	Version         int32          `json:"version"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
+type Product struct {
+	ID                uuid.UUID       `json:"id"`
+	Name              string          `json:"name"`
+	Sku               string          `json:"sku"`
+	Ean               *string         `json:"ean"`
+	ProductTypeID     uuid.UUID       `json:"product_type_id"`
+	ShortDescription  string          `json:"short_description"`
+	WholesalePriceSek int64           `json:"wholesale_price_sek"`
+	WholesaleCurrency string          `json:"wholesale_currency"`
+	MsrpSek           int64           `json:"msrp_sek"`
+	MsrpCurrency      string          `json:"msrp_currency"`
+	Status            string          `json:"status"`
+	Attributes        json.RawMessage `json:"attributes"`
+	SkuLocked         bool            `json:"sku_locked"`
+	Archived          bool            `json:"archived"`
+	ArchivedAt        *time.Time      `json:"archived_at"`
+	Version           int32           `json:"version"`
+	CreatedAt         time.Time       `json:"created_at"`
+	UpdatedAt         time.Time       `json:"updated_at"`
+}
+
+type ProductDocument struct {
+	ID           uuid.UUID  `json:"id"`
+	ProductID    uuid.UUID  `json:"product_id"`
+	Title        string     `json:"title"`
+	TitleEn      string     `json:"title_en"`
+	DocumentType string     `json:"document_type"`
+	Url          string     `json:"url"`
+	ExpiresAt    *time.Time `json:"expires_at"`
+	Archived     bool       `json:"archived"`
+	ArchivedAt   *time.Time `json:"archived_at"`
+	Version      int32      `json:"version"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}
+
+type ProductImage struct {
+	ID         uuid.UUID  `json:"id"`
+	ProductID  uuid.UUID  `json:"product_id"`
+	Url        string     `json:"url"`
+	SortOrder  int32      `json:"sort_order"`
+	IsMain     bool       `json:"is_main"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type ProductType struct {
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	NameEn     string     `json:"name_en"`
+	TypeCode   string     `json:"type_code"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type ProductTypeField struct {
+	ID                uuid.UUID  `json:"id"`
+	ProductTypeID     uuid.UUID  `json:"product_type_id"`
+	FieldDefinitionID uuid.UUID  `json:"field_definition_id"`
+	SortOrder         int32      `json:"sort_order"`
+	MandatoryOverride *bool      `json:"mandatory_override"`
+	Archived          bool       `json:"archived"`
+	ArchivedAt        *time.Time `json:"archived_at"`
+	Version           int32      `json:"version"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+}
+
+type PurchaseOrder struct {
+	ID           uuid.UUID   `json:"id"`
+	SupplierID   uuid.UUID   `json:"supplier_id"`
+	OrderNumber  string      `json:"order_number"`
+	Currency     string      `json:"currency"`
+	OrderDate    pgtype.Date `json:"order_date"`
+	ExpectedDate pgtype.Date `json:"expected_date"`
+	Status       string      `json:"status"`
+	TotalAmount  int64       `json:"total_amount"`
+	Notes        string      `json:"notes"`
+	Archived     bool        `json:"archived"`
+	ArchivedAt   *time.Time  `json:"archived_at"`
+	Version      int32       `json:"version"`
+	CreatedAt    time.Time   `json:"created_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
+}
+
+type PurchaseOrderLine struct {
+	ID              uuid.UUID  `json:"id"`
+	PurchaseOrderID uuid.UUID  `json:"purchase_order_id"`
+	ProductID       uuid.UUID  `json:"product_id"`
+	Quantity        int32      `json:"quantity"`
+	UnitPrice       int64      `json:"unit_price"`
+	UnitCurrency    string     `json:"unit_currency"`
+	LineTotal       int64      `json:"line_total"`
+	Archived        bool       `json:"archived"`
+	ArchivedAt      *time.Time `json:"archived_at"`
+	Version         int32      `json:"version"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+type Reminder struct {
+	ID              uuid.UUID   `json:"id"`
+	ReminderType    string      `json:"reminder_type"`
+	IdsEntryID      *uuid.UUID  `json:"ids_entry_id"`
+	ExternalRefType *string     `json:"external_ref_type"`
+	ExternalRefID   *uuid.UUID  `json:"external_ref_id"`
+	Title           string      `json:"title"`
+	TitleEn         string      `json:"title_en"`
+	Description     string      `json:"description"`
+	DueDate         pgtype.Date `json:"due_date"`
+	Notified        bool        `json:"notified"`
+	NotifiedAt      *time.Time  `json:"notified_at"`
+	CalendarEventID *uuid.UUID  `json:"calendar_event_id"`
+	Archived        bool        `json:"archived"`
+	ArchivedAt      *time.Time  `json:"archived_at"`
+	Version         int32       `json:"version"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
 }
 
 type Session struct {
@@ -55,6 +485,98 @@ type Session struct {
 	ExpiresAt  time.Time `json:"expires_at"`
 }
 
+type Shipment struct {
+	ID               uuid.UUID       `json:"id"`
+	PurchaseOrderID  uuid.UUID       `json:"purchase_order_id"`
+	FromLocation     string          `json:"from_location"`
+	ToLocation       string          `json:"to_location"`
+	Carrier          string          `json:"carrier"`
+	TrackingNumber   string          `json:"tracking_number"`
+	ShippedAt        *time.Time      `json:"shipped_at"`
+	EstimatedArrival pgtype.Date     `json:"estimated_arrival"`
+	ActualArrival    pgtype.Date     `json:"actual_arrival"`
+	BatchNumber      string          `json:"batch_number"`
+	Status           string          `json:"status"`
+	Documents        json.RawMessage `json:"documents"`
+	Archived         bool            `json:"archived"`
+	ArchivedAt       *time.Time      `json:"archived_at"`
+	Version          int32           `json:"version"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+type Stockmovement struct {
+	ID                uuid.UUID   `json:"id"`
+	ProductID         uuid.UUID   `json:"product_id"`
+	LocationID        uuid.UUID   `json:"location_id"`
+	BatchNumber       string      `json:"batch_number"`
+	ManufacturingDate pgtype.Date `json:"manufacturing_date"`
+	BestBeforeDate    pgtype.Date `json:"best_before_date"`
+	MovementType      string      `json:"movement_type"`
+	Quantity          int32       `json:"quantity"`
+	Reason            string      `json:"reason"`
+	ReferenceType     string      `json:"reference_type"`
+	ReferenceID       *uuid.UUID  `json:"reference_id"`
+	Version           int32       `json:"version"`
+	CreatedAt         time.Time   `json:"created_at"`
+	UpdatedAt         time.Time   `json:"updated_at"`
+}
+
+type Supplier struct {
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	NameEn        string     `json:"name_en"`
+	OrgNumber     string     `json:"org_number"`
+	VatNumber     string     `json:"vat_number"`
+	Country       string     `json:"country"`
+	Address       string     `json:"address"`
+	City          string     `json:"city"`
+	PostalCode    string     `json:"postal_code"`
+	Website       string     `json:"website"`
+	ContactEmail  string     `json:"contact_email"`
+	ContactPhone  string     `json:"contact_phone"`
+	Role          string     `json:"role"`
+	LeadTimeDays  int32      `json:"lead_time_days"`
+	Moq           int32      `json:"moq"`
+	Currency      string     `json:"currency"`
+	PaymentTerms  string     `json:"payment_terms"`
+	DeliveryTerms string     `json:"delivery_terms"`
+	Notes         string     `json:"notes"`
+	Archived      bool       `json:"archived"`
+	ArchivedAt    *time.Time `json:"archived_at"`
+	Version       int32      `json:"version"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+type SupplierContact struct {
+	ID         uuid.UUID  `json:"id"`
+	SupplierID uuid.UUID  `json:"supplier_id"`
+	Name       string     `json:"name"`
+	NameEn     string     `json:"name_en"`
+	Email      string     `json:"email"`
+	Phone      string     `json:"phone"`
+	Role       string     `json:"role"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type SupplierProduct struct {
+	ID               uuid.UUID  `json:"id"`
+	SupplierID       uuid.UUID  `json:"supplier_id"`
+	ProductID        uuid.UUID  `json:"product_id"`
+	PurchasePrice    int64      `json:"purchase_price"`
+	PurchaseCurrency string     `json:"purchase_currency"`
+	Archived         bool       `json:"archived"`
+	ArchivedAt       *time.Time `json:"archived_at"`
+	Version          int32      `json:"version"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+}
+
 type User struct {
 	ID          uuid.UUID  `json:"id"`
 	CreatedAt   time.Time  `json:"created_at"`
@@ -66,4 +588,58 @@ type User struct {
 	DisplayName string     `json:"display_name"`
 	LastLoginAt *time.Time `json:"last_login_at"`
 	ArchivedAt  *time.Time `json:"archived_at"`
+}
+
+type WorkflowCondition struct {
+	ID           uuid.UUID       `json:"id"`
+	TransitionID uuid.UUID       `json:"transition_id"`
+	Kind         string          `json:"kind"`
+	Config       json.RawMessage `json:"config"`
+	Archived     bool            `json:"archived"`
+	ArchivedAt   *time.Time      `json:"archived_at"`
+	Version      int32           `json:"version"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+}
+
+type WorkflowEffect struct {
+	ID           uuid.UUID       `json:"id"`
+	TransitionID uuid.UUID       `json:"transition_id"`
+	Kind         string          `json:"kind"`
+	Config       json.RawMessage `json:"config"`
+	Archived     bool            `json:"archived"`
+	ArchivedAt   *time.Time      `json:"archived_at"`
+	Version      int32           `json:"version"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+}
+
+type WorkflowStep struct {
+	ID         uuid.UUID  `json:"id"`
+	Key        string     `json:"key"`
+	Name       string     `json:"name"`
+	NameEn     string     `json:"name_en"`
+	SortOrder  int32      `json:"sort_order"`
+	IsStart    bool       `json:"is_start"`
+	IsEnd      bool       `json:"is_end"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type WorkflowTransition struct {
+	ID         uuid.UUID  `json:"id"`
+	StepKey    string     `json:"step_key"`
+	FromKey    string     `json:"from_key"`
+	ToKey      string     `json:"to_key"`
+	Label      string     `json:"label"`
+	LabelEn    string     `json:"label_en"`
+	SortOrder  int32      `json:"sort_order"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }

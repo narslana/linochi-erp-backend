@@ -1,0 +1,177 @@
+package purchasing
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
+)
+
+// Service holds the business logic for purchase orders and lines.
+type Service struct {
+	store *Store
+	rec   *audit.Recorder
+	pool  *pgxpool.Pool
+}
+
+func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool) *Service {
+	return &Service{store: store, rec: rec, pool: pool}
+}
+
+// ListPurchaseOrders returns all active purchase orders.
+func (s *Service) ListPurchaseOrders(ctx context.Context, status *string, supplierID *uuid.UUID) ([]PurchaseOrder, error) {
+	switch {
+	case status != nil:
+		return s.store.ListPurchaseOrdersByStatus(ctx, *status)
+	case supplierID != nil:
+		return s.store.ListPurchaseOrdersBySupplier(ctx, *supplierID)
+	default:
+		return s.store.ListPurchaseOrders(ctx)
+	}
+}
+
+// GetPurchaseOrder returns a purchase order by ID.
+func (s *Service) GetPurchaseOrder(ctx context.Context, id uuid.UUID) (PurchaseOrder, error) {
+	po, err := s.store.GetPurchaseOrder(ctx, id)
+	if err != nil {
+		return po, ProblemError(err)
+	}
+	return po, nil
+}
+
+// CreatePurchaseOrder creates a new purchase order (INK-01).
+func (s *Service) CreatePurchaseOrder(ctx context.Context, supplierID uuid.UUID, orderNumber, currency string, orderDate, expectedDate *time.Time, notes string) (PurchaseOrder, error) {
+	var po PurchaseOrder
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		id := uuid.New()
+		var err error
+		po, err = s.store.CreatePurchaseOrder(ctx, id, supplierID, orderNumber, currency, orderDate, expectedDate, "draft", 0, notes)
+		if err != nil {
+			return err
+		}
+
+		actor, _ := audit.ActorFrom(ctx)
+		_ = s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "purchasing",
+			EntityType: "purchase_order",
+			EntityID:   po.ID,
+			Action:     "Create",
+			After:      map[string]any{"supplier_id": supplierID, "status": "draft"},
+			Reason:     actor.ID.String(),
+		})
+		return nil
+	})
+	return po, err
+}
+
+// UpdatePurchaseOrder updates a purchase order (INK-01).
+func (s *Service) UpdatePurchaseOrder(ctx context.Context, id uuid.UUID, status *string, expectedDate *time.Time, totalAmount *int64, notes *string, version int) (PurchaseOrder, error) {
+	po, err := s.store.UpdatePurchaseOrder(ctx, status, expectedDate, totalAmount, notes, id, version)
+	if err != nil {
+		return po, ProblemError(err)
+	}
+	actor, _ := audit.ActorFrom(ctx)
+	after := map[string]any{}
+	if status != nil {
+		after["status"] = *status
+	}
+	if notes != nil {
+		after["notes"] = *notes
+	}
+	_ = s.rec.Record(ctx, nil, audit.Entry{
+		Module:     "purchasing",
+		EntityType: "purchase_order",
+		EntityID:   id,
+		Action:     "Update",
+		After:      after,
+		Reason:     actor.ID.String(),
+	})
+	return po, nil
+}
+
+// ArchivePurchaseOrder archives a purchase order (NFK-09).
+func (s *Service) ArchivePurchaseOrder(ctx context.Context, id uuid.UUID, version int) (PurchaseOrder, error) {
+	po, err := s.store.ArchivePurchaseOrder(ctx, id, version)
+	if err != nil {
+		return po, ProblemError(err)
+	}
+	actor, _ := audit.ActorFrom(ctx)
+	_ = s.rec.Record(ctx, nil, audit.Entry{
+		Module:     "purchasing",
+		EntityType: "purchase_order",
+		EntityID:   id,
+		Action:     "Archive",
+		Reason:     actor.ID.String(),
+	})
+	return po, nil
+}
+
+// ListLines returns the lines for a purchase order.
+func (s *Service) ListLines(ctx context.Context, poID uuid.UUID) ([]PurchaseOrderLine, error) {
+	return s.store.ListPurchaseOrderLines(ctx, poID)
+}
+
+// CreateLine adds a line to a purchase order (INK-01).
+func (s *Service) CreateLine(ctx context.Context, poID, productID uuid.UUID, quantity int, unitPrice, lineTotal int64, unitCurrency string) (PurchaseOrderLine, error) {
+	id := uuid.New()
+	line, err := s.store.CreatePurchaseOrderLine(ctx, id, poID, productID, quantity, unitPrice, lineTotal, unitCurrency)
+	if err != nil {
+		return line, err
+	}
+	actor, _ := audit.ActorFrom(ctx)
+	_ = s.rec.Record(ctx, nil, audit.Entry{
+		Module:     "purchasing",
+		EntityType: "purchase_order_line",
+		EntityID:   line.ID,
+		Action:     "Create",
+		After:      map[string]any{"po_id": poID, "product_id": productID, "quantity": quantity},
+		Reason:     actor.ID.String(),
+	})
+	return line, nil
+}
+
+// UpdateLine updates a purchase order line (INK-01).
+func (s *Service) UpdateLine(ctx context.Context, id uuid.UUID, quantity, unitPrice, lineTotal *int, version int) (PurchaseOrderLine, error) {
+	line, err := s.store.UpdatePurchaseOrderLine(ctx, quantity, unitPrice, lineTotal, id, version)
+	if err != nil {
+		return line, ProblemError(err)
+	}
+	actor, _ := audit.ActorFrom(ctx)
+	after := map[string]any{}
+	if quantity != nil {
+		after["quantity"] = *quantity
+	}
+	if lineTotal != nil {
+		after["line_total"] = *lineTotal
+	}
+	_ = s.rec.Record(ctx, nil, audit.Entry{
+		Module:     "purchasing",
+		EntityType: "purchase_order_line",
+		EntityID:   id,
+		Action:     "Update",
+		After:      after,
+		Reason:     actor.ID.String(),
+	})
+	return line, nil
+}
+
+// ArchiveLine archives a purchase order line (NFK-09).
+func (s *Service) ArchiveLine(ctx context.Context, id uuid.UUID, version int) (PurchaseOrderLine, error) {
+	line, err := s.store.ArchivePurchaseOrderLine(ctx, id, version)
+	if err != nil {
+		return line, ProblemError(err)
+	}
+	actor, _ := audit.ActorFrom(ctx)
+	_ = s.rec.Record(ctx, nil, audit.Entry{
+		Module:     "purchasing",
+		EntityType: "purchase_order_line",
+		EntityID:   id,
+		Action:     "Archive",
+		Reason:     actor.ID.String(),
+	})
+	return line, nil
+}

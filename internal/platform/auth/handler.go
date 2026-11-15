@@ -45,7 +45,8 @@ type Handler struct {
 	logins *prometheus.CounterVec
 }
 
-var _ api.ServerInterface = (*Handler)(nil)
+// Handler no longer implements api.ServerInterface directly.
+// The boards.Composite wraps auth and boards handlers to satisfy the interface.
 
 // NewHandler creates a Handler and registers linochi_auth_logins_total.
 func NewHandler(cfg HandlerConfig) (*Handler, error) {
@@ -75,16 +76,10 @@ func NewHandler(cfg HandlerConfig) (*Handler, error) {
 	return h, nil
 }
 
-// Mount registers the routes of the OpenAPI document on m.
+// Mount is deprecated: the boards.Composite now handles mounting for both auth and boards routes.
+// This method is kept for backward compatibility but does nothing.
 func (h *Handler) Mount(m api.ServeMux) {
-	api.HandlerWithOptions(h, api.StdHTTPServerOptions{
-		BaseRouter: m,
-		// A parameter that does not parse (a repeated one, say) is a bad request
-		// like any other, and not the generated code's plain-text answer.
-		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, _ error) {
-			httpx.WriteProblem(w, r, httpx.Problem{Code: "invalid-request", Title: "Invalid request", Status: http.StatusBadRequest})
-		},
-	})
+	_ = m
 }
 
 // Login starts a login: it stores the attempt, binds it to this browser with a

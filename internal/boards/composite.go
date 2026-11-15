@@ -7,14 +7,19 @@ import (
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/api"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/calendar"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/customers"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/ids"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/inventory"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/kiosk"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/orders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/products"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/purchasing"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/reminders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/shipments"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/stats"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/suppliers"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/workflow"
 )
 
 // Composite implements api.ServerInterface by delegating to auth, boards, products, ids, suppliers, purchasing, shipments, inventory, calendar and kiosk handlers.
@@ -30,11 +35,16 @@ type Composite struct {
 	inventory  *inventory.Handler
 	calendar   *calendar.Handler
 	kiosk      *kiosk.Handler
+	customers  *customers.Handler
+	workflow   *workflow.Handler
+	orders     *orders.Handler
+	stats      *stats.Handler
+	reminders  *reminders.Handler
 }
 
 // NewComposite creates a composite handler.
-func NewComposite(auth *auth.Handler, boards *Handler, productsH *products.Handler, idsH *ids.Handler, suppliersH *suppliers.Handler, purchasingH *purchasing.Handler, shipmentsH *shipments.Handler, inventoryH *inventory.Handler, calendarH *calendar.Handler, kioskH *kiosk.Handler) *Composite {
-	return &Composite{auth: auth, boards: boards, products: productsH, ids: idsH, suppliers: suppliersH, purchasing: purchasingH, shipments: shipmentsH, inventory: inventoryH, calendar: calendarH, kiosk: kioskH}
+func NewComposite(auth *auth.Handler, boards *Handler, productsH *products.Handler, idsH *ids.Handler, suppliersH *suppliers.Handler, purchasingH *purchasing.Handler, shipmentsH *shipments.Handler, inventoryH *inventory.Handler, calendarH *calendar.Handler, kioskH *kiosk.Handler, customersH *customers.Handler, workflowH *workflow.Handler, ordersH *orders.Handler, statsH *stats.Handler, remindersH *reminders.Handler) *Composite {
+	return &Composite{auth: auth, boards: boards, products: productsH, ids: idsH, suppliers: suppliersH, purchasing: purchasingH, shipments: shipmentsH, inventory: inventoryH, calendar: calendarH, kiosk: kioskH, customers: customersH, workflow: workflowH, orders: ordersH, stats: statsH, reminders: remindersH}
 }
 
 // Mount registers the composite on the given router.
@@ -426,4 +436,235 @@ func (c *Composite) PairKioskDevice(w http.ResponseWriter, r *http.Request, para
 }
 func (c *Composite) GetKioskData(w http.ResponseWriter, r *http.Request, params api.GetKioskDataParams) {
 	c.kiosk.GetKioskData(w, r, params)
+}
+
+// ─── Customers routes (delegated) ────────────────────────────────────────────
+
+func (c *Composite) ListCustomers(w http.ResponseWriter, r *http.Request) {
+	c.customers.ListCustomers(w, r)
+}
+func (c *Composite) CreateCustomer(w http.ResponseWriter, r *http.Request) {
+	c.customers.CreateCustomer(w, r)
+}
+func (c *Composite) GetCustomer(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID) {
+	c.customers.GetCustomer(w, r, customerId)
+}
+func (c *Composite) UpdateCustomer(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID) {
+	c.customers.UpdateCustomer(w, r, customerId)
+}
+func (c *Composite) ArchiveCustomer(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID) {
+	c.customers.ArchiveCustomer(w, r, customerId)
+}
+func (c *Composite) ListContacts(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID) {
+	c.customers.ListContacts(w, r, customerId)
+}
+func (c *Composite) CreateContact(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID) {
+	c.customers.CreateContact(w, r, customerId)
+}
+func (c *Composite) UpdateContact(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID, contactId openapi_types.UUID) {
+	c.customers.UpdateContact(w, r, customerId, contactId)
+}
+func (c *Composite) ArchiveContact(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID, contactId openapi_types.UUID) {
+	c.customers.ArchiveContact(w, r, customerId, contactId)
+}
+func (c *Composite) AnonymiseContact(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID, contactId openapi_types.UUID) {
+	c.customers.AnonymiseContact(w, r, customerId, contactId)
+}
+func (c *Composite) ListLeads(w http.ResponseWriter, r *http.Request) {
+	c.customers.ListLeads(w, r)
+}
+func (c *Composite) CreateLead(w http.ResponseWriter, r *http.Request) {
+	c.customers.CreateLead(w, r)
+}
+func (c *Composite) GetLead(w http.ResponseWriter, r *http.Request, leadId openapi_types.UUID) {
+	c.customers.GetLead(w, r, leadId)
+}
+func (c *Composite) UpdateLead(w http.ResponseWriter, r *http.Request, leadId openapi_types.UUID) {
+	c.customers.UpdateLead(w, r, leadId)
+}
+func (c *Composite) ArchiveLead(w http.ResponseWriter, r *http.Request, leadId openapi_types.UUID) {
+	c.customers.ArchiveLead(w, r, leadId)
+}
+func (c *Composite) ListEanSeries(w http.ResponseWriter, r *http.Request) {
+	c.customers.ListEanSeries(w, r)
+}
+func (c *Composite) CreateEanSeries(w http.ResponseWriter, r *http.Request) {
+	c.customers.CreateEanSeries(w, r)
+}
+func (c *Composite) GetEanSeries(w http.ResponseWriter, r *http.Request, eanSeriesId openapi_types.UUID) {
+	c.customers.GetEanSeries(w, r, eanSeriesId)
+}
+func (c *Composite) UpdateEanSeries(w http.ResponseWriter, r *http.Request, eanSeriesId openapi_types.UUID) {
+	c.customers.UpdateEanSeries(w, r, eanSeriesId)
+}
+func (c *Composite) ArchiveEanSeries(w http.ResponseWriter, r *http.Request, eanSeriesId openapi_types.UUID) {
+	c.customers.ArchiveEanSeries(w, r, eanSeriesId)
+}
+func (c *Composite) NextFreeEanCode(w http.ResponseWriter, r *http.Request) {
+	c.customers.NextFreeEanCode(w, r)
+}
+
+// ─── Workflow routes (delegated) ─────────────────────────────────────────────
+
+func (c *Composite) ListWorkflowSteps(w http.ResponseWriter, r *http.Request) {
+	c.workflow.ListWorkflowSteps(w, r)
+}
+func (c *Composite) CreateWorkflowStep(w http.ResponseWriter, r *http.Request) {
+	c.workflow.CreateWorkflowStep(w, r)
+}
+func (c *Composite) GetWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+	c.workflow.GetWorkflowStep(w, r, stepKey)
+}
+func (c *Composite) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+	c.workflow.UpdateWorkflowStep(w, r, stepKey)
+}
+func (c *Composite) ArchiveWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.workflow.ArchiveWorkflowStep(w, r, id)
+}
+func (c *Composite) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request, stepKey string) {
+	c.workflow.ListWorkflowTransitions(w, r, stepKey)
+}
+func (c *Composite) GetWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
+	c.workflow.GetWorkflowTransition(w, r, transitionId)
+}
+func (c *Composite) CreateWorkflowTransition(w http.ResponseWriter, r *http.Request) {
+	c.workflow.CreateWorkflowTransition(w, r)
+}
+func (c *Composite) UpdateWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
+	c.workflow.UpdateWorkflowTransition(w, r, transitionId)
+}
+func (c *Composite) ArchiveWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
+	c.workflow.ArchiveWorkflowTransition(w, r, transitionId)
+}
+func (c *Composite) ListWorkflowConditions(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
+	c.workflow.ListWorkflowConditions(w, r, transitionId)
+}
+func (c *Composite) CreateWorkflowCondition(w http.ResponseWriter, r *http.Request) {
+	c.workflow.CreateWorkflowCondition(w, r)
+}
+func (c *Composite) ArchiveWorkflowCondition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID, conditionId openapi_types.UUID) {
+	c.workflow.ArchiveWorkflowCondition(w, r, transitionId, conditionId)
+}
+func (c *Composite) ListWorkflowEffects(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
+	c.workflow.ListWorkflowEffects(w, r, transitionId)
+}
+func (c *Composite) CreateWorkflowEffect(w http.ResponseWriter, r *http.Request) {
+	c.workflow.CreateWorkflowEffect(w, r)
+}
+func (c *Composite) ArchiveWorkflowEffect(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID, effectId openapi_types.UUID) {
+	c.workflow.ArchiveWorkflowEffect(w, r, transitionId, effectId)
+}
+
+// ─── Orders routes (delegated) ───────────────────────────────────────────────
+
+func (c *Composite) ListOrders(w http.ResponseWriter, r *http.Request) {
+	c.orders.ListOrders(w, r)
+}
+func (c *Composite) CreateOrder(w http.ResponseWriter, r *http.Request) {
+	c.orders.CreateOrder(w, r)
+}
+func (c *Composite) GetOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
+	c.orders.GetOrder(w, r, orderId)
+}
+func (c *Composite) UpdateOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
+	c.orders.UpdateOrder(w, r, orderId)
+}
+func (c *Composite) ArchiveOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
+	c.orders.ArchiveOrder(w, r, orderId)
+}
+func (c *Composite) UpdateOrderStatus(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
+	c.orders.UpdateOrderStatus(w, r, orderId)
+}
+func (c *Composite) ListOrderLines(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
+	c.orders.ListOrderLines(w, r, orderId)
+}
+func (c *Composite) CreateOrderLine(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
+	c.orders.CreateOrderLine(w, r, orderId)
+}
+func (c *Composite) UpdateOrderLine(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID, orderLineId openapi_types.UUID) {
+	c.orders.UpdateOrderLine(w, r, orderId, orderLineId)
+}
+func (c *Composite) ArchiveOrderLine(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID, orderLineId openapi_types.UUID) {
+	c.orders.ArchiveOrderLine(w, r, orderId, orderLineId)
+}
+func (c *Composite) AcceptOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.orders.AcceptOrder(w, r, id)
+}
+func (c *Composite) ShipOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.orders.ShipOrder(w, r, id)
+}
+func (c *Composite) CancelOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.orders.CancelOrder(w, r, id)
+}
+func (c *Composite) DeleteOrderLine(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID, orderLineId openapi_types.UUID) {
+	c.orders.DeleteOrderLine(w, r, orderId, orderLineId)
+}
+func (c *Composite) BatchExportOrders(w http.ResponseWriter, r *http.Request) {
+	c.orders.BatchExportOrders(w, r)
+}
+func (c *Composite) CreateCustomerContact(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.customers.CreateCustomerContact(w, r, id)
+}
+
+// ─── Stats routes (delegated) ────────────────────────────────────────────────
+
+func (c *Composite) KeyFigures(w http.ResponseWriter, r *http.Request) {
+	c.stats.KeyFigures(w, r)
+}
+func (c *Composite) OrdersPerMonth(w http.ResponseWriter, r *http.Request) {
+	c.stats.OrdersPerMonth(w, r)
+}
+func (c *Composite) RevenueByChannel(w http.ResponseWriter, r *http.Request) {
+	c.stats.RevenueByChannel(w, r)
+}
+func (c *Composite) RevenueByCountry(w http.ResponseWriter, r *http.Request) {
+	c.stats.RevenueByCountry(w, r)
+}
+func (c *Composite) MarginPerProduct(w http.ResponseWriter, r *http.Request) {
+	c.stats.MarginPerProduct(w, r)
+}
+func (c *Composite) OrderToShippedTime(w http.ResponseWriter, r *http.Request) {
+	c.stats.OrderToShippedTime(w, r)
+}
+func (c *Composite) RepurchaseRate(w http.ResponseWriter, r *http.Request) {
+	c.stats.RepurchaseRate(w, r)
+}
+func (c *Composite) SalesByCustomerType(w http.ResponseWriter, r *http.Request) {
+	c.stats.SalesByCustomerType(w, r)
+}
+func (c *Composite) InventoryTurnover(w http.ResponseWriter, r *http.Request) {
+	c.stats.InventoryTurnover(w, r)
+}
+func (c *Composite) LowStockProducts(w http.ResponseWriter, r *http.Request) {
+	c.stats.LowStockProducts(w, r)
+}
+func (c *Composite) OrdersByStatus(w http.ResponseWriter, r *http.Request) {
+	c.stats.OrdersByStatus(w, r)
+}
+func (c *Composite) ShipmentsOnTheirWay(w http.ResponseWriter, r *http.Request) {
+	c.stats.ShipmentsOnTheirWay(w, r)
+}
+func (c *Composite) CardsDue(w http.ResponseWriter, r *http.Request) {
+	c.stats.CardsDue(w, r)
+}
+
+// ─── Reminders routes (delegated) ────────────────────────────────────────────
+
+func (c *Composite) ListReminders(w http.ResponseWriter, r *http.Request) {
+	c.reminders.ListReminders(w, r)
+}
+func (c *Composite) CreateReminder(w http.ResponseWriter, r *http.Request) {
+	c.reminders.CreateReminder(w, r)
+}
+func (c *Composite) GetReminder(w http.ResponseWriter, r *http.Request, reminderId openapi_types.UUID) {
+	c.reminders.GetReminder(w, r, reminderId)
+}
+func (c *Composite) UpdateReminder(w http.ResponseWriter, r *http.Request, reminderId openapi_types.UUID) {
+	c.reminders.UpdateReminder(w, r, reminderId)
+}
+func (c *Composite) ArchiveReminder(w http.ResponseWriter, r *http.Request, reminderId openapi_types.UUID) {
+	c.reminders.ArchiveReminder(w, r, reminderId)
+}
+func (c *Composite) MarkReminderNotified(w http.ResponseWriter, r *http.Request, reminderId openapi_types.UUID) {
+	c.reminders.MarkReminderNotified(w, r, reminderId)
 }

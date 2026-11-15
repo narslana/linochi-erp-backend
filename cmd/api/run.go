@@ -17,9 +17,11 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/boards"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/calendar"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/customers"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/ids"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/inventory"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/kiosk"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/orders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/config"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
@@ -27,8 +29,11 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/obs"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/products"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/purchasing"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/reminders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/shipments"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/stats"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/suppliers"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/workflow"
 )
 
 // run is main without the process globals, so that it can be tested. It
@@ -214,7 +219,34 @@ func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health
 		logger,
 	)
 
-	composite := boards.NewComposite(authHandler, boardsHandler, productsHandler, idsHandler, suppliersHandler, purchasingHandler, shipmentsHandler, inventoryHandler, calendarHandler, kioskHandler)
+	customersHandler := customers.NewHandler(
+		customers.NewService(customers.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	workflowHandler := workflow.NewHandler(
+		workflow.NewService(workflow.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	ordersHandler := orders.NewHandler(
+		orders.NewService(orders.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	statsService := stats.NewService(stats.NewStore(pool))
+	statsHandler := stats.NewHandler(statsService, mw)
+
+	remindersHandler := reminders.NewHandler(
+		reminders.NewService(reminders.NewStore(pool), rec, pool),
+		mw,
+		logger,
+	)
+
+	composite := boards.NewComposite(authHandler, boardsHandler, productsHandler, idsHandler, suppliersHandler, purchasingHandler, shipmentsHandler, inventoryHandler, calendarHandler, kioskHandler, customersHandler, workflowHandler, ordersHandler, statsHandler, remindersHandler)
 	composite.Mount(pub)
 
 	in := httpx.NewRouter(httpx.RouterOptions{Server: "internal", Logger: logger, Metrics: metrics, Tracer: tp})

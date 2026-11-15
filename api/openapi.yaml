@@ -35,6 +35,16 @@ tags:
     description: iCal calendar sources and events (KAL-01 to KAL-04)
   - name: kiosk
     description: Kiosk playlists, views and devices (KIO-01 to KIO-07)
+  - name: customers
+    description: Customers, contacts and leads (KUN-01 to KUN-08)
+  - name: workflow
+    description: Workflow steps, transitions, conditions and effects (WF-01 to WF-10)
+  - name: orders
+    description: Orders and order lines (ORD-01 to ORD-13)
+  - name: stats
+    description: Statistics and key figures (STA-01 to STA-04)
+  - name: reminders
+    description: Reminders for expiring entries (REG-05)
 
 paths:
   /api/v1/boards:
@@ -3846,6 +3856,1826 @@ paths:
                 $ref: "#/components/schemas/Problem"
         "400": { $ref: "#/components/responses/BadRequest" }
 
+  /api/v1/customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List customers (KUN-01)
+      security:
+        - session: []
+      parameters:
+        - name: q
+          in: query
+          description: Search by name, email, org number or EAN
+          required: false
+          schema:
+            type: string
+            maxLength: 128
+      responses:
+        "200":
+          description: Matching customers.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer (KUN-01)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomer"
+      responses:
+        "201":
+          description: The new customer.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Location:
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a customer (KUN-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The customer.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer (KUN-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomer"
+      responses:
+        "200":
+          description: The updated customer.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: archiveCustomer
+      tags: [customers]
+      summary: Archive a customer (KUN-02)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Customer archived.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/customers/{id}/contacts:
+    get:
+      operationId: listCustomerContacts
+      tags: [customers]
+      summary: List contacts for a customer (KUN-03)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Contacts for the customer.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createCustomerContact
+      tags: [customers]
+      summary: Create a contact for a customer (KUN-03)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContact"
+      responses:
+        "201":
+          description: The new contact.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/customers/{id}/leads:
+    get:
+      operationId: listCustomerLeads
+      tags: [customers]
+      summary: List leads linked to a customer (KUN-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Leads for the customer.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/leads:
+    get:
+      operationId: listLeads
+      tags: [customers]
+      summary: List all leads (KUN-05)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All active leads.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createLead
+      tags: [customers]
+      summary: Create a lead (KUN-05)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLead"
+      responses:
+        "201":
+          description: The new lead.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/leads/{id}:
+    get:
+      operationId: getLead
+      tags: [customers]
+      summary: Get a lead (KUN-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The lead.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateLead
+      tags: [customers]
+      summary: Update a lead (KUN-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLead"
+      responses:
+        "200":
+          description: The updated lead.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: archiveLead
+      tags: [customers]
+      summary: Archive a lead (KUN-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Lead archived.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/customers/{id}/ean-series:
+    get:
+      operationId: listCustomerEANSeries
+      tags: [customers]
+      summary: List EAN series registered by a customer (KUN-07)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: EAN series for the customer.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EANSeries"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: registerCustomerEANSeries
+      tags: [customers]
+      summary: Register an EAN series for a customer (KUN-07)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterEANSeries"
+      responses:
+        "201":
+          description: The new EAN series.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EANSeries"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/workflow/steps:
+    get:
+      operationId: listWorkflowSteps
+      tags: [workflow]
+      summary: List workflow steps (WF-01)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All workflow steps.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkflowStep"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createWorkflowStep
+      tags: [workflow]
+      summary: Create a workflow step (WF-01)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowStep"
+      responses:
+        "201":
+          description: The new step.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowStep"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/workflow/steps/{id}:
+    get:
+      operationId: getWorkflowStep
+      tags: [workflow]
+      summary: Get a workflow step (WF-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The step.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowStep"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateWorkflowStep
+      tags: [workflow]
+      summary: Update a workflow step (WF-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkflowStep"
+      responses:
+        "200":
+          description: The updated step.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowStep"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: archiveWorkflowStep
+      tags: [workflow]
+      summary: Archive a workflow step (WF-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Step archived.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/workflow/transitions:
+    get:
+      operationId: listWorkflowTransitions
+      tags: [workflow]
+      summary: List workflow transitions (WF-02)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All workflow transitions.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkflowTransition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createWorkflowTransition
+      tags: [workflow]
+      summary: Create a workflow transition (WF-02)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowTransition"
+      responses:
+        "201":
+          description: The new transition.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowTransition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/workflow/transitions/{id}:
+    get:
+      operationId: getWorkflowTransition
+      tags: [workflow]
+      summary: Get a workflow transition (WF-02)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The transition.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowTransition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateWorkflowTransition
+      tags: [workflow]
+      summary: Update a workflow transition (WF-02)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkflowTransition"
+      responses:
+        "200":
+          description: The updated transition.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowTransition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: archiveWorkflowTransition
+      tags: [workflow]
+      summary: Archive a workflow transition (WF-02)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Transition archived.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/workflow/transitions/{id}/conditions:
+    get:
+      operationId: listWorkflowTransitionConditions
+      tags: [workflow]
+      summary: List conditions for a transition (WF-03)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Conditions for the transition.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkflowCondition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createWorkflowTransitionCondition
+      tags: [workflow]
+      summary: Add a condition to a transition (WF-03)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowCondition"
+      responses:
+        "201":
+          description: The new condition.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowCondition"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/workflow/transitions/{id}/effects:
+    get:
+      operationId: listWorkflowTransitionEffects
+      tags: [workflow]
+      summary: List effects for a transition (WF-04)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Effects for the transition.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkflowEffect"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createWorkflowTransitionEffect
+      tags: [workflow]
+      summary: Add an effect to a transition (WF-04)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkflowEffect"
+      responses:
+        "201":
+          description: The new effect.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowEffect"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by order status
+          required: false
+          schema:
+            type: string
+            enum: [draft, accepted, shipped, delivered, cancelled]
+        - name: customer_id
+          in: query
+          description: Filter by customer ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Matching orders.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create an order (ORD-01)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrder"
+      responses:
+        "201":
+          description: The new order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order with lines (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The order with lines.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Update an order (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrder"
+      responses:
+        "200":
+          description: The updated order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: archiveOrder
+      tags: [orders]
+      summary: Archive an order (ORD-08)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Order archived.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/orders/{id}/lines:
+    get:
+      operationId: listOrderLines
+      tags: [orders]
+      summary: List order lines (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Order lines.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderLine"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createOrderLine
+      tags: [orders]
+      summary: Add a line to an order (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderLine"
+      responses:
+        "201":
+          description: The new order line.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderLine"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}/lines/{line_id}:
+    put:
+      operationId: updateOrderLine
+      tags: [orders]
+      summary: Update an order line (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: line_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderLine"
+      responses:
+        "200":
+          description: The updated order line.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderLine"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: deleteOrderLine
+      tags: [orders]
+      summary: Remove a line from an order (ORD-01)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: line_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Order line removed.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/orders/{id}/status:
+    post:
+      operationId: updateOrderStatus
+      tags: [orders]
+      summary: Update order status (ORD-02)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderStatus"
+      responses:
+        "200":
+          description: The updated order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}/status/accept:
+    post:
+      operationId: acceptOrder
+      tags: [orders]
+      summary: Accept an order with preview and optional override (ORD-04, WF-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptOrder"
+      responses:
+        "200":
+          description: The accepted order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}/status/ship:
+    post:
+      operationId: shipOrder
+      tags: [orders]
+      summary: Ship an order (ORD-06)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipOrder"
+      responses:
+        "200":
+          description: The shipped order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}/status/cancel:
+    post:
+      operationId: cancelOrder
+      tags: [orders]
+      summary: Cancel an order (ORD-07, WF-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelOrder"
+      responses:
+        "200":
+          description: The cancelled order.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}/export:
+    get:
+      operationId: exportOrder
+      tags: [orders]
+      summary: Export an order as PDF (ORD-09)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: PDF document.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/orders/batch-export:
+    post:
+      operationId: batchExportOrders
+      tags: [orders]
+      summary: Batch export orders as CSV (ORD-13)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                from_date:
+                  type: string
+                  format: date
+                to_date:
+                  type: string
+                  format: date
+      responses:
+        "200":
+          description: CSV export.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/stats/key-figures:
+    get:
+      operationId: getKeyFigures
+      tags: [stats]
+      summary: Key figures (STA-01)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Key figures for the current period.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyFigures"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/stats/revenue:
+    get:
+      operationId: getRevenue
+      tags: [stats]
+      summary: Revenue trend (STA-01)
+      security:
+        - session: []
+      parameters:
+        - name: period
+          in: query
+          description: daily, weekly, monthly, yearly
+          required: false
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: monthly
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Revenue trend data.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenuePoint"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/stats/inventory:
+    get:
+      operationId: getInventoryStats
+      tags: [stats]
+      summary: Inventory value and low-stock count (STA-02)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Inventory statistics.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryStats"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/stats/cards:
+    get:
+      operationId: getStatsCards
+      tags: [stats]
+      summary: Summary cards (STA-03)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Summary cards for dashboard.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StatsCard"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /api/v1/reminders:
+    get:
+      operationId: listReminders
+      tags: [reminders]
+      summary: List active reminders (REG-05)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Active reminders.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reminder"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: createReminder
+      tags: [reminders]
+      summary: Create a reminder (REG-05)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReminder"
+      responses:
+        "201":
+          description: The new reminder.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/reminders/{id}:
+    get:
+      operationId: getReminder
+      tags: [reminders]
+      summary: Get a reminder (REG-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The reminder.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateReminder
+      tags: [reminders]
+      summary: Update a reminder (REG-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReminder"
+      responses:
+        "200":
+          description: The updated reminder.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      operationId: archiveReminder
+      tags: [reminders]
+      summary: Archive a reminder (REG-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Reminder archived.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/reminders/{id}/notify:
+    post:
+      operationId: markReminderNotified
+      tags: [reminders]
+      summary: Mark a reminder as notified (REG-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Reminder marked as notified.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reminder"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/VersionConflict"
+
+  /api/v1/ean-series:
+    get:
+      operationId: listEANSeries
+      tags: [ids]
+      summary: List all EAN series (REG-04)
+      security:
+        - session: []
+      responses:
+        "200":
+          description: All EAN series.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EANSeries"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      operationId: registerEANSeries
+      tags: [ids]
+      summary: Register a new EAN series (REG-04)
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterEANSeries"
+      responses:
+        "201":
+          description: The new EAN series.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EANSeries"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
 components:
   securitySchemes:
     session:
@@ -4519,3 +6349,529 @@ components:
         inventory_value:
           type: integer
         low_stock_count: { type: integer }
+
+    Customer:
+      type: object
+      required: [id, name, type_code, address, city, country, eori, epr, currency, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type_code: { type: string }
+        address: { type: string }
+        city: { type: string }
+        country: { type: string }
+        eori: { type: string }
+        epr: { type: string }
+        currency: { type: string }
+        notes: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateCustomer:
+      type: object
+      required: [name, type_code]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 256 }
+        type_code: { type: string, maxLength: 32 }
+        address: { type: string, maxLength: 256 }
+        city: { type: string, maxLength: 128 }
+        country: { type: string, maxLength: 128 }
+        eori: { type: string, maxLength: 40 }
+        epr: { type: string, maxLength: 40 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        notes: { type: string, maxLength: 2000 }
+
+    UpdateCustomer:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        name: { type: string, maxLength: 256 }
+        type_code: { type: string, maxLength: 32 }
+        address: { type: string, maxLength: 256 }
+        city: { type: string, maxLength: 128 }
+        country: { type: string, maxLength: 128 }
+        eori: { type: string, maxLength: 40 }
+        epr: { type: string, maxLength: 40 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        notes: { type: string, maxLength: 2000 }
+
+    Contact:
+      type: object
+      required: [id, customer_id, first_name, last_name, email, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        customer_id: { type: string, format: uuid }
+        first_name: { type: string }
+        last_name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateContact:
+      type: object
+      required: [customer_id, first_name, last_name, email]
+      properties:
+        customer_id: { type: string, format: uuid }
+        first_name: { type: string, minLength: 1, maxLength: 128 }
+        last_name: { type: string, minLength: 1, maxLength: 128 }
+        email: { type: string, maxLength: 256 }
+        phone: { type: string, maxLength: 64 }
+
+    Lead:
+      type: object
+      required: [id, company, email, status, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        company: { type: string }
+        contact_name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        address: { type: string }
+        city: { type: string }
+        country: { type: string }
+        status: { type: string, enum: [new, contacted, interested, customer, not_relevant] }
+        notes: { type: string }
+        converted_customer_id: { type: string, format: uuid, nullable: true }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateLead:
+      type: object
+      required: [company, email]
+      properties:
+        company: { type: string, minLength: 1, maxLength: 256 }
+        contact_name: { type: string, maxLength: 256 }
+        email: { type: string, maxLength: 256 }
+        phone: { type: string, maxLength: 64 }
+        address: { type: string, maxLength: 256 }
+        city: { type: string, maxLength: 128 }
+        country: { type: string, maxLength: 128 }
+        status: { type: string, enum: [new, contacted, interested, customer, not_relevant] }
+        notes: { type: string, maxLength: 2000 }
+
+    UpdateLead:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        company: { type: string, maxLength: 256 }
+        contact_name: { type: string, maxLength: 256 }
+        email: { type: string, maxLength: 256 }
+        phone: { type: string, maxLength: 64 }
+        address: { type: string, maxLength: 256 }
+        city: { type: string, maxLength: 128 }
+        country: { type: string, maxLength: 128 }
+        status: { type: string, enum: [new, contacted, interested, customer, not_relevant] }
+        notes: { type: string, maxLength: 2000 }
+
+    EANSeries:
+      type: object
+      required: [id, prefix, start_code, end_code, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        prefix: { type: string }
+        start_code: { type: string }
+        end_code: { type: string }
+        description: { type: string }
+        assigned_count: { type: integer }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    RegisterEANSeries:
+      type: object
+      required: [prefix, start_code, end_code]
+      properties:
+        prefix: { type: string, minLength: 1, maxLength: 32 }
+        start_code: { type: string }
+        end_code: { type: string }
+        description: { type: string, maxLength: 500 }
+
+    WorkflowStep:
+      type: object
+      required: [id, key, name, sort_order, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        key: { type: string }
+        name: { type: string }
+        name_en: { type: string }
+        sort_order: { type: integer }
+        is_start: { type: boolean }
+        is_end: { type: boolean }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateWorkflowStep:
+      type: object
+      required: [key, name]
+      properties:
+        key: { type: string, minLength: 1, maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 128 }
+        name_en: { type: string, maxLength: 128 }
+        sort_order: { type: integer }
+        is_start: { type: boolean }
+        is_end: { type: boolean }
+
+    UpdateWorkflowStep:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        name: { type: string, maxLength: 128 }
+        name_en: { type: string, maxLength: 128 }
+        sort_order: { type: integer }
+        is_start: { type: boolean }
+        is_end: { type: boolean }
+
+    WorkflowTransition:
+      type: object
+      required: [id, step_key, from_key, to_key, label, sort_order, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        step_key: { type: string }
+        from_key: { type: string }
+        to_key: { type: string }
+        label: { type: string }
+        label_en: { type: string }
+        sort_order: { type: integer }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateWorkflowTransition:
+      type: object
+      required: [step_key, from_key, to_key, label]
+      properties:
+        step_key: { type: string, maxLength: 64 }
+        from_key: { type: string, maxLength: 64 }
+        to_key: { type: string, maxLength: 64 }
+        label: { type: string, maxLength: 128 }
+        label_en: { type: string, maxLength: 128 }
+        sort_order: { type: integer }
+
+    UpdateWorkflowTransition:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        from_key: { type: string, maxLength: 64 }
+        to_key: { type: string, maxLength: 64 }
+        label: { type: string, maxLength: 128 }
+        label_en: { type: string, maxLength: 128 }
+        sort_order: { type: integer }
+
+    WorkflowCondition:
+      type: object
+      required: [id, transition_id, kind, config, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        transition_id: { type: string, format: uuid }
+        kind: { type: string }
+        config: { type: object, additionalProperties: true }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateWorkflowCondition:
+      type: object
+      required: [transition_id, kind, config]
+      properties:
+        transition_id: { type: string, format: uuid }
+        kind: { type: string, maxLength: 64 }
+        config: { type: object, additionalProperties: true }
+
+    WorkflowEffect:
+      type: object
+      required: [id, transition_id, kind, config, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        transition_id: { type: string, format: uuid }
+        kind: { type: string }
+        config: { type: object, additionalProperties: true }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateWorkflowEffect:
+      type: object
+      required: [transition_id, kind, config]
+      properties:
+        transition_id: { type: string, format: uuid }
+        kind: { type: string, maxLength: 64 }
+        config: { type: object, additionalProperties: true }
+
+    Order:
+      type: object
+      required: [id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        external_id: { type: string }
+        channel: { type: string }
+        status: { type: string }
+        currency: { type: string }
+        exchange_rate_sek: { type: number }
+        subtotal_sek: { type: integer }
+        tax_sek: { type: integer }
+        freight_sek: { type: integer }
+        commission_sek: { type: integer }
+        total_sek: { type: integer }
+        customer_id: { type: string, format: uuid }
+        shipping_name: { type: string }
+        shipping_address: { type: string }
+        shipping_city: { type: string }
+        shipping_postal_code: { type: string }
+        shipping_country: { type: string }
+        billing_name: { type: string }
+        billing_address: { type: string }
+        billing_city: { type: string }
+        billing_postal_code: { type: string }
+        billing_country: { type: string }
+        tracking_number: { type: string }
+        carrier: { type: string }
+        shipping_label_url: { type: string }
+        shipped_at: { type: string, format: date-time, nullable: true }
+        delivered_at: { type: string, format: date-time, nullable: true }
+        notes: { type: string }
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderLine"
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateOrder:
+      type: object
+      required: [customer_id, channel, currency, exchange_rate_sek, lines]
+      properties:
+        external_id: { type: string, maxLength: 128 }
+        channel: { type: string, maxLength: 64 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        exchange_rate_sek: { type: number }
+        subtotal_sek: { type: integer }
+        tax_sek: { type: integer }
+        freight_sek: { type: integer }
+        commission_sek: { type: integer }
+        total_sek: { type: integer }
+        customer_id: { type: string, format: uuid }
+        shipping_name: { type: string, maxLength: 256 }
+        shipping_address: { type: string, maxLength: 256 }
+        shipping_city: { type: string, maxLength: 128 }
+        shipping_postal_code: { type: string, maxLength: 20 }
+        shipping_country: { type: string, maxLength: 128 }
+        billing_name: { type: string, maxLength: 256 }
+        billing_address: { type: string, maxLength: 256 }
+        billing_city: { type: string, maxLength: 128 }
+        billing_postal_code: { type: string, maxLength: 20 }
+        billing_country: { type: string, maxLength: 128 }
+        tracking_number: { type: string, maxLength: 128 }
+        carrier: { type: string, maxLength: 128 }
+        shipping_label_url: { type: string, maxLength: 500 }
+        notes: { type: string, maxLength: 2000 }
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateOrderLine"
+
+    UpdateOrder:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        external_id: { type: string, maxLength: 128 }
+        channel: { type: string, maxLength: 64 }
+        currency: { type: string, maxLength: 3 }
+        exchange_rate_sek: { type: number }
+        subtotal_sek: { type: integer }
+        tax_sek: { type: integer }
+        freight_sek: { type: integer }
+        commission_sek: { type: integer }
+        total_sek: { type: integer }
+        customer_id: { type: string, format: uuid }
+        shipping_name: { type: string, maxLength: 256 }
+        shipping_address: { type: string, maxLength: 256 }
+        shipping_city: { type: string, maxLength: 128 }
+        shipping_postal_code: { type: string, maxLength: 20 }
+        shipping_country: { type: string, maxLength: 128 }
+        billing_name: { type: string, maxLength: 256 }
+        billing_address: { type: string, maxLength: 256 }
+        billing_city: { type: string, maxLength: 128 }
+        billing_postal_code: { type: string, maxLength: 20 }
+        billing_country: { type: string, maxLength: 128 }
+        tracking_number: { type: string, maxLength: 128 }
+        carrier: { type: string, maxLength: 128 }
+        shipping_label_url: { type: string, maxLength: 500 }
+        notes: { type: string, maxLength: 2000 }
+
+    OrderLine:
+      type: object
+      required: [id, order_id, product_id, quantity, quantity_shipped, unit_price_sek, tax_rate, tax_amount_sek, total_sek, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        order_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        quantity: { type: integer }
+        quantity_shipped: { type: integer }
+        unit_price_sek: { type: integer }
+        tax_rate: { type: number }
+        tax_amount_sek: { type: integer }
+        total_sek: { type: integer }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateOrderLine:
+      type: object
+      required: [product_id, quantity, unit_price_sek]
+      properties:
+        product_id: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        unit_price_sek: { type: integer, minimum: 0 }
+        tax_rate: { type: number }
+
+    UpdateOrderLine:
+      type: object
+      required: [id, order_id, version]
+      properties:
+        id: { type: string, format: uuid }
+        order_id: { type: string, format: uuid }
+        version: { type: integer }
+        quantity: { type: integer, minimum: 1 }
+        unit_price_sek: { type: integer, minimum: 0 }
+        tax_rate: { type: number }
+
+    UpdateOrderStatus:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+
+    AcceptOrder:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [accepted] }
+        reason: { type: string, maxLength: 2000, nullable: true }
+
+    ShipOrder:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [shipped] }
+
+    CancelOrder:
+      type: object
+      required: [status, reason]
+      properties:
+        status: { type: string, enum: [cancelled] }
+        reason: { type: string, maxLength: 2000 }
+
+    KeyFigures:
+      type: object
+      properties:
+        orders_this_year: { type: integer }
+        revenue_this_year: { type: integer }
+        customers: { type: integer }
+        countries: { type: integer }
+        inventory_value: { type: integer }
+        low_stock_count: { type: integer }
+
+    RevenuePoint:
+      type: object
+      properties:
+        period: { type: string }
+        revenue: { type: integer }
+        orders: { type: integer }
+
+    InventoryStats:
+      type: object
+      properties:
+        total_value: { type: integer }
+        low_stock_count: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id: { type: string, format: uuid }
+              product_name: { type: string }
+              quantity: { type: integer }
+              value: { type: integer }
+
+    StatsCard:
+      type: object
+      properties:
+        title: { type: string }
+        value: { type: string }
+        change: { type: string, nullable: true }
+
+    Reminder:
+      type: object
+      required: [id, reminder_type, title, due_date, notified, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        reminder_type: { type: string, enum: [ids_entry, external] }
+        ids_entry_id: { type: string, format: uuid, nullable: true }
+        external_ref_type: { type: string }
+        external_ref_id: { type: string, format: uuid, nullable: true }
+        title: { type: string }
+        title_en: { type: string }
+        description: { type: string }
+        due_date: { type: string, format: date }
+        notified: { type: boolean }
+        notified_at: { type: string, format: date-time, nullable: true }
+        calendar_event_id: { type: string, format: uuid, nullable: true }
+        archived_at: { type: string, format: date-time }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateReminder:
+      type: object
+      required: [reminder_type, title, due_date]
+      properties:
+        reminder_type: { type: string, enum: [ids_entry, external] }
+        ids_entry_id: { type: string, format: uuid, nullable: true }
+        external_ref_type: { type: string, maxLength: 64 }
+        external_ref_id: { type: string, format: uuid, nullable: true }
+        title: { type: string, maxLength: 500 }
+        title_en: { type: string, maxLength: 500 }
+        description: { type: string, maxLength: 2000 }
+        due_date: { type: string, format: date }
+
+    UpdateReminder:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        reminder_type: { type: string, enum: [ids_entry, external] }
+        ids_entry_id: { type: string, format: uuid, nullable: true }
+        external_ref_type: { type: string, maxLength: 64 }
+        external_ref_id: { type: string, format: uuid, nullable: true }
+        title: { type: string, maxLength: 500 }
+        title_en: { type: string, maxLength: 500 }
+        description: { type: string, maxLength: 2000 }
+        due_date: { type: string, format: date }
+
