@@ -2,6 +2,8 @@
 SELECT * FROM orders WHERE archived = false
   AND (sqlc.arg(status)::text IS NULL OR status = sqlc.arg(status))
   AND (sqlc.arg(customer_id)::uuid IS NULL OR customer_id = sqlc.arg(customer_id))
+  AND (sqlc.arg(from_date)::date IS NULL OR created_at >= sqlc.arg(from_date)::date)
+  AND (sqlc.arg(to_date)::date IS NULL OR created_at < sqlc.arg(to_date)::date + interval '1 day')
 ORDER BY created_at DESC;
 
 -- name: GetOrder :one

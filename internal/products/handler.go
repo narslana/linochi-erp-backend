@@ -269,13 +269,43 @@ func (h *Handler) AssignFieldToProductType(w http.ResponseWriter, r *http.Reques
 
 func (h *Handler) UpdateProductTypeField(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID, ptfId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		httpx.WriteProblem(w, r, httpx.Problem{Code: "not-implemented", Title: "Update product type field not yet implemented", Status: http.StatusNotImplemented})
+		var body api.UpdateProductTypeFieldJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			httpx.WriteProblem(w, r, httpx.Problem{Code: "invalid-request", Title: "Invalid request body", Status: http.StatusBadRequest})
+			return
+		}
+
+		var sortOrder *int32
+		if body.SortOrder != nil {
+			v := int32(*body.SortOrder) //nolint:gosec // sort order is bounded
+			sortOrder = &v
+		}
+
+		ptf, err := h.svc.UpdateProductTypeField(r.Context(), uuid.UUID(ptfId), sortOrder, body.MandatoryOverride, body.Version)
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, ptf)
 	})).ServeHTTP(w, r)
 }
 
 func (h *Handler) ArchiveProductTypeField(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID, ptfId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		httpx.WriteProblem(w, r, httpx.Problem{Code: "not-implemented", Title: "Archive product type field not yet implemented", Status: http.StatusNotImplemented})
+		var body struct {
+			Version int `json:"version"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			httpx.WriteProblem(w, r, httpx.Problem{Code: "invalid-request", Title: "Invalid request body", Status: http.StatusBadRequest})
+			return
+		}
+
+		ptf, err := h.svc.ArchiveProductTypeField(r.Context(), uuid.UUID(ptfId), body.Version)
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, ptf)
 	})).ServeHTTP(w, r)
 }
 

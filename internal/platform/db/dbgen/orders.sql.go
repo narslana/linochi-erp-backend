@@ -405,16 +405,25 @@ const listOrders = `-- name: ListOrders :many
 SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at FROM orders WHERE archived = false
   AND ($1::text IS NULL OR status = $1)
   AND ($2::uuid IS NULL OR customer_id = $2)
+  AND ($3::date IS NULL OR created_at >= $3::date)
+  AND ($4::date IS NULL OR created_at < $4::date + interval '1 day')
 ORDER BY created_at DESC
 `
 
 type ListOrdersParams struct {
-	Status     string    `json:"status"`
-	CustomerID uuid.UUID `json:"customer_id"`
+	Status     string      `json:"status"`
+	CustomerID uuid.UUID   `json:"customer_id"`
+	FromDate   pgtype.Date `json:"from_date"`
+	ToDate     pgtype.Date `json:"to_date"`
 }
 
 func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order, error) {
-	rows, err := q.db.Query(ctx, listOrders, arg.Status, arg.CustomerID)
+	rows, err := q.db.Query(ctx, listOrders,
+		arg.Status,
+		arg.CustomerID,
+		arg.FromDate,
+		arg.ToDate,
+	)
 	if err != nil {
 		return nil, err
 	}

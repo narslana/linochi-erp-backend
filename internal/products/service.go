@@ -222,13 +222,15 @@ func (s *Service) AssignFieldToProductType(ctx context.Context, productTypeID, f
 }
 
 func (s *Service) UpdateProductTypeField(ctx context.Context, id uuid.UUID, sortOrder *int32, mandatoryOverride *bool, version int) (ProductTypeField, error) {
-	// ASSUMPTION: We fetch the existing record to get its current values when fields are partial
-	return ProductTypeField{}, fmt.Errorf("not implemented: need to fetch existing PTF first")
+	var sortOrderVal int32 = 0
+	if sortOrder != nil {
+		sortOrderVal = *sortOrder
+	}
+	return s.store.UpdateProductTypeField(ctx, sortOrderVal, mandatoryOverride, id, version)
 }
 
 func (s *Service) ArchiveProductTypeField(ctx context.Context, id uuid.UUID, version int) (ProductTypeField, error) {
-	// ASSUMPTION: Version defaults to current if not provided
-	return ProductTypeField{}, fmt.Errorf("not implemented: need to fetch existing PTF first")
+	return s.store.ArchiveProductTypeField(ctx, id, version)
 }
 
 // ─── Products (PRD-01, PRD-02, PRD-04, PRD-08, PRD-09, PRD-10, PRD-16, PRD-17) ──

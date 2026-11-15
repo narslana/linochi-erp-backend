@@ -23,13 +23,23 @@ func NewStore(pool *pgxpool.Pool) *Store {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-func (s *Store) ListOrders(ctx context.Context, status *string, customerID *uuid.UUID) ([]Order, error) {
+func (s *Store) ListOrders(ctx context.Context, status *string, customerID *uuid.UUID, fromDate, toDate *string) ([]Order, error) {
 	var arg dbgen.ListOrdersParams
 	if status != nil {
 		arg.Status = *status
 	}
 	if customerID != nil {
 		arg.CustomerID = *customerID
+	}
+	if fromDate != nil {
+		if t, err := time.Parse(time.DateOnly, *fromDate); err == nil {
+			arg.FromDate = pgtype.Date{Time: t, Valid: true}
+		}
+	}
+	if toDate != nil {
+		if t, err := time.Parse(time.DateOnly, *toDate); err == nil {
+			arg.ToDate = pgtype.Date{Time: t, Valid: true}
+		}
 	}
 	rows, err := s.q.ListOrders(ctx, arg)
 	if err != nil {
