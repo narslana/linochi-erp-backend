@@ -402,11 +402,19 @@ func (q *Queries) ListOrderLines(ctx context.Context, orderID uuid.UUID) ([]Orde
 }
 
 const listOrders = `-- name: ListOrders :many
-SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at FROM orders WHERE archived = false ORDER BY created_at DESC
+SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at FROM orders WHERE archived = false
+  AND ($1::text IS NULL OR status = $1)
+  AND ($2::uuid IS NULL OR customer_id = $2)
+ORDER BY created_at DESC
 `
 
-func (q *Queries) ListOrders(ctx context.Context) ([]Order, error) {
-	rows, err := q.db.Query(ctx, listOrders)
+type ListOrdersParams struct {
+	Status     string    `json:"status"`
+	CustomerID uuid.UUID `json:"customer_id"`
+}
+
+func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order, error) {
+	rows, err := q.db.Query(ctx, listOrders, arg.Status, arg.CustomerID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 -- LAG-01: locations for inventory (LAG-01)
 CREATE TABLE locations (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     name                text NOT NULL,
     name_en             text NOT NULL DEFAULT '',
     address             text NOT NULL DEFAULT '',
@@ -20,7 +20,7 @@ CREATE TABLE locations (
 -- +goose StatementBegin
 -- LAG-01, LAG-02, LAG-03, LAG-04: stock movements are the source of truth for balance
 CREATE TABLE stockmovements (
-    id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                      uuid PRIMARY KEY DEFAULT uuidv7(),
     product_id              uuid NOT NULL REFERENCES products(id),
     location_id             uuid NOT NULL REFERENCES locations(id),
     batch_number            text NOT NULL DEFAULT '',
@@ -48,6 +48,7 @@ CREATE INDEX idx_stockmovements_ref ON stockmovements(reference_type, reference_
 -- +goose StatementBegin
 GRANT SELECT, INSERT, UPDATE ON locations TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON stockmovements TO linochi_erp_app;
+-- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS stockmovements;

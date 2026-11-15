@@ -194,3 +194,27 @@ WHERE es.archived = false
   )
 ORDER BY es.start_code
 LIMIT 1;
+
+-- name: ListCustomerEANSeries :many
+-- KUN-07: list EAN series (delegates to global list until customer-specific linkage exists)
+SELECT * FROM ean_series WHERE archived = false ORDER BY prefix, start_code;
+
+-- name: ListCustomerLeads :many
+-- KUN-05: list leads (delegates to global list until customer-specific linkage exists)
+SELECT * FROM leads WHERE archived = false ORDER BY created_at DESC;
+
+-- name: RegisterCustomerEANSeries :one
+-- KUN-07: register an EAN series for a customer
+INSERT INTO ean_series (
+    id, prefix, start_code, end_code, description
+) VALUES (
+    gen_random_uuid(), $1, $2, $3, $4
+) RETURNING *;
+
+-- name: RegisterEANSeries :one
+-- REG-04: register a new EAN series
+INSERT INTO ean_series (
+    id, prefix, start_code, end_code, description
+) VALUES (
+    gen_random_uuid(), $1, $2, $3, $4
+) RETURNING *;

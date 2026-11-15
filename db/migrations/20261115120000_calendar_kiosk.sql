@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 -- KAL-01: iCal sources for Google calendars
 CREATE TABLE ical_sources (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     name            text NOT NULL,
     name_en         text NOT NULL DEFAULT '',
     ical_url        text NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE ical_sources (
 
 -- KAL-01, KAL-03: calendar events from iCal and ERP internal sources
 CREATE TABLE calendar_events (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     source_type     text NOT NULL CHECK (source_type IN ('ical', 'internal')),
     source_id       uuid,
     ical_uid        text,
@@ -48,11 +48,10 @@ GRANT SELECT, INSERT, UPDATE ON ical_sources TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON calendar_events TO linochi_erp_app;
 -- +goose StatementEnd
 
--- +goose Up
 -- +goose StatementBegin
 -- KIO-01: kiosk playlists
 CREATE TABLE kiosk_playlists (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     name            text NOT NULL,
     name_en         text NOT NULL DEFAULT '',
     archived        boolean NOT NULL DEFAULT false,
@@ -64,7 +63,7 @@ CREATE TABLE kiosk_playlists (
 
 -- KIO-01, KIO-04: views within a playlist
 CREATE TABLE kiosk_playlist_views (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     playlist_id     uuid NOT NULL REFERENCES kiosk_playlists(id),
     view_type       text NOT NULL CHECK (view_type IN ('map', 'graph', 'inventory', 'orders', 'calendar')),
     sort_order      int NOT NULL DEFAULT 0,
@@ -79,7 +78,7 @@ CREATE TABLE kiosk_playlist_views (
 
 -- KIO-06: kiosk devices for fixed screens
 CREATE TABLE kiosk_devices (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     name            text NOT NULL,
     pairing_code    text NOT NULL DEFAULT '',
     api_key_hash    text NOT NULL DEFAULT '',

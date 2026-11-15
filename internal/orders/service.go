@@ -25,8 +25,8 @@ func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool) *Service 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 // ListOrders returns all active orders (ORD-01).
-func (s *Service) ListOrders(ctx context.Context) ([]Order, error) {
-	return s.store.ListOrders(ctx)
+func (s *Service) ListOrders(ctx context.Context, status *string, customerID *uuid.UUID) ([]Order, error) {
+	return s.store.ListOrders(ctx, status, customerID)
 }
 
 // CreateOrder creates a new order (ORD-01).

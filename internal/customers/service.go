@@ -367,3 +367,23 @@ func (s *Service) CustomerStats(ctx context.Context, customerID uuid.UUID) ([]db
 func (s *Service) TopProductsByCustomer(ctx context.Context, customerID uuid.UUID) ([]dbgen.TopProductsByCustomerRow, error) {
 	return s.store.TopProductsByCustomer(ctx, customerID)
 }
+
+// ListCustomerEANSeries returns EAN series for a customer (KUN-07).
+func (s *Service) ListCustomerEANSeries(ctx context.Context) ([]EanSeries, error) {
+	return s.store.ListCustomerEANSeries(ctx)
+}
+
+// ListCustomerLeads returns leads for a customer (KUN-05).
+func (s *Service) ListCustomerLeads(ctx context.Context) ([]Lead, error) {
+	return s.store.ListCustomerLeads(ctx)
+}
+
+// RegisterCustomerEANSeries registers an EAN series for a customer (KUN-07).
+func (s *Service) RegisterCustomerEANSeries(ctx context.Context, prefix, startCode, endCode, description string) (EanSeries, error) {
+	return s.store.RegisterCustomerEANSeries(ctx, prefix, startCode, endCode, description)
+}
+
+// RegisterEANSeries registers a new EAN series (REG-04).
+func (s *Service) RegisterEANSeries(ctx context.Context, prefix, startCode, endCode, description string) (EanSeries, error) {
+	return s.store.RegisterEANSeries(ctx, prefix, startCode, endCode, description)
+}

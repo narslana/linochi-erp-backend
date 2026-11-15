@@ -34,8 +34,8 @@ func (s *Store) ListWorkflowSteps(ctx context.Context) ([]Step, error) {
 	return out, nil
 }
 
-func (s *Store) GetWorkflowStep(ctx context.Context, key string) (Step, error) {
-	row, err := s.q.GetWorkflowStep(ctx, key)
+func (s *Store) GetWorkflowStep(ctx context.Context, id uuid.UUID) (Step, error) {
+	row, err := s.q.GetWorkflowStep(ctx, id)
 	if err != nil {
 		return Step{}, err
 	}
@@ -58,9 +58,9 @@ func (s *Store) CreateWorkflowStep(ctx context.Context, id uuid.UUID, key, name,
 	return dbRowToStep(row), nil
 }
 
-func (s *Store) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, sortOrder *int, isStart, isEnd *bool, key string, version int) (Step, error) {
+func (s *Store) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, sortOrder *int, isStart, isEnd *bool, id uuid.UUID, version int) (Step, error) {
 	var params dbgen.UpdateWorkflowStepParams
-	params.Key = key
+	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
 	if name != nil {
 		params.Name = *name
@@ -84,8 +84,8 @@ func (s *Store) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, so
 	return dbRowToStep(row), nil
 }
 
-func (s *Store) ArchiveWorkflowStep(ctx context.Context, key string, version int) (Step, error) {
-	row, err := s.q.ArchiveWorkflowStep(ctx, dbgen.ArchiveWorkflowStepParams{Key: key, Version: int32(version)}) //nolint:gosec // version is bounded by optimistic locking
+func (s *Store) ArchiveWorkflowStep(ctx context.Context, id uuid.UUID, version int) (Step, error) {
+	row, err := s.q.ArchiveWorkflowStep(ctx, dbgen.ArchiveWorkflowStepParams{ID: id, Version: int32(version)}) //nolint:gosec // version is bounded by optimistic locking
 	if err != nil {
 		return Step{}, err
 	}
@@ -94,8 +94,8 @@ func (s *Store) ArchiveWorkflowStep(ctx context.Context, key string, version int
 
 // ─── Transitions ──────────────────────────────────────────────────────────────
 
-func (s *Store) ListWorkflowTransitions(ctx context.Context, stepKey string) ([]Transition, error) {
-	rows, err := s.q.ListWorkflowTransitions(ctx, stepKey)
+func (s *Store) ListWorkflowTransitions(ctx context.Context) ([]Transition, error) {
+	rows, err := s.q.ListWorkflowTransitions(ctx)
 	if err != nil {
 		return nil, err
 	}

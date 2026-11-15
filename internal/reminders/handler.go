@@ -71,7 +71,7 @@ func (h *Handler) createReminder(w http.ResponseWriter, r *http.Request) {
 		description = *body.Description
 	}
 
-	dueDate := body.DueDate.Time.Format("2006-01-02")
+	dueDate := body.DueDate.Format("2006-01-02")
 
 	reminder, err := h.svc.CreateReminder(r.Context(), idsEntryID, externalRefID, string(body.ReminderType), externalRefType, body.Title, titleEn, description, dueDate)
 	if err != nil {
@@ -127,8 +127,8 @@ func (h *Handler) updateReminder(w http.ResponseWriter, r *http.Request, reminde
 	if body.Description != nil {
 		description = body.Description
 	}
-	if body.DueDate.Time.Year() > 0 {
-		d := body.DueDate.Time.Format("2006-01-02")
+	if body.DueDate.Year() > 0 {
+		d := body.DueDate.Format("2006-01-02")
 		dueDate = &d
 	}
 

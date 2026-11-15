@@ -55,9 +55,9 @@ func (s *Service) CreateWorkflowStep(ctx context.Context, key, name, nameEn stri
 	return step, err
 }
 
-// GetWorkflowStep returns a workflow step by key.
-func (s *Service) GetWorkflowStep(ctx context.Context, key string) (Step, error) {
-	step, err := s.store.GetWorkflowStep(ctx, key)
+// GetWorkflowStep returns a workflow step by ID.
+func (s *Service) GetWorkflowStep(ctx context.Context, id uuid.UUID) (Step, error) {
+	step, err := s.store.GetWorkflowStep(ctx, id)
 	if err != nil {
 		return step, ProblemError(err)
 	}
@@ -65,8 +65,8 @@ func (s *Service) GetWorkflowStep(ctx context.Context, key string) (Step, error)
 }
 
 // UpdateWorkflowStep updates a workflow step (WF-01).
-func (s *Service) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, sortOrder *int, isStart, isEnd *bool, key string, version int) (Step, error) {
-	step, err := s.store.UpdateWorkflowStep(ctx, name, nameEn, sortOrder, isStart, isEnd, key, version)
+func (s *Service) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, sortOrder *int, isStart, isEnd *bool, id uuid.UUID, version int) (Step, error) {
+	step, err := s.store.UpdateWorkflowStep(ctx, name, nameEn, sortOrder, isStart, isEnd, id, version)
 	if err != nil {
 		return step, ProblemError(err)
 	}
@@ -83,8 +83,8 @@ func (s *Service) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, 
 }
 
 // ArchiveWorkflowStep archives a workflow step (NFK-09).
-func (s *Service) ArchiveWorkflowStep(ctx context.Context, key string, version int) (Step, error) {
-	step, err := s.store.ArchiveWorkflowStep(ctx, key, version)
+func (s *Service) ArchiveWorkflowStep(ctx context.Context, id uuid.UUID, version int) (Step, error) {
+	step, err := s.store.ArchiveWorkflowStep(ctx, id, version)
 	if err != nil {
 		return step, ProblemError(err)
 	}
@@ -102,9 +102,9 @@ func (s *Service) ArchiveWorkflowStep(ctx context.Context, key string, version i
 
 // ─── Transitions ──────────────────────────────────────────────────────────────
 
-// ListWorkflowTransitions returns all active transitions for a step (WF-01).
-func (s *Service) ListWorkflowTransitions(ctx context.Context, stepKey string) ([]Transition, error) {
-	return s.store.ListWorkflowTransitions(ctx, stepKey)
+// ListWorkflowTransitions returns all workflow transitions (WF-02).
+func (s *Service) ListWorkflowTransitions(ctx context.Context) ([]Transition, error) {
+	return s.store.ListWorkflowTransitions(ctx)
 }
 
 // GetWorkflowTransition returns a transition by ID.

@@ -29,12 +29,19 @@ func NewHandler(svc *Service, mw *auth.SessionMiddleware, logger *slog.Logger) *
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 // ListOrders returns all active orders (ORD-01).
-func (h *Handler) ListOrders(w http.ResponseWriter, r *http.Request) {
-	h.mw.Require(http.HandlerFunc(h.listOrders)).ServeHTTP(w, r)
+func (h *Handler) ListOrders(w http.ResponseWriter, r *http.Request, params api.ListOrdersParams) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.listOrders(w, r, params)
+	})).ServeHTTP(w, r)
 }
 
-func (h *Handler) listOrders(w http.ResponseWriter, r *http.Request) {
-	orders, err := h.svc.ListOrders(r.Context())
+func (h *Handler) listOrders(w http.ResponseWriter, r *http.Request, params api.ListOrdersParams) {
+	var status *string
+	if params.Status != nil {
+		s := string(*params.Status)
+		status = &s
+	}
+	orders, err := h.svc.ListOrders(r.Context(), status, params.CustomerId)
 	if err != nil {
 		httpx.Error(w, r, err)
 		return
@@ -546,8 +553,23 @@ func (h *Handler) batchExportOrders(w http.ResponseWriter, r *http.Request) {
 	}
 	// TODO: implement CSV export logic
 	w.Header().Set("Content-Type", "text/csv")
-	w.Write([]byte("id,status,customer_id,created_at\n"))
+	if _, err := w.Write([]byte("id,status,customer_id,created_at\n")); err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"message": "CSV export not yet implemented"})
+}
+
+// ExportOrder exports an order as PDF (ORD-09).
+func (h *Handler) ExportOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.exportOrder(w, r, id)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) exportOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	// TODO: implement PDF export
+	http.Error(w, "PDF export not yet implemented", http.StatusNotImplemented)
 }
 
 // writeJSON encodes data as JSON and writes it to the response writer.

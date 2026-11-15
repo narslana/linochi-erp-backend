@@ -45,21 +45,21 @@ func ProblemError(err error) error {
 
 // Customer is a B2B buyer (KUN-01).
 type Customer struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	TypeCode  string    `json:"type_code"`
-	Address   string    `json:"address"`
-	City      string    `json:"city"`
-	Country   string    `json:"country"`
-	Eori      string    `json:"eori,omitempty"`
-	Epr       string    `json:"epr,omitempty"`
-	Currency  string    `json:"currency"`
-	Notes     string    `json:"notes,omitempty"`
-	Archived  bool      `json:"-"`
-	ArchivedAt *string  `json:"archived_at,omitempty"`
-	Version   int       `json:"version"`
-	CreatedAt string    `json:"created_at"`
-	UpdatedAt string    `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	TypeCode   string    `json:"type_code"`
+	Address    string    `json:"address"`
+	City       string    `json:"city"`
+	Country    string    `json:"country"`
+	Eori       string    `json:"eori,omitempty"`
+	Epr        string    `json:"epr,omitempty"`
+	Currency   string    `json:"currency"`
+	Notes      string    `json:"notes,omitempty"`
+	Archived   bool      `json:"-"`
+	ArchivedAt *string   `json:"archived_at,omitempty"`
+	Version    int       `json:"version"`
+	CreatedAt  string    `json:"created_at"`
+	UpdatedAt  string    `json:"updated_at"`
 }
 
 // Contact is a person at a customer company (KUN-01).
@@ -112,19 +112,19 @@ type EanSeries struct {
 
 // CustomerStats holds aggregated order statistics per customer (KUN-04).
 type CustomerStats struct {
-	TotalOrders    int     `json:"total_orders"`
-	TotalValue     int64   `json:"total_value"`
-	AvgOrderValue  float64 `json:"avg_order_value"`
-	LatestOrder    *string `json:"latest_order,omitempty"`
-	Channel        string  `json:"channel"`
-	ChannelCount   int     `json:"channel_count"`
+	TotalOrders   int     `json:"total_orders"`
+	TotalValue    int64   `json:"total_value"`
+	AvgOrderValue float64 `json:"avg_order_value"`
+	LatestOrder   *string `json:"latest_order,omitempty"`
+	Channel       string  `json:"channel"`
+	ChannelCount  int     `json:"channel_count"`
 }
 
 // TopProduct is a product purchased by a customer (KUN-04).
 type TopProduct struct {
-	ProductID    uuid.UUID `json:"product_id"`
-	ProductName  string    `json:"product_name"`
-	TotalQuantity int      `json:"total_quantity"`
+	ProductID     uuid.UUID `json:"product_id"`
+	ProductName   string    `json:"product_name"`
+	TotalQuantity int       `json:"total_quantity"`
 }
 
 // InactiveCustomer represents a customer with no recent orders (KUN-05).

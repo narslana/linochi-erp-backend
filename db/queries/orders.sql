@@ -1,5 +1,8 @@
 -- name: ListOrders :many
-SELECT * FROM orders WHERE archived = false ORDER BY created_at DESC;
+SELECT * FROM orders WHERE archived = false
+  AND (sqlc.arg(status)::text IS NULL OR status = sqlc.arg(status))
+  AND (sqlc.arg(customer_id)::uuid IS NULL OR customer_id = sqlc.arg(customer_id))
+ORDER BY created_at DESC;
 
 -- name: GetOrder :one
 SELECT * FROM orders WHERE id = $1 AND archived = false;

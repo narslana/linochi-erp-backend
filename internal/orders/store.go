@@ -23,8 +23,15 @@ func NewStore(pool *pgxpool.Pool) *Store {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-func (s *Store) ListOrders(ctx context.Context) ([]Order, error) {
-	rows, err := s.q.ListOrders(ctx)
+func (s *Store) ListOrders(ctx context.Context, status *string, customerID *uuid.UUID) ([]Order, error) {
+	var arg dbgen.ListOrdersParams
+	if status != nil {
+		arg.Status = *status
+	}
+	if customerID != nil {
+		arg.CustomerID = *customerID
+	}
+	rows, err := s.q.ListOrders(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -63,33 +70,33 @@ func (s *Store) CreateOrder(ctx context.Context, id, customerID uuid.UUID, exter
 	exchangeRate.Valid = true
 
 	row, err := s.q.CreateOrder(ctx, dbgen.CreateOrderParams{
-		ID:               id,
-		ExternalID:       externalID,
-		Channel:          channel,
-		Status:           status,
-		Currency:         currency,
-		ExchangeRateSek:  exchangeRate,
-		SubtotalSek:      subtotalSek,
-		TaxSek:           taxSek,
-		FreightSek:       freightSek,
-		CommissionSek:    commissionSek,
-		TotalSek:         totalSek,
-		CustomerID:       customerID,
-		ShippingName:     shippingName,
-		ShippingAddress:  shippingAddress,
-		ShippingCity:     shippingCity,
+		ID:                 id,
+		ExternalID:         externalID,
+		Channel:            channel,
+		Status:             status,
+		Currency:           currency,
+		ExchangeRateSek:    exchangeRate,
+		SubtotalSek:        subtotalSek,
+		TaxSek:             taxSek,
+		FreightSek:         freightSek,
+		CommissionSek:      commissionSek,
+		TotalSek:           totalSek,
+		CustomerID:         customerID,
+		ShippingName:       shippingName,
+		ShippingAddress:    shippingAddress,
+		ShippingCity:       shippingCity,
 		ShippingPostalCode: shippingPostalCode,
-		ShippingCountry:  shippingCountry,
-		BillingName:      billingName,
-		BillingAddress:   billingAddress,
-		BillingCity:      billingCity,
-		BillingPostalCode: billingPostalCode,
-		BillingCountry:   billingCountry,
-		TrackingNumber:   trackingNumber,
-		Carrier:          carrier,
-		ShippingLabelUrl: shippingLabelUrl,
-		DeliveredAt:      deliveredAtTime,
-		Notes:            notes,
+		ShippingCountry:    shippingCountry,
+		BillingName:        billingName,
+		BillingAddress:     billingAddress,
+		BillingCity:        billingCity,
+		BillingPostalCode:  billingPostalCode,
+		BillingCountry:     billingCountry,
+		TrackingNumber:     trackingNumber,
+		Carrier:            carrier,
+		ShippingLabelUrl:   shippingLabelUrl,
+		DeliveredAt:        deliveredAtTime,
+		Notes:              notes,
 	})
 	if err != nil {
 		return Order{}, err
@@ -252,7 +259,7 @@ func (s *Store) CreateOrderLine(ctx context.Context, id, orderID, productID uuid
 		ID:              id,
 		OrderID:         orderID,
 		ProductID:       productID,
-		Quantity:        int32(quantity), //nolint:gosec // quantity is bounded by business logic
+		Quantity:        int32(quantity),        //nolint:gosec // quantity is bounded by business logic
 		QuantityShipped: int32(quantityShipped), //nolint:gosec // quantity shipped is bounded by business logic
 		UnitPriceSek:    unitPriceSek,
 		TaxRate:         taxRateNumeric,
@@ -313,34 +320,34 @@ func dbRowToOrder(r dbgen.Order) Order {
 		exchangeRateSek = r.ExchangeRateSek.Int.Int64()
 	}
 	o := Order{
-		ID:               r.ID,
-		ExternalID:       r.ExternalID,
-		Channel:          r.Channel,
-		Status:           r.Status,
-		Currency:         r.Currency,
-		ExchangeRateSek:  exchangeRateSek,
-		SubtotalSek:      r.SubtotalSek,
-		TaxSek:           r.TaxSek,
-		FreightSek:       r.FreightSek,
-		CommissionSek:    r.CommissionSek,
-		TotalSek:         r.TotalSek,
-		CustomerID:       r.CustomerID,
-		ShippingName:     r.ShippingName,
-		ShippingAddress:  r.ShippingAddress,
-		ShippingCity:     r.ShippingCity,
+		ID:                 r.ID,
+		ExternalID:         r.ExternalID,
+		Channel:            r.Channel,
+		Status:             r.Status,
+		Currency:           r.Currency,
+		ExchangeRateSek:    exchangeRateSek,
+		SubtotalSek:        r.SubtotalSek,
+		TaxSek:             r.TaxSek,
+		FreightSek:         r.FreightSek,
+		CommissionSek:      r.CommissionSek,
+		TotalSek:           r.TotalSek,
+		CustomerID:         r.CustomerID,
+		ShippingName:       r.ShippingName,
+		ShippingAddress:    r.ShippingAddress,
+		ShippingCity:       r.ShippingCity,
 		ShippingPostalCode: r.ShippingPostalCode,
-		ShippingCountry:  r.ShippingCountry,
-		BillingName:      r.BillingName,
-		BillingAddress:   r.BillingAddress,
-		BillingCity:      r.BillingCity,
-		BillingPostalCode: r.BillingPostalCode,
-		BillingCountry:   r.BillingCountry,
-		TrackingNumber:   r.TrackingNumber,
-		Carrier:          r.Carrier,
-		ShippingLabelUrl: r.ShippingLabelUrl,
-		Version:          int(r.Version),
-		CreatedAt:        r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:        r.UpdatedAt.Format(time.RFC3339),
+		ShippingCountry:    r.ShippingCountry,
+		BillingName:        r.BillingName,
+		BillingAddress:     r.BillingAddress,
+		BillingCity:        r.BillingCity,
+		BillingPostalCode:  r.BillingPostalCode,
+		BillingCountry:     r.BillingCountry,
+		TrackingNumber:     r.TrackingNumber,
+		Carrier:            r.Carrier,
+		ShippingLabelUrl:   r.ShippingLabelUrl,
+		Version:            int(r.Version),
+		CreatedAt:          r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:          r.UpdatedAt.Format(time.RFC3339),
 	}
 	if r.ShippedAt != nil {
 		t := r.ShippedAt.Format(time.RFC3339)
@@ -364,18 +371,18 @@ func dbRowToOrderLine(r dbgen.OrderLine) OrderLine {
 		taxRate = float64(r.TaxRate.Int.Int64()) / 100
 	}
 	l := OrderLine{
-		ID:             r.ID,
-		OrderID:        r.OrderID,
-		ProductID:      r.ProductID,
-		Quantity:       int(r.Quantity),
+		ID:              r.ID,
+		OrderID:         r.OrderID,
+		ProductID:       r.ProductID,
+		Quantity:        int(r.Quantity),
 		QuantityShipped: int(r.QuantityShipped),
-		UnitPriceSek:   r.UnitPriceSek,
-		TaxRate:        taxRate,
-		TaxAmountSek:   r.TaxAmountSek,
-		TotalSek:       r.TotalSek,
-		Version:        int(r.Version),
-		CreatedAt:      r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:      r.UpdatedAt.Format(time.RFC3339),
+		UnitPriceSek:    r.UnitPriceSek,
+		TaxRate:         taxRate,
+		TaxAmountSek:    r.TaxAmountSek,
+		TotalSek:        r.TotalSek,
+		Version:         int(r.Version),
+		CreatedAt:       r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       r.UpdatedAt.Format(time.RFC3339),
 	}
 	if r.ArchivedAt != nil {
 		l.Archived = true

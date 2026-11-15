@@ -2,7 +2,7 @@
 SELECT * FROM workflow_steps WHERE archived = false ORDER BY sort_order, key;
 
 -- name: GetWorkflowStep :one
-SELECT * FROM workflow_steps WHERE key = $1 AND archived = false;
+SELECT * FROM workflow_steps WHERE id = $1 AND archived = false;
 
 -- name: CreateWorkflowStep :one
 INSERT INTO workflow_steps (
@@ -20,7 +20,7 @@ UPDATE workflow_steps SET
     is_end = COALESCE(sqlc.arg(is_end), is_end),
     version = version + 1,
     updated_at = now()
-WHERE key = $1 AND version = $2 AND archived = false
+WHERE id = $1 AND version = $2 AND archived = false
 RETURNING *;
 
 -- name: ArchiveWorkflowStep :one
@@ -29,10 +29,13 @@ UPDATE workflow_steps SET
     archived_at = now(),
     version = version + 1,
     updated_at = now()
-WHERE key = $1 AND version = $2
+WHERE id = $1 AND version = $2
 RETURNING *;
 
 -- name: ListWorkflowTransitions :many
+SELECT * FROM workflow_transitions WHERE archived = false ORDER BY sort_order;
+
+-- name: ListWorkflowTransitionsByStep :many
 SELECT * FROM workflow_transitions WHERE step_key = $1 AND archived = false ORDER BY sort_order;
 
 -- name: GetWorkflowTransition :one

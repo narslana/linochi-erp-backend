@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db/dbgen"
@@ -374,6 +373,58 @@ func (s *Store) TopProductsByCustomer(ctx context.Context, customerID uuid.UUID)
 	return s.q.TopProductsByCustomer(ctx, customerID)
 }
 
+// ─── Customer-specific EAN and Leads (KUN-05, KUN-07) ────────────────────────
+
+func (s *Store) ListCustomerEANSeries(ctx context.Context) ([]EanSeries, error) {
+	rows, err := s.q.ListCustomerEANSeries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]EanSeries, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, dbRowToEanSeries(r))
+	}
+	return out, nil
+}
+
+func (s *Store) ListCustomerLeads(ctx context.Context) ([]Lead, error) {
+	rows, err := s.q.ListCustomerLeads(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Lead, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, dbRowToLead(r))
+	}
+	return out, nil
+}
+
+func (s *Store) RegisterCustomerEANSeries(ctx context.Context, prefix, startCode, endCode, description string) (EanSeries, error) {
+	row, err := s.q.RegisterCustomerEANSeries(ctx, dbgen.RegisterCustomerEANSeriesParams{
+		Prefix:      prefix,
+		StartCode:   startCode,
+		EndCode:     endCode,
+		Description: description,
+	})
+	if err != nil {
+		return EanSeries{}, err
+	}
+	return dbRowToEanSeries(row), nil
+}
+
+func (s *Store) RegisterEANSeries(ctx context.Context, prefix, startCode, endCode, description string) (EanSeries, error) {
+	row, err := s.q.RegisterEANSeries(ctx, dbgen.RegisterEANSeriesParams{
+		Prefix:      prefix,
+		StartCode:   startCode,
+		EndCode:     endCode,
+		Description: description,
+	})
+	if err != nil {
+		return EanSeries{}, err
+	}
+	return dbRowToEanSeries(row), nil
+}
+
 // ─── Row helpers ──────────────────────────────────────────────────────────────
 
 func dbRowToCustomer(r dbgen.Customer) Customer {
@@ -461,12 +512,4 @@ func dbRowToEanSeries(r dbgen.EanSeries) EanSeries {
 		e.ArchivedAt = &t
 	}
 	return e
-}
-
-func datePtr(d pgtype.Timestamp) *string {
-	if !d.Valid {
-		return nil
-	}
-	s := d.Time.Format("2006-01-02T15:04:05Z")
-	return &s
 }

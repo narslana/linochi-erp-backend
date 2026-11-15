@@ -585,6 +585,85 @@ func (q *Queries) ListContacts(ctx context.Context, customerID uuid.UUID) ([]Con
 	return items, nil
 }
 
+const listCustomerEANSeries = `-- name: ListCustomerEANSeries :many
+SELECT id, prefix, start_code, end_code, description, assigned_count, archived, archived_at, version, created_at, updated_at FROM ean_series WHERE archived = false ORDER BY prefix, start_code
+`
+
+// KUN-07: list EAN series (delegates to global list until customer-specific linkage exists)
+func (q *Queries) ListCustomerEANSeries(ctx context.Context) ([]EanSeries, error) {
+	rows, err := q.db.Query(ctx, listCustomerEANSeries)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []EanSeries
+	for rows.Next() {
+		var i EanSeries
+		if err := rows.Scan(
+			&i.ID,
+			&i.Prefix,
+			&i.StartCode,
+			&i.EndCode,
+			&i.Description,
+			&i.AssignedCount,
+			&i.Archived,
+			&i.ArchivedAt,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCustomerLeads = `-- name: ListCustomerLeads :many
+SELECT id, company, contact_name, email, phone, address, city, country, status, notes, converted_customer_id, archived, archived_at, version, created_at, updated_at FROM leads WHERE archived = false ORDER BY created_at DESC
+`
+
+// KUN-05: list leads (delegates to global list until customer-specific linkage exists)
+func (q *Queries) ListCustomerLeads(ctx context.Context) ([]Lead, error) {
+	rows, err := q.db.Query(ctx, listCustomerLeads)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Lead
+	for rows.Next() {
+		var i Lead
+		if err := rows.Scan(
+			&i.ID,
+			&i.Company,
+			&i.ContactName,
+			&i.Email,
+			&i.Phone,
+			&i.Address,
+			&i.City,
+			&i.Country,
+			&i.Status,
+			&i.Notes,
+			&i.ConvertedCustomerID,
+			&i.Archived,
+			&i.ArchivedAt,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCustomers = `-- name: ListCustomers :many
 SELECT id, name, type_code, address, city, country, eori, epr, currency, notes, archived, archived_at, version, created_at, updated_at FROM customers WHERE archived = false ORDER BY name
 `
@@ -719,6 +798,86 @@ func (q *Queries) NextFreeEanCode(ctx context.Context) (string, error) {
 	var start_code string
 	err := row.Scan(&start_code)
 	return start_code, err
+}
+
+const registerCustomerEANSeries = `-- name: RegisterCustomerEANSeries :one
+INSERT INTO ean_series (
+    id, prefix, start_code, end_code, description
+) VALUES (
+    gen_random_uuid(), $1, $2, $3, $4
+) RETURNING id, prefix, start_code, end_code, description, assigned_count, archived, archived_at, version, created_at, updated_at
+`
+
+type RegisterCustomerEANSeriesParams struct {
+	Prefix      string `json:"prefix"`
+	StartCode   string `json:"start_code"`
+	EndCode     string `json:"end_code"`
+	Description string `json:"description"`
+}
+
+// KUN-07: register an EAN series for a customer
+func (q *Queries) RegisterCustomerEANSeries(ctx context.Context, arg RegisterCustomerEANSeriesParams) (EanSeries, error) {
+	row := q.db.QueryRow(ctx, registerCustomerEANSeries,
+		arg.Prefix,
+		arg.StartCode,
+		arg.EndCode,
+		arg.Description,
+	)
+	var i EanSeries
+	err := row.Scan(
+		&i.ID,
+		&i.Prefix,
+		&i.StartCode,
+		&i.EndCode,
+		&i.Description,
+		&i.AssignedCount,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const registerEANSeries = `-- name: RegisterEANSeries :one
+INSERT INTO ean_series (
+    id, prefix, start_code, end_code, description
+) VALUES (
+    gen_random_uuid(), $1, $2, $3, $4
+) RETURNING id, prefix, start_code, end_code, description, assigned_count, archived, archived_at, version, created_at, updated_at
+`
+
+type RegisterEANSeriesParams struct {
+	Prefix      string `json:"prefix"`
+	StartCode   string `json:"start_code"`
+	EndCode     string `json:"end_code"`
+	Description string `json:"description"`
+}
+
+// REG-04: register a new EAN series
+func (q *Queries) RegisterEANSeries(ctx context.Context, arg RegisterEANSeriesParams) (EanSeries, error) {
+	row := q.db.QueryRow(ctx, registerEANSeries,
+		arg.Prefix,
+		arg.StartCode,
+		arg.EndCode,
+		arg.Description,
+	)
+	var i EanSeries
+	err := row.Scan(
+		&i.ID,
+		&i.Prefix,
+		&i.StartCode,
+		&i.EndCode,
+		&i.Description,
+		&i.AssignedCount,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const topProductsByCustomer = `-- name: TopProductsByCustomer :many

@@ -36,20 +36,20 @@ func ProblemError(err error) error {
 
 // Reminder is a deadline or follow-up task (REG-05).
 type Reminder struct {
-	ID             uuid.UUID `json:"id"`
-	ReminderType   string    `json:"reminder_type"`
-	IdsEntryID     *uuid.UUID `json:"ids_entry_id,omitempty"`
-	ExternalRefType string   `json:"external_ref_type,omitempty"`
-	ExternalRefID  *uuid.UUID `json:"external_ref_id,omitempty"`
-	Title          string    `json:"title"`
-	TitleEn        string    `json:"title_en"`
-	Description    string    `json:"description,omitempty"`
-	DueDate        string    `json:"due_date"`
-	Notified       bool      `json:"notified"`
-	NotifiedAt     *string   `json:"notified_at,omitempty"`
-	Archived       bool      `json:"-"`
-	ArchivedAt     *string   `json:"archived_at,omitempty"`
-	Version        int       `json:"version"`
-	CreatedAt      string    `json:"created_at"`
-	UpdatedAt      string    `json:"updated_at"`
+	ID              uuid.UUID  `json:"id"`
+	ReminderType    string     `json:"reminder_type"`
+	IdsEntryID      *uuid.UUID `json:"ids_entry_id,omitempty"`
+	ExternalRefType string     `json:"external_ref_type,omitempty"`
+	ExternalRefID   *uuid.UUID `json:"external_ref_id,omitempty"`
+	Title           string     `json:"title"`
+	TitleEn         string     `json:"title_en"`
+	Description     string     `json:"description,omitempty"`
+	DueDate         string     `json:"due_date"`
+	Notified        bool       `json:"notified"`
+	NotifiedAt      *string    `json:"notified_at,omitempty"`
+	Archived        bool       `json:"-"`
+	ArchivedAt      *string    `json:"archived_at,omitempty"`
+	Version         int        `json:"version"`
+	CreatedAt       string     `json:"created_at"`
+	UpdatedAt       string     `json:"updated_at"`
 }

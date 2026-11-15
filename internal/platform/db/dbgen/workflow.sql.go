@@ -82,17 +82,17 @@ UPDATE workflow_steps SET
     archived_at = now(),
     version = version + 1,
     updated_at = now()
-WHERE key = $1 AND version = $2
+WHERE id = $1 AND version = $2
 RETURNING id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at
 `
 
 type ArchiveWorkflowStepParams struct {
-	Key     string `json:"key"`
-	Version int32  `json:"version"`
+	ID      uuid.UUID `json:"id"`
+	Version int32     `json:"version"`
 }
 
 func (q *Queries) ArchiveWorkflowStep(ctx context.Context, arg ArchiveWorkflowStepParams) (WorkflowStep, error) {
-	row := q.db.QueryRow(ctx, archiveWorkflowStep, arg.Key, arg.Version)
+	row := q.db.QueryRow(ctx, archiveWorkflowStep, arg.ID, arg.Version)
 	var i WorkflowStep
 	err := row.Scan(
 		&i.ID,
@@ -313,11 +313,11 @@ func (q *Queries) CreateWorkflowTransition(ctx context.Context, arg CreateWorkfl
 }
 
 const getWorkflowStep = `-- name: GetWorkflowStep :one
-SELECT id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at FROM workflow_steps WHERE key = $1 AND archived = false
+SELECT id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at FROM workflow_steps WHERE id = $1 AND archived = false
 `
 
-func (q *Queries) GetWorkflowStep(ctx context.Context, key string) (WorkflowStep, error) {
-	row := q.db.QueryRow(ctx, getWorkflowStep, key)
+func (q *Queries) GetWorkflowStep(ctx context.Context, id uuid.UUID) (WorkflowStep, error) {
+	row := q.db.QueryRow(ctx, getWorkflowStep, id)
 	var i WorkflowStep
 	err := row.Scan(
 		&i.ID,
@@ -466,11 +466,48 @@ func (q *Queries) ListWorkflowSteps(ctx context.Context) ([]WorkflowStep, error)
 }
 
 const listWorkflowTransitions = `-- name: ListWorkflowTransitions :many
+SELECT id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at FROM workflow_transitions WHERE archived = false ORDER BY sort_order
+`
+
+func (q *Queries) ListWorkflowTransitions(ctx context.Context) ([]WorkflowTransition, error) {
+	rows, err := q.db.Query(ctx, listWorkflowTransitions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WorkflowTransition
+	for rows.Next() {
+		var i WorkflowTransition
+		if err := rows.Scan(
+			&i.ID,
+			&i.StepKey,
+			&i.FromKey,
+			&i.ToKey,
+			&i.Label,
+			&i.LabelEn,
+			&i.SortOrder,
+			&i.Archived,
+			&i.ArchivedAt,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWorkflowTransitionsByStep = `-- name: ListWorkflowTransitionsByStep :many
 SELECT id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at FROM workflow_transitions WHERE step_key = $1 AND archived = false ORDER BY sort_order
 `
 
-func (q *Queries) ListWorkflowTransitions(ctx context.Context, stepKey string) ([]WorkflowTransition, error) {
-	rows, err := q.db.Query(ctx, listWorkflowTransitions, stepKey)
+func (q *Queries) ListWorkflowTransitionsByStep(ctx context.Context, stepKey string) ([]WorkflowTransition, error) {
+	rows, err := q.db.Query(ctx, listWorkflowTransitionsByStep, stepKey)
 	if err != nil {
 		return nil, err
 	}
@@ -511,23 +548,23 @@ UPDATE workflow_steps SET
     is_end = COALESCE($7, is_end),
     version = version + 1,
     updated_at = now()
-WHERE key = $1 AND version = $2 AND archived = false
+WHERE id = $1 AND version = $2 AND archived = false
 RETURNING id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at
 `
 
 type UpdateWorkflowStepParams struct {
-	Key       string `json:"key"`
-	Version   int32  `json:"version"`
-	Name      string `json:"name"`
-	NameEn    string `json:"name_en"`
-	SortOrder int32  `json:"sort_order"`
-	IsStart   bool   `json:"is_start"`
-	IsEnd     bool   `json:"is_end"`
+	ID        uuid.UUID `json:"id"`
+	Version   int32     `json:"version"`
+	Name      string    `json:"name"`
+	NameEn    string    `json:"name_en"`
+	SortOrder int32     `json:"sort_order"`
+	IsStart   bool      `json:"is_start"`
+	IsEnd     bool      `json:"is_end"`
 }
 
 func (q *Queries) UpdateWorkflowStep(ctx context.Context, arg UpdateWorkflowStepParams) (WorkflowStep, error) {
 	row := q.db.QueryRow(ctx, updateWorkflowStep,
-		arg.Key,
+		arg.ID,
 		arg.Version,
 		arg.Name,
 		arg.NameEn,

@@ -125,16 +125,16 @@ func (s *Store) ExpiredReminders(ctx context.Context) ([]Reminder, error) {
 
 func dbRowToReminder(r dbgen.Reminder) Reminder {
 	rem := Reminder{
-		ID:             r.ID,
-		ReminderType:   r.ReminderType,
-		Title:          r.Title,
-		TitleEn:        r.TitleEn,
-		Description:    r.Description,
-		DueDate:        r.DueDate.Time.Format("2006-01-02"),
-		Notified:       r.Notified,
-		Version:        int(r.Version),
-		CreatedAt:      r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:      r.UpdatedAt.Format(time.RFC3339),
+		ID:           r.ID,
+		ReminderType: r.ReminderType,
+		Title:        r.Title,
+		TitleEn:      r.TitleEn,
+		Description:  r.Description,
+		DueDate:      r.DueDate.Time.Format("2006-01-02"),
+		Notified:     r.Notified,
+		Version:      int(r.Version),
+		CreatedAt:    r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:    r.UpdatedAt.Format(time.RFC3339),
 	}
 	if r.IdsEntryID != nil {
 		rem.IdsEntryID = r.IdsEntryID

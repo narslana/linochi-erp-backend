@@ -142,3 +142,104 @@ WHERE archived = false
   AND due_date BETWEEN current_date AND current_date + 30
   AND notified = false
 ORDER BY due_date ASC;
+
+-- name: GetInventoryStats :one
+-- STA-02: inventory value and low-stock count
+SELECT
+    COALESCE(SUM(sm.quantity * COALESCE(sp.purchase_price, 0)), 0) AS total_value,
+    COALESCE(SUM(CASE WHEN COALESCE(SUM(sm.quantity), 0) < 10 THEN 1 ELSE 0 END), 0) AS low_stock_count
+FROM products p
+LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+LEFT JOIN supplier_products sp ON sp.product_id = sm.product_id AND sp.archived = false
+WHERE p.archived = false
+GROUP BY p.id;
+
+-- name: GetInventoryStatsTotal :one
+-- STA-02: total inventory value
+SELECT COALESCE(SUM(sm.quantity * COALESCE(sp.purchase_price, 0)), 0) AS total_value
+FROM stockmovements sm
+LEFT JOIN supplier_products sp ON sp.product_id = sm.product_id AND sp.archived = false
+WHERE sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0;
+
+-- name: GetInventoryStatsLowStock :one
+-- STA-02: count of products with low stock
+SELECT COUNT(*) AS low_stock_count
+FROM (
+    SELECT p.id
+    FROM products p
+    LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+    WHERE p.archived = false
+    GROUP BY p.id
+    HAVING COALESCE(SUM(sm.quantity), 0) < 10
+) sub;
+
+-- name: GetInventoryStatsItems :many
+-- STA-02: per-product inventory items
+SELECT
+    p.id AS product_id,
+    p.name AS product_name,
+    COALESCE(SUM(CASE WHEN sm.movement_type != 'reservation' AND sm.movement_type != 'release' THEN sm.quantity ELSE 0 END), 0) AS quantity,
+    COALESCE(SUM(CASE WHEN sm.movement_type != 'reservation' AND sm.movement_type != 'release' THEN sm.quantity * COALESCE(sp.purchase_price, 0) ELSE 0 END), 0) AS value
+FROM products p
+LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release'
+LEFT JOIN supplier_products sp ON sp.product_id = sm.product_id AND sp.archived = false
+WHERE p.archived = false
+GROUP BY p.id, p.name
+HAVING SUM(CASE WHEN sm.movement_type != 'reservation' AND sm.movement_type != 'release' THEN sm.quantity ELSE 0 END) > 0
+ORDER BY value DESC;
+
+-- name: GetStatsCards :many
+-- STA-03: summary cards for dashboard
+SELECT title, value, change
+FROM (
+    SELECT
+        'Orders this month' AS title,
+        COUNT(*)::text AS value,
+        NULL AS change
+    FROM orders
+    WHERE archived = false
+      AND created_at >= date_trunc('month', now())
+    UNION ALL
+    SELECT
+        'Revenue this month' AS title,
+        COALESCE(SUM(total_sek)::text, '0') AS value,
+        NULL AS change
+    FROM orders
+    WHERE archived = false
+      AND created_at >= date_trunc('month', now())
+    UNION ALL
+    SELECT
+        'Low stock products' AS title,
+        COUNT(*)::text AS value,
+        NULL AS change
+    FROM (
+        SELECT p.id
+        FROM products p
+        LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+        WHERE p.archived = false
+        GROUP BY p.id
+        HAVING COALESCE(SUM(sm.quantity), 0) < 10
+    ) sub
+    UNION ALL
+    SELECT
+        'Orders in pipeline' AS title,
+        COUNT(*)::text AS value,
+        NULL AS change
+    FROM orders
+    WHERE archived = false
+      AND status IN ('draft', 'confirmed', 'accepted')
+) cards
+ORDER BY title;
+
+-- name: GetRevenueTrend :many
+-- STA-01: revenue trend over time
+SELECT
+    TO_CHAR(created_at, 'YYYY-MM-DD') AS period,
+    COUNT(*) AS orders,
+    SUM(total_sek) AS revenue
+FROM orders
+WHERE archived = false
+  AND created_at >= $1::date
+  AND created_at < $2::date + interval '1 day'
+GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
+ORDER BY period ASC;

@@ -78,15 +78,15 @@ func (h *Handler) createWorkflowStep(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, step)
 }
 
-// GetWorkflowStep returns a workflow step by key.
-func (h *Handler) GetWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+// GetWorkflowStep returns a workflow step by ID.
+func (h *Handler) GetWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.getWorkflowStep(w, r, stepKey)
+		h.getWorkflowStep(w, r, id)
 	})).ServeHTTP(w, r)
 }
 
-func (h *Handler) getWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
-	step, err := h.svc.GetWorkflowStep(r.Context(), stepKey)
+func (h *Handler) getWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	step, err := h.svc.GetWorkflowStep(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, newNotFound("workflow step")) {
 			httpx.Error(w, r, err)
@@ -100,13 +100,13 @@ func (h *Handler) getWorkflowStep(w http.ResponseWriter, r *http.Request, stepKe
 }
 
 // UpdateWorkflowStep updates a workflow step (WF-01).
-func (h *Handler) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+func (h *Handler) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.updateWorkflowStep(w, r, stepKey)
+		h.updateWorkflowStep(w, r, id)
 	})).ServeHTTP(w, r)
 }
 
-func (h *Handler) updateWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+func (h *Handler) updateWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	var body api.WorkflowStep
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		httpx.Error(w, r, err)
@@ -134,7 +134,7 @@ func (h *Handler) updateWorkflowStep(w http.ResponseWriter, r *http.Request, ste
 		isEnd = body.IsEnd
 	}
 
-	step, err := h.svc.UpdateWorkflowStep(r.Context(), name, nameEn, sortOrder, isStart, isEnd, stepKey, int(body.Version))
+	step, err := h.svc.UpdateWorkflowStep(r.Context(), name, nameEn, sortOrder, isStart, isEnd, id, int(body.Version))
 	if err != nil {
 		if errors.Is(err, newNotFound("workflow step")) {
 			httpx.Error(w, r, err)
@@ -163,7 +163,7 @@ func (h *Handler) archiveWorkflowStep(w http.ResponseWriter, r *http.Request, id
 		return
 	}
 
-	step, err := h.svc.ArchiveWorkflowStep(r.Context(), id.String(), body.Version)
+	step, err := h.svc.ArchiveWorkflowStep(r.Context(), id, body.Version)
 	if err != nil {
 		if errors.Is(err, newNotFound("workflow step")) {
 			httpx.Error(w, r, err)
@@ -178,15 +178,13 @@ func (h *Handler) archiveWorkflowStep(w http.ResponseWriter, r *http.Request, id
 
 // ─── Transitions ──────────────────────────────────────────────────────────────
 
-// ListWorkflowTransitions returns all active transitions for a step (WF-02).
-func (h *Handler) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request, stepKey string) {
-	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.listWorkflowTransitions(w, r, stepKey)
-	})).ServeHTTP(w, r)
+// ListWorkflowTransitions returns all workflow transitions (WF-02).
+func (h *Handler) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request) {
+	h.mw.Require(http.HandlerFunc(h.listWorkflowTransitions)).ServeHTTP(w, r)
 }
 
-func (h *Handler) listWorkflowTransitions(w http.ResponseWriter, r *http.Request, stepKey string) {
-	transitions, err := h.svc.ListWorkflowTransitions(r.Context(), stepKey)
+func (h *Handler) listWorkflowTransitions(w http.ResponseWriter, r *http.Request) {
+	transitions, err := h.svc.ListWorkflowTransitions(r.Context())
 	if err != nil {
 		httpx.Error(w, r, err)
 		return
@@ -454,6 +452,90 @@ func (h *Handler) archiveWorkflowEffect(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	writeJSON(w, http.StatusOK, effect)
+}
+
+// ─── Transition-scoped conditions and effects (WF-03, WF-04) ─────────────────
+
+// ListWorkflowTransitionConditions returns all active conditions for a transition (WF-03).
+func (h *Handler) ListWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.listWorkflowTransitionConditions(w, r, id)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) listWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	conditions, err := h.svc.ListWorkflowConditions(r.Context(), uuid.UUID(id))
+	if err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, conditions)
+}
+
+// CreateWorkflowTransitionCondition adds a condition to a transition (WF-03).
+func (h *Handler) CreateWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.createWorkflowTransitionCondition(w, r, id)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) createWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var body api.CreateWorkflowCondition
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+
+	configBytes, _ := json.Marshal(body.Config)
+
+	condition, err := h.svc.CreateWorkflowCondition(r.Context(), uuid.UUID(id), body.Kind, configBytes)
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "CreateWorkflowTransitionCondition failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, condition)
+}
+
+// ListWorkflowTransitionEffects returns all active effects for a transition (WF-04).
+func (h *Handler) ListWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.listWorkflowTransitionEffects(w, r, id)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) listWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	effects, err := h.svc.ListWorkflowEffects(r.Context(), uuid.UUID(id))
+	if err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, effects)
+}
+
+// CreateWorkflowTransitionEffect adds an effect to a transition (WF-04).
+func (h *Handler) CreateWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.createWorkflowTransitionEffect(w, r, id)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) createWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var body api.CreateWorkflowEffect
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+
+	configBytes, _ := json.Marshal(body.Config)
+
+	effect, err := h.svc.CreateWorkflowEffect(r.Context(), uuid.UUID(id), body.Kind, configBytes)
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "CreateWorkflowTransitionEffect failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, effect)
 }
 
 // writeJSON encodes data as JSON and writes it to the response writer.

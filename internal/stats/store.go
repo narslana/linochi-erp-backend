@@ -2,7 +2,9 @@ package stats
 
 import (
 	"context"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db/dbgen"
@@ -67,4 +69,31 @@ func (s *Store) ShipmentsOnTheirWay(ctx context.Context) ([]dbgen.ShipmentsOnThe
 
 func (s *Store) CardsDue(ctx context.Context) ([]dbgen.CardsDueRow, error) {
 	return s.q.CardsDue(ctx)
+}
+
+func (s *Store) GetInventoryStats(ctx context.Context) (dbgen.GetInventoryStatsRow, error) {
+	return s.q.GetInventoryStats(ctx)
+}
+
+func (s *Store) GetInventoryStatsTotal(ctx context.Context) (interface{}, error) {
+	return s.q.GetInventoryStatsTotal(ctx)
+}
+
+func (s *Store) GetInventoryStatsLowStock(ctx context.Context) (int64, error) {
+	return s.q.GetInventoryStatsLowStock(ctx)
+}
+
+func (s *Store) GetInventoryStatsItems(ctx context.Context) ([]dbgen.GetInventoryStatsItemsRow, error) {
+	return s.q.GetInventoryStatsItems(ctx)
+}
+
+func (s *Store) GetStatsCards(ctx context.Context) ([]dbgen.GetStatsCardsRow, error) {
+	return s.q.GetStatsCards(ctx)
+}
+
+func (s *Store) GetRevenueTrend(ctx context.Context, from, to time.Time) ([]dbgen.GetRevenueTrendRow, error) {
+	return s.q.GetRevenueTrend(ctx, dbgen.GetRevenueTrendParams{
+		Column1: pgtype.Date{Time: from, Valid: true},
+		Column2: pgtype.Date{Time: to, Valid: true},
+	})
 }

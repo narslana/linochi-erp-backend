@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE field_definitions (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     name            text NOT NULL,
     name_en         text NOT NULL DEFAULT '',
     field_type      text NOT NULL CHECK (field_type IN (
@@ -25,7 +25,7 @@ CREATE TABLE field_definitions (
 
 -- +goose StatementBegin
 CREATE TABLE product_types (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     name            text NOT NULL,
     name_en         text NOT NULL DEFAULT '',
     type_code       text NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE product_types (
 
 -- +goose StatementBegin
 CREATE TABLE product_type_fields (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     product_type_id     uuid NOT NULL REFERENCES product_types(id),
     field_definition_id uuid NOT NULL REFERENCES field_definitions(id),
     sort_order          int NOT NULL DEFAULT 0,
@@ -54,7 +54,7 @@ CREATE TABLE product_type_fields (
 
 -- +goose StatementBegin
 CREATE TABLE products (
-    id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                      uuid PRIMARY KEY DEFAULT uuidv7(),
     name                    text NOT NULL,
     sku                     text NOT NULL,
     ean                     text,
@@ -84,7 +84,7 @@ CREATE INDEX idx_products_attributes ON products USING gin(attributes);
 
 -- +goose StatementBegin
 CREATE TABLE product_images (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     product_id      uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     url             text NOT NULL,
     sort_order      int NOT NULL DEFAULT 0,
@@ -99,7 +99,7 @@ CREATE TABLE product_images (
 
 -- +goose StatementBegin
 CREATE TABLE product_documents (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     product_id      uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     title           text NOT NULL,
     title_en        text NOT NULL DEFAULT '',
@@ -116,7 +116,7 @@ CREATE TABLE product_documents (
 
 -- +goose StatementBegin
 CREATE TABLE ids_entries (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     category        text NOT NULL,
     name            text NOT NULL,
     value           text NOT NULL,
@@ -148,6 +148,7 @@ GRANT SELECT, INSERT, UPDATE ON products TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON product_images TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON product_documents TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON ids_entries TO linochi_erp_app;
+-- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS ids_entries;

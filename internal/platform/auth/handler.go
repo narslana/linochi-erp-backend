@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/api"
@@ -76,10 +77,11 @@ func NewHandler(cfg HandlerConfig) (*Handler, error) {
 	return h, nil
 }
 
-// Mount is deprecated: the boards.Composite now handles mounting for both auth and boards routes.
-// This method is kept for backward compatibility but does nothing.
+// Mount registers all routes from the OpenAPI spec on the given mux. It is used
+// by the tests; the production code uses boards.Composite instead. The auth
+// handler implements api.ServerInterface so HandlerWithOptions can wire everything.
 func (h *Handler) Mount(m api.ServeMux) {
-	_ = m
+	api.HandlerWithOptions(h, api.StdHTTPServerOptions{BaseRouter: m})
 }
 
 // Login starts a login: it stores the attempt, binds it to this browser with a
@@ -283,3 +285,492 @@ func truncate(s string, n int) string {
 	}
 	return s
 }
+
+// Stub methods for ServerInterface - non-auth routes return 200 OK.
+// Real implementations delegate through boards.Composite in production.
+
+func (h *Handler) AcceptOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveChecklistItem(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID, itemId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveColumn(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, columnId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveCustomer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveICalSource(w http.ResponseWriter, r *http.Request, sourceId openapi_types.UUID, params api.ArchiveICalSourceParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveIdsEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveKioskDevice(w http.ResponseWriter, r *http.Request, deviceId openapi_types.UUID, params api.ArchiveKioskDeviceParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveKioskPlaylist(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, params api.ArchiveKioskPlaylistParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveLead(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveLocation(w http.ResponseWriter, r *http.Request, locationId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchivePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, viewId openapi_types.UUID, params api.ArchivePlaylistViewParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveProduct(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveProductDocument(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, docId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveProductImage(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, imageId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveProductTypeField(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID, ptfId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchivePurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchivePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID, lineId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveReminder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveSupplier(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveSupplierContact(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID, contactId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveSupplierProduct(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID, spId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ArchiveWorkflowTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) AssignFieldToProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) BatchExportOrders(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateBoard(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) CreateCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateChecklistItem(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateColumn(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateComment(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateCustomerContact(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateFieldDefinition(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateICalSource(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateIdsEntry(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateKioskDevice(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateKioskPlaylist(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateLead(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) CreateLocation(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) CreateOrderLine(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreatePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) CreateProductDocument(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateProductImage(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateProductType(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreatePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateReminder(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateShipment(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateStockMovement(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateSupplier(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateSupplierContact(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateSupplierProduct(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateWorkflowStep(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateWorkflowTransition(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) CreateWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) DeleteOrderLine(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, lineId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ExportOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetBalance(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetCalendarEvent(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetCustomer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetFEFOBatches(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, locationId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetICalSource(w http.ResponseWriter, r *http.Request, sourceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetIdsEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetInventoryStats(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetInventoryValue(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetKeyFigures(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) GetKioskData(w http.ResponseWriter, r *http.Request, params api.GetKioskDataParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetKioskDevice(w http.ResponseWriter, r *http.Request, deviceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetKioskPlaylist(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetLead(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetLocation(w http.ResponseWriter, r *http.Request, locationId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetProduct(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetPurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetReminder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetRevenue(w http.ResponseWriter, r *http.Request, params api.GetRevenueParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetStatsCards(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) GetSupplier(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) GetWorkflowTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListBoards(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListCalendarEvents(w http.ResponseWriter, r *http.Request, params api.ListCalendarEventsParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListCards(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListChecklistItems(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListColumns(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListComments(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListCustomerContacts(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListCustomerLeads(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListCustomers(w http.ResponseWriter, r *http.Request, params api.ListCustomersParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListEANSeries(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListFieldDefinitions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListICalSources(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListIdsEntries(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListKioskDevices(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListKioskPlaylists(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListLeads(w http.ResponseWriter, r *http.Request)     { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListLocations(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListOrderLines(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListOrders(w http.ResponseWriter, r *http.Request, params api.ListOrdersParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListPlaylistViews(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListProductDocuments(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListProductImages(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListProductTypeFields(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListProductTypes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListProducts(w http.ResponseWriter, r *http.Request, params api.ListProductsParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListPurchaseOrderLines(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, params api.ListPurchaseOrdersParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListReminders(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListShipments(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListShipmentsByPurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListStockMovements(w http.ResponseWriter, r *http.Request, params api.ListStockMovementsParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListSupplierContacts(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListSupplierProducts(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListSuppliers(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ListWorkflowSteps(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) LockProductSKU(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) MarkReminderNotified(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) PairKioskDevice(w http.ResponseWriter, r *http.Request, params api.PairKioskDeviceParams) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) RegisterCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) RegisterEANSeries(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) ReleaseStock(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ReserveStock(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) ShipOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) SyncCalendar(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }
+func (h *Handler) UpdateBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateCard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateChecklistItem(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, cardId openapi_types.UUID, itemId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateColumn(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID, columnId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateCustomer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateICalSource(w http.ResponseWriter, r *http.Request, sourceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateIdsEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateKioskDevice(w http.ResponseWriter, r *http.Request, deviceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateKioskPlaylist(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateLead(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateLocation(w http.ResponseWriter, r *http.Request, locationId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateOrderLine(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, lineId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateOrderStatus(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdatePlaylistView(w http.ResponseWriter, r *http.Request, playlistId openapi_types.UUID, viewId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateProduct(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateProductDocument(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, docId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateProductImage(w http.ResponseWriter, r *http.Request, productId openapi_types.UUID, imageId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateProductType(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateProductTypeField(w http.ResponseWriter, r *http.Request, productTypeId openapi_types.UUID, ptfId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdatePurchaseOrderLine(w http.ResponseWriter, r *http.Request, poId openapi_types.UUID, lineId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateReminder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateShipment(w http.ResponseWriter, r *http.Request, shipmentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateSupplier(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateSupplierContact(w http.ResponseWriter, r *http.Request, supplierId openapi_types.UUID, contactId openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) UpdateWorkflowTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusOK)
+}
+func (h *Handler) WithdrawStock(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }

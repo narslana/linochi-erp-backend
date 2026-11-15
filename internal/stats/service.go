@@ -2,6 +2,7 @@ package stats
 
 import (
 	"context"
+	"time"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db/dbgen"
 )
@@ -266,4 +267,75 @@ func (s *Service) ShipmentsOnTheirWay(ctx context.Context) ([]ShipmentOnTheirWay
 // CardsDue returns boards with due cards (STA-01).
 func (s *Service) CardsDue(ctx context.Context) ([]dbgen.CardsDueRow, error) {
 	return s.store.CardsDue(ctx)
+}
+
+// GetInventoryStats returns inventory value, low-stock count and per-product items.
+func (s *Service) GetInventoryStats(ctx context.Context) (InventoryStats, error) {
+	total, err := s.store.GetInventoryStatsTotal(ctx)
+	if err != nil {
+		return InventoryStats{}, err
+	}
+	lowStock, err := s.store.GetInventoryStatsLowStock(ctx)
+	if err != nil {
+		return InventoryStats{}, err
+	}
+	items, err := s.store.GetInventoryStatsItems(ctx)
+	if err != nil {
+		return InventoryStats{}, err
+	}
+
+	var itemSlice []InventoryStatsItem
+	for _, it := range items {
+		itemSlice = append(itemSlice, InventoryStatsItem{
+			ProductID:   it.ProductID,
+			ProductName: it.ProductName,
+			Quantity:    int(keyFiguresInt64(it.Quantity)),
+			Value:       keyFiguresInt64(it.Value),
+		})
+	}
+
+	return InventoryStats{
+		TotalValue:    keyFiguresInt64(total),
+		LowStockCount: int(lowStock),
+		Items:         &itemSlice,
+	}, nil
+}
+
+// GetStatsCards returns summary cards for the dashboard (STA-03).
+func (s *Service) GetStatsCards(ctx context.Context) ([]StatsCard, error) {
+	rows, err := s.store.GetStatsCards(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]StatsCard, 0, len(rows))
+	for _, r := range rows {
+		card := StatsCard{Title: r.Title, Value: r.Value}
+		if r.Change != nil {
+			card.Change = stringPtr(r.Change.(string))
+		}
+		out = append(out, card)
+	}
+	return out, nil
+}
+
+// GetRevenue returns revenue trend data (STA-01).
+func (s *Service) GetRevenue(ctx context.Context, from, to time.Time) ([]RevenuePoint, error) {
+	rows, err := s.store.GetRevenueTrend(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]RevenuePoint, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, RevenuePoint{
+			Period:  r.Period,
+			Orders:  int(r.Orders),
+			Revenue: int(r.Revenue),
+		})
+	}
+	return out, nil
+}
+
+// stringPtr returns a pointer to the given string.
+func stringPtr(s string) *string {
+	return &s
 }

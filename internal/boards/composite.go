@@ -440,8 +440,8 @@ func (c *Composite) GetKioskData(w http.ResponseWriter, r *http.Request, params 
 
 // ─── Customers routes (delegated) ────────────────────────────────────────────
 
-func (c *Composite) ListCustomers(w http.ResponseWriter, r *http.Request) {
-	c.customers.ListCustomers(w, r)
+func (c *Composite) ListCustomers(w http.ResponseWriter, r *http.Request, params api.ListCustomersParams) {
+	c.customers.ListCustomers(w, r, params)
 }
 func (c *Composite) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 	c.customers.CreateCustomer(w, r)
@@ -470,6 +470,18 @@ func (c *Composite) ArchiveContact(w http.ResponseWriter, r *http.Request, custo
 func (c *Composite) AnonymiseContact(w http.ResponseWriter, r *http.Request, customerId openapi_types.UUID, contactId openapi_types.UUID) {
 	c.customers.AnonymiseContact(w, r, customerId, contactId)
 }
+func (c *Composite) ListCustomerContacts(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.customers.ListCustomerContacts(w, r, id)
+}
+func (c *Composite) ListCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.customers.ListCustomerEANSeries(w, r, id)
+}
+func (c *Composite) ListCustomerLeads(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.customers.ListCustomerLeads(w, r, id)
+}
+func (c *Composite) RegisterCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.customers.RegisterCustomerEANSeries(w, r, id)
+}
 func (c *Composite) ListLeads(w http.ResponseWriter, r *http.Request) {
 	c.customers.ListLeads(w, r)
 }
@@ -485,8 +497,8 @@ func (c *Composite) UpdateLead(w http.ResponseWriter, r *http.Request, leadId op
 func (c *Composite) ArchiveLead(w http.ResponseWriter, r *http.Request, leadId openapi_types.UUID) {
 	c.customers.ArchiveLead(w, r, leadId)
 }
-func (c *Composite) ListEanSeries(w http.ResponseWriter, r *http.Request) {
-	c.customers.ListEanSeries(w, r)
+func (c *Composite) ListEANSeries(w http.ResponseWriter, r *http.Request) {
+	c.customers.ListEANSeries(w, r)
 }
 func (c *Composite) CreateEanSeries(w http.ResponseWriter, r *http.Request) {
 	c.customers.CreateEanSeries(w, r)
@@ -500,6 +512,9 @@ func (c *Composite) UpdateEanSeries(w http.ResponseWriter, r *http.Request, eanS
 func (c *Composite) ArchiveEanSeries(w http.ResponseWriter, r *http.Request, eanSeriesId openapi_types.UUID) {
 	c.customers.ArchiveEanSeries(w, r, eanSeriesId)
 }
+func (c *Composite) RegisterEANSeries(w http.ResponseWriter, r *http.Request) {
+	c.customers.RegisterEANSeries(w, r)
+}
 func (c *Composite) NextFreeEanCode(w http.ResponseWriter, r *http.Request) {
 	c.customers.NextFreeEanCode(w, r)
 }
@@ -512,17 +527,17 @@ func (c *Composite) ListWorkflowSteps(w http.ResponseWriter, r *http.Request) {
 func (c *Composite) CreateWorkflowStep(w http.ResponseWriter, r *http.Request) {
 	c.workflow.CreateWorkflowStep(w, r)
 }
-func (c *Composite) GetWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+func (c *Composite) GetWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey openapi_types.UUID) {
 	c.workflow.GetWorkflowStep(w, r, stepKey)
 }
-func (c *Composite) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey string) {
+func (c *Composite) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey openapi_types.UUID) {
 	c.workflow.UpdateWorkflowStep(w, r, stepKey)
 }
 func (c *Composite) ArchiveWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	c.workflow.ArchiveWorkflowStep(w, r, id)
 }
-func (c *Composite) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request, stepKey string) {
-	c.workflow.ListWorkflowTransitions(w, r, stepKey)
+func (c *Composite) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request) {
+	c.workflow.ListWorkflowTransitions(w, r)
 }
 func (c *Composite) GetWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
 	c.workflow.GetWorkflowTransition(w, r, transitionId)
@@ -545,6 +560,18 @@ func (c *Composite) CreateWorkflowCondition(w http.ResponseWriter, r *http.Reque
 func (c *Composite) ArchiveWorkflowCondition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID, conditionId openapi_types.UUID) {
 	c.workflow.ArchiveWorkflowCondition(w, r, transitionId, conditionId)
 }
+func (c *Composite) ListWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.workflow.ListWorkflowTransitionConditions(w, r, id)
+}
+func (c *Composite) CreateWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.workflow.CreateWorkflowTransitionCondition(w, r, id)
+}
+func (c *Composite) ListWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.workflow.ListWorkflowTransitionEffects(w, r, id)
+}
+func (c *Composite) CreateWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.workflow.CreateWorkflowTransitionEffect(w, r, id)
+}
 func (c *Composite) ListWorkflowEffects(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
 	c.workflow.ListWorkflowEffects(w, r, transitionId)
 }
@@ -557,8 +584,8 @@ func (c *Composite) ArchiveWorkflowEffect(w http.ResponseWriter, r *http.Request
 
 // ─── Orders routes (delegated) ───────────────────────────────────────────────
 
-func (c *Composite) ListOrders(w http.ResponseWriter, r *http.Request) {
-	c.orders.ListOrders(w, r)
+func (c *Composite) ListOrders(w http.ResponseWriter, r *http.Request, params api.ListOrdersParams) {
+	c.orders.ListOrders(w, r, params)
 }
 func (c *Composite) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	c.orders.CreateOrder(w, r)
@@ -602,6 +629,9 @@ func (c *Composite) DeleteOrderLine(w http.ResponseWriter, r *http.Request, orde
 func (c *Composite) BatchExportOrders(w http.ResponseWriter, r *http.Request) {
 	c.orders.BatchExportOrders(w, r)
 }
+func (c *Composite) ExportOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.orders.ExportOrder(w, r, id)
+}
 func (c *Composite) CreateCustomerContact(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	c.customers.CreateCustomerContact(w, r, id)
 }
@@ -610,6 +640,18 @@ func (c *Composite) CreateCustomerContact(w http.ResponseWriter, r *http.Request
 
 func (c *Composite) KeyFigures(w http.ResponseWriter, r *http.Request) {
 	c.stats.KeyFigures(w, r)
+}
+func (c *Composite) GetKeyFigures(w http.ResponseWriter, r *http.Request) {
+	c.stats.GetKeyFigures(w, r)
+}
+func (c *Composite) GetRevenue(w http.ResponseWriter, r *http.Request, params api.GetRevenueParams) {
+	c.stats.GetRevenue(w, r, params)
+}
+func (c *Composite) GetInventoryStats(w http.ResponseWriter, r *http.Request) {
+	c.stats.GetInventoryStats(w, r)
+}
+func (c *Composite) GetStatsCards(w http.ResponseWriter, r *http.Request) {
+	c.stats.GetStatsCards(w, r)
 }
 func (c *Composite) OrdersPerMonth(w http.ResponseWriter, r *http.Request) {
 	c.stats.OrdersPerMonth(w, r)

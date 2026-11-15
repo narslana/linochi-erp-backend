@@ -2,7 +2,7 @@
 -- Boards, columns, cards, checklists and comments (TAV-01 to TAV-05)
 
 CREATE TABLE boards (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuidv7(),
     name text NOT NULL,
     archived_at timestamptz,
     version int NOT NULL DEFAULT 1,
@@ -11,7 +11,7 @@ CREATE TABLE boards (
 );
 
 CREATE TABLE board_columns (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuidv7(),
     board_id uuid NOT NULL REFERENCES boards(id),
     name text NOT NULL,
     sort_order int NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE board_columns (
 );
 
 CREATE TABLE cards (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuidv7(),
     board_id uuid NOT NULL REFERENCES boards(id),
     column_id uuid NOT NULL REFERENCES board_columns(id),
     title text NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE cards (
 );
 
 CREATE TABLE card_checklist_items (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuidv7(),
     card_id uuid NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
     title text NOT NULL,
     completed boolean NOT NULL DEFAULT false,
@@ -49,7 +49,7 @@ CREATE TABLE card_checklist_items (
 );
 
 CREATE TABLE card_comments (
-    id uuid PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT uuidv7(),
     card_id uuid NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
     body_md text NOT NULL,
     author_id uuid NOT NULL REFERENCES users(id),

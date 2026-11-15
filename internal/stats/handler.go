@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/api"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 )
@@ -210,6 +212,100 @@ func (h *Handler) cardsDue(w http.ResponseWriter, r *http.Request) {
 	data, err := h.svc.CardsDue(r.Context())
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "CardsDue failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, data)
+}
+
+// GetKeyFigures returns summary statistics (STA-01).
+func (h *Handler) GetKeyFigures(w http.ResponseWriter, r *http.Request) {
+	h.mw.Require(http.HandlerFunc(h.getKeyFigures)).ServeHTTP(w, r)
+}
+
+func (h *Handler) getKeyFigures(w http.ResponseWriter, r *http.Request) {
+	data, err := h.svc.KeyFigures(r.Context())
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "GetKeyFigures failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, data)
+}
+
+// GetRevenue returns revenue trend data (STA-01).
+func (h *Handler) GetRevenue(w http.ResponseWriter, r *http.Request, params api.GetRevenueParams) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.getRevenue(w, r, params)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) getRevenue(w http.ResponseWriter, r *http.Request, params api.GetRevenueParams) {
+	now := time.Now()
+	var from, to time.Time
+	period := api.Daily
+	if params.Period != nil {
+		period = *params.Period
+	}
+	switch period {
+	case api.Daily:
+		from = now.AddDate(0, 0, -1)
+		to = now
+	case api.Weekly:
+		from = now.AddDate(0, 0, -7)
+		to = now
+	case api.Monthly:
+		from = now.AddDate(0, -1, 0)
+		to = now
+	case api.Yearly:
+		from = now.AddDate(-1, 0, 0)
+		to = now
+	default:
+		from = now.AddDate(0, -1, 0)
+		to = now
+	}
+	if params.FromDate != nil {
+		d := *params.FromDate
+		from = time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, time.UTC)
+	}
+	if params.ToDate != nil {
+		d := *params.ToDate
+		to = time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, time.UTC).Add(24 * time.Hour)
+	}
+
+	data, err := h.svc.GetRevenue(r.Context(), from, to)
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "GetRevenue failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, data)
+}
+
+// GetInventoryStats returns inventory statistics (STA-02).
+func (h *Handler) GetInventoryStats(w http.ResponseWriter, r *http.Request) {
+	h.mw.Require(http.HandlerFunc(h.getInventoryStats)).ServeHTTP(w, r)
+}
+
+func (h *Handler) getInventoryStats(w http.ResponseWriter, r *http.Request) {
+	data, err := h.svc.GetInventoryStats(r.Context())
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "GetInventoryStats failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, data)
+}
+
+// GetStatsCards returns summary cards for the dashboard (STA-03).
+func (h *Handler) GetStatsCards(w http.ResponseWriter, r *http.Request) {
+	h.mw.Require(http.HandlerFunc(h.getStatsCards)).ServeHTTP(w, r)
+}
+
+func (h *Handler) getStatsCards(w http.ResponseWriter, r *http.Request) {
+	data, err := h.svc.GetStatsCards(r.Context())
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "GetStatsCards failed", "error", err)
 		httpx.Error(w, r, err)
 		return
 	}

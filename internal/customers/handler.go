@@ -29,7 +29,7 @@ func NewHandler(svc *Service, mw *auth.SessionMiddleware, logger *slog.Logger) *
 // ─── Customers ────────────────────────────────────────────────────────────────
 
 // ListCustomers returns all active customers (KUN-01).
-func (h *Handler) ListCustomers(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ListCustomers(w http.ResponseWriter, r *http.Request, params api.ListCustomersParams) {
 	h.mw.Require(http.HandlerFunc(h.listCustomers)).ServeHTTP(w, r)
 }
 
@@ -498,8 +498,8 @@ func (h *Handler) archiveLead(w http.ResponseWriter, r *http.Request, leadId ope
 
 // ─── EAN Series ───────────────────────────────────────────────────────────────
 
-// ListEanSeries returns all active EAN series (REG-04).
-func (h *Handler) ListEanSeries(w http.ResponseWriter, r *http.Request) {
+// ListEANSeries returns all active EAN series (REG-04).
+func (h *Handler) ListEANSeries(w http.ResponseWriter, r *http.Request) {
 	h.mw.Require(http.HandlerFunc(h.listEanSeries)).ServeHTTP(w, r)
 }
 
@@ -642,6 +642,104 @@ func (h *Handler) nextFreeEanCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"code": code})
+}
+
+// ListCustomerContacts returns contacts for a customer (KUN-03).
+func (h *Handler) ListCustomerContacts(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.listCustomerContacts(w, r, id)
+	})).ServeHTTP(w, r)
+}
+
+func (h *Handler) listCustomerContacts(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	contacts, err := h.svc.ListContacts(r.Context(), uuid.UUID(id))
+	if err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, contacts)
+}
+
+// ListCustomerEANSeries returns EAN series for a customer (KUN-07).
+func (h *Handler) ListCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(h.listCustomerEANSeries)).ServeHTTP(w, r)
+}
+
+func (h *Handler) listCustomerEANSeries(w http.ResponseWriter, r *http.Request) {
+	series, err := h.svc.ListCustomerEANSeries(r.Context())
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "ListCustomerEANSeries failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, series)
+}
+
+// ListCustomerLeads returns leads for a customer (KUN-05).
+func (h *Handler) ListCustomerLeads(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(h.listCustomerLeads)).ServeHTTP(w, r)
+}
+
+func (h *Handler) listCustomerLeads(w http.ResponseWriter, r *http.Request) {
+	leads, err := h.svc.ListCustomerLeads(r.Context())
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "ListCustomerLeads failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, leads)
+}
+
+// RegisterCustomerEANSeries registers an EAN series for a customer (KUN-07).
+func (h *Handler) RegisterCustomerEANSeries(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(h.registerCustomerEANSeries)).ServeHTTP(w, r)
+}
+
+func (h *Handler) registerCustomerEANSeries(w http.ResponseWriter, r *http.Request) {
+	var body api.RegisterEANSeries
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+
+	var description string
+	if body.Description != nil {
+		description = *body.Description
+	}
+
+	ean, err := h.svc.RegisterCustomerEANSeries(r.Context(), body.Prefix, body.StartCode, body.EndCode, description)
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "RegisterCustomerEANSeries failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, ean)
+}
+
+// RegisterEANSeries registers a new EAN series (REG-04).
+func (h *Handler) RegisterEANSeries(w http.ResponseWriter, r *http.Request) {
+	h.mw.Require(http.HandlerFunc(h.registerEANSeries)).ServeHTTP(w, r)
+}
+
+func (h *Handler) registerEANSeries(w http.ResponseWriter, r *http.Request) {
+	var body api.RegisterEANSeries
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+
+	var description string
+	if body.Description != nil {
+		description = *body.Description
+	}
+
+	ean, err := h.svc.RegisterEANSeries(r.Context(), body.Prefix, body.StartCode, body.EndCode, description)
+	if err != nil {
+		h.logger.ErrorContext(r.Context(), "RegisterEANSeries failed", "error", err)
+		httpx.Error(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, ean)
 }
 
 // writeJSON encodes data as JSON and writes it to the response writer.

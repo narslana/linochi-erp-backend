@@ -48,6 +48,228 @@ func (q *Queries) CardsDue(ctx context.Context) ([]CardsDueRow, error) {
 	return items, nil
 }
 
+const getInventoryStats = `-- name: GetInventoryStats :one
+SELECT
+    COALESCE(SUM(sm.quantity * COALESCE(sp.purchase_price, 0)), 0) AS total_value,
+    COALESCE(SUM(CASE WHEN COALESCE(SUM(sm.quantity), 0) < 10 THEN 1 ELSE 0 END), 0) AS low_stock_count
+FROM products p
+LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+LEFT JOIN supplier_products sp ON sp.product_id = sm.product_id AND sp.archived = false
+WHERE p.archived = false
+GROUP BY p.id
+`
+
+type GetInventoryStatsRow struct {
+	TotalValue    interface{} `json:"total_value"`
+	LowStockCount interface{} `json:"low_stock_count"`
+}
+
+// STA-02: inventory value and low-stock count
+func (q *Queries) GetInventoryStats(ctx context.Context) (GetInventoryStatsRow, error) {
+	row := q.db.QueryRow(ctx, getInventoryStats)
+	var i GetInventoryStatsRow
+	err := row.Scan(&i.TotalValue, &i.LowStockCount)
+	return i, err
+}
+
+const getInventoryStatsItems = `-- name: GetInventoryStatsItems :many
+SELECT
+    p.id AS product_id,
+    p.name AS product_name,
+    COALESCE(SUM(CASE WHEN sm.movement_type != 'reservation' AND sm.movement_type != 'release' THEN sm.quantity ELSE 0 END), 0) AS quantity,
+    COALESCE(SUM(CASE WHEN sm.movement_type != 'reservation' AND sm.movement_type != 'release' THEN sm.quantity * COALESCE(sp.purchase_price, 0) ELSE 0 END), 0) AS value
+FROM products p
+LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release'
+LEFT JOIN supplier_products sp ON sp.product_id = sm.product_id AND sp.archived = false
+WHERE p.archived = false
+GROUP BY p.id, p.name
+HAVING SUM(CASE WHEN sm.movement_type != 'reservation' AND sm.movement_type != 'release' THEN sm.quantity ELSE 0 END) > 0
+ORDER BY value DESC
+`
+
+type GetInventoryStatsItemsRow struct {
+	ProductID   uuid.UUID   `json:"product_id"`
+	ProductName string      `json:"product_name"`
+	Quantity    interface{} `json:"quantity"`
+	Value       interface{} `json:"value"`
+}
+
+// STA-02: per-product inventory items
+func (q *Queries) GetInventoryStatsItems(ctx context.Context) ([]GetInventoryStatsItemsRow, error) {
+	rows, err := q.db.Query(ctx, getInventoryStatsItems)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetInventoryStatsItemsRow
+	for rows.Next() {
+		var i GetInventoryStatsItemsRow
+		if err := rows.Scan(
+			&i.ProductID,
+			&i.ProductName,
+			&i.Quantity,
+			&i.Value,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getInventoryStatsLowStock = `-- name: GetInventoryStatsLowStock :one
+SELECT COUNT(*) AS low_stock_count
+FROM (
+    SELECT p.id
+    FROM products p
+    LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+    WHERE p.archived = false
+    GROUP BY p.id
+    HAVING COALESCE(SUM(sm.quantity), 0) < 10
+) sub
+`
+
+// STA-02: count of products with low stock
+func (q *Queries) GetInventoryStatsLowStock(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getInventoryStatsLowStock)
+	var low_stock_count int64
+	err := row.Scan(&low_stock_count)
+	return low_stock_count, err
+}
+
+const getInventoryStatsTotal = `-- name: GetInventoryStatsTotal :one
+SELECT COALESCE(SUM(sm.quantity * COALESCE(sp.purchase_price, 0)), 0) AS total_value
+FROM stockmovements sm
+LEFT JOIN supplier_products sp ON sp.product_id = sm.product_id AND sp.archived = false
+WHERE sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+`
+
+// STA-02: total inventory value
+func (q *Queries) GetInventoryStatsTotal(ctx context.Context) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getInventoryStatsTotal)
+	var total_value interface{}
+	err := row.Scan(&total_value)
+	return total_value, err
+}
+
+const getRevenueTrend = `-- name: GetRevenueTrend :many
+SELECT
+    TO_CHAR(created_at, 'YYYY-MM-DD') AS period,
+    COUNT(*) AS orders,
+    SUM(total_sek) AS revenue
+FROM orders
+WHERE archived = false
+  AND created_at >= $1::date
+  AND created_at < $2::date + interval '1 day'
+GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
+ORDER BY period ASC
+`
+
+type GetRevenueTrendParams struct {
+	Column1 pgtype.Date `json:"column_1"`
+	Column2 pgtype.Date `json:"column_2"`
+}
+
+type GetRevenueTrendRow struct {
+	Period  string `json:"period"`
+	Orders  int64  `json:"orders"`
+	Revenue int64  `json:"revenue"`
+}
+
+// STA-01: revenue trend over time
+func (q *Queries) GetRevenueTrend(ctx context.Context, arg GetRevenueTrendParams) ([]GetRevenueTrendRow, error) {
+	rows, err := q.db.Query(ctx, getRevenueTrend, arg.Column1, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRevenueTrendRow
+	for rows.Next() {
+		var i GetRevenueTrendRow
+		if err := rows.Scan(&i.Period, &i.Orders, &i.Revenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getStatsCards = `-- name: GetStatsCards :many
+SELECT title, value, change
+FROM (
+    SELECT
+        'Orders this month' AS title,
+        COUNT(*)::text AS value,
+        NULL AS change
+    FROM orders
+    WHERE archived = false
+      AND created_at >= date_trunc('month', now())
+    UNION ALL
+    SELECT
+        'Revenue this month' AS title,
+        COALESCE(SUM(total_sek)::text, '0') AS value,
+        NULL AS change
+    FROM orders
+    WHERE archived = false
+      AND created_at >= date_trunc('month', now())
+    UNION ALL
+    SELECT
+        'Low stock products' AS title,
+        COUNT(*)::text AS value,
+        NULL AS change
+    FROM (
+        SELECT p.id
+        FROM products p
+        LEFT JOIN stockmovements sm ON sm.product_id = p.id AND sm.movement_type != 'reservation' AND sm.movement_type != 'release' AND sm.quantity > 0
+        WHERE p.archived = false
+        GROUP BY p.id
+        HAVING COALESCE(SUM(sm.quantity), 0) < 10
+    ) sub
+    UNION ALL
+    SELECT
+        'Orders in pipeline' AS title,
+        COUNT(*)::text AS value,
+        NULL AS change
+    FROM orders
+    WHERE archived = false
+      AND status IN ('draft', 'confirmed', 'accepted')
+) cards
+ORDER BY title
+`
+
+type GetStatsCardsRow struct {
+	Title  string      `json:"title"`
+	Value  string      `json:"value"`
+	Change interface{} `json:"change"`
+}
+
+// STA-03: summary cards for dashboard
+func (q *Queries) GetStatsCards(ctx context.Context) ([]GetStatsCardsRow, error) {
+	rows, err := q.db.Query(ctx, getStatsCards)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStatsCardsRow
+	for rows.Next() {
+		var i GetStatsCardsRow
+		if err := rows.Scan(&i.Title, &i.Value, &i.Change); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const inventoryTurnover = `-- name: InventoryTurnover :one
 SELECT
     COALESCE(SUM(sm.quantity * sp.purchase_price), 0) AS inventory_value,

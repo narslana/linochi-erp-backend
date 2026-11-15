@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE suppliers (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     name                text NOT NULL,
     name_en             text NOT NULL DEFAULT '',
     org_number          text NOT NULL DEFAULT '',
@@ -30,7 +30,7 @@ CREATE TABLE suppliers (
 
 -- +goose StatementBegin
 CREATE TABLE supplier_contacts (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     supplier_id     uuid NOT NULL REFERENCES suppliers(id),
     name            text NOT NULL,
     name_en         text NOT NULL DEFAULT '',
@@ -47,7 +47,7 @@ CREATE TABLE supplier_contacts (
 
 -- +goose StatementBegin
 CREATE TABLE supplier_products (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     supplier_id         uuid NOT NULL REFERENCES suppliers(id),
     product_id          uuid NOT NULL REFERENCES products(id),
     purchase_price      bigint NOT NULL DEFAULT 0,
@@ -62,7 +62,7 @@ CREATE TABLE supplier_products (
 
 -- +goose StatementBegin
 CREATE TABLE purchase_orders (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     supplier_id         uuid NOT NULL REFERENCES suppliers(id),
     order_number        text NOT NULL DEFAULT '',
     currency            char(3) NOT NULL DEFAULT 'SEK',
@@ -81,7 +81,7 @@ CREATE TABLE purchase_orders (
 
 -- +goose StatementBegin
 CREATE TABLE purchase_order_lines (
-    id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                      uuid PRIMARY KEY DEFAULT uuidv7(),
     purchase_order_id       uuid NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
     product_id              uuid NOT NULL REFERENCES products(id),
     quantity                int NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE purchase_order_lines (
 
 -- +goose StatementBegin
 CREATE TABLE shipments (
-    id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                      uuid PRIMARY KEY DEFAULT uuidv7(),
     purchase_order_id       uuid NOT NULL REFERENCES purchase_orders(id),
     from_location           text NOT NULL DEFAULT '',
     to_location             text NOT NULL DEFAULT '',
@@ -136,6 +136,7 @@ GRANT SELECT, INSERT, UPDATE ON supplier_products TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON purchase_orders TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON purchase_order_lines TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON shipments TO linochi_erp_app;
+-- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS shipments;

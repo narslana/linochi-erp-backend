@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 -- KUN-01, KUN-04, KUN-05, KUN-07, KUN-08: customers
 CREATE TABLE customers (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     name            text NOT NULL,
     type_code       text NOT NULL,
     address         text NOT NULL DEFAULT '',
@@ -22,7 +22,7 @@ CREATE INDEX idx_customers_type ON customers(type_code) WHERE archived = false;
 
 -- KUN-01, KUN-04, KUN-07: contacts
 CREATE TABLE contacts (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     customer_id     uuid NOT NULL REFERENCES customers(id),
     first_name      text NOT NULL DEFAULT '',
     last_name       text NOT NULL DEFAULT '',
@@ -38,7 +38,7 @@ CREATE INDEX idx_contacts_customer ON contacts(customer_id) WHERE archived = fal
 
 -- KUN-06: leads
 CREATE TABLE leads (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     company             text NOT NULL,
     contact_name        text NOT NULL DEFAULT '',
     email               text NOT NULL DEFAULT '',
@@ -59,7 +59,7 @@ CREATE INDEX idx_leads_status ON leads(status) WHERE archived = false;
 
 -- REG-04: EAN series
 CREATE TABLE ean_series (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     prefix          text NOT NULL,
     start_code      text NOT NULL,
     end_code        text NOT NULL,
@@ -80,11 +80,10 @@ GRANT SELECT, INSERT, UPDATE ON leads TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON ean_series TO linochi_erp_app;
 -- +goose StatementEnd
 
--- +goose Up
 -- +goose StatementBegin
 -- WF-01, WF-03: workflow steps
 CREATE TABLE workflow_steps (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     key             text NOT NULL,
     name            text NOT NULL,
     name_en         text NOT NULL DEFAULT '',
@@ -101,7 +100,7 @@ CREATE UNIQUE INDEX idx_workflowsteps_key ON workflow_steps(key) WHERE archived 
 
 -- WF-02: workflow transitions
 CREATE TABLE workflow_transitions (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     step_key        text NOT NULL,
     from_key        text NOT NULL,
     to_key          text NOT NULL,
@@ -118,7 +117,7 @@ CREATE INDEX idx_workflowtransitions_step ON workflow_transitions(step_key) WHER
 
 -- WF-04: workflow conditions
 CREATE TABLE workflow_conditions (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     transition_id   uuid NOT NULL REFERENCES workflow_transitions(id),
     kind            text NOT NULL,
     config          jsonb NOT NULL DEFAULT '{}',
@@ -131,7 +130,7 @@ CREATE TABLE workflow_conditions (
 
 -- WF-05: workflow effects
 CREATE TABLE workflow_effects (
-    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id              uuid PRIMARY KEY DEFAULT uuidv7(),
     transition_id   uuid NOT NULL REFERENCES workflow_transitions(id),
     kind            text NOT NULL,
     config          jsonb NOT NULL DEFAULT '{}',
@@ -149,11 +148,10 @@ GRANT SELECT, INSERT, UPDATE ON workflow_conditions TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON workflow_effects TO linochi_erp_app;
 -- +goose StatementEnd
 
--- +goose Up
 -- +goose StatementBegin
 -- ORD-01 to ORD-08, ORD-09 to ORD-13: orders
 CREATE TABLE orders (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     external_id         text NOT NULL DEFAULT '',
     channel             text NOT NULL,
     status              text NOT NULL DEFAULT 'draft',
@@ -194,7 +192,7 @@ CREATE INDEX idx_orders_customer ON orders(customer_id) WHERE archived = false;
 
 -- ORD-01, ORD-10: order lines
 CREATE TABLE order_lines (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     order_id            uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id          uuid NOT NULL REFERENCES products(id),
     quantity            int NOT NULL,
@@ -217,11 +215,10 @@ GRANT SELECT, INSERT, UPDATE ON orders TO linochi_erp_app;
 GRANT SELECT, INSERT, UPDATE ON order_lines TO linochi_erp_app;
 -- +goose StatementEnd
 
--- +goose Up
 -- +goose StatementBegin
 -- REG-05: reminders
 CREATE TABLE reminders (
-    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  uuid PRIMARY KEY DEFAULT uuidv7(),
     reminder_type       text NOT NULL CHECK (reminder_type IN ('ids_entry', 'external')),
     ids_entry_id        uuid REFERENCES ids_entries(id),
     external_ref_type   text,
