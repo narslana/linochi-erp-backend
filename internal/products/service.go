@@ -294,6 +294,9 @@ func (s *Service) UpdateProduct(ctx context.Context, id uuid.UUID, name, sku, ea
 	if attributes == nil {
 		attributes = p.Attributes
 	}
+	if productTypeID == uuid.Nil {
+		productTypeID = p.ProductTypeID
+	}
 	updated, err := s.store.UpdateProduct(ctx, name, sku, ean, productTypeID, shortDesc, wholesalePriceSEK, msrpSEK, wholesaleCurrency, msrpCurrency, status, attributes, id, version)
 	if err != nil {
 		return updated, ProblemError(err)

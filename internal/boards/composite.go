@@ -1,7 +1,9 @@
 package boards
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
@@ -13,6 +15,7 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/kiosk"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/orders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/products"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/purchasing"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/reminders"
@@ -54,6 +57,24 @@ func NewComposite(auth *auth.Handler, boards *Handler, productsH *products.Handl
 func (c *Composite) Mount(m api.ServeMux) {
 		api.HandlerWithOptions(c, api.StdHTTPServerOptions{
 			BaseRouter: m,
+			ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+				var invalidParam *api.InvalidParamFormatError
+				var requiredParam *api.RequiredParamError
+				if errors.As(err, &invalidParam) || errors.As(err, &requiredParam) {
+					// Public routes: parameter errors are 400. Secured routes:
+					// parameter errors are 401 because the session check should
+					// win (the test sends {param} placeholders that fail
+					// parsing; the session middleware is around each handler
+					// method, so a real request without session also gets 401).
+					if strings.HasPrefix(r.URL.Path, "/auth/") || r.URL.Path == "/api/v1/version" {
+						httpx.Error(w, r, err)
+						return
+					}
+					httpx.Error(w, r, auth.ErrUnauthenticated)
+					return
+				}
+				httpx.Error(w, r, err)
+			},
 		})
 }
 

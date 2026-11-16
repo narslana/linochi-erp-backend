@@ -376,9 +376,18 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("POST", "/api/v1/boards/"+boardID+"/cards/"+card1ID+"/comments", map[string]interface{}{"body_md": "note"}, nil, &calls)
 	// ---- dependencies: product-types ----
 	w = b.callJSON("POST", "/api/v1/product-types", map[string]interface{}{"name": "Shampoo", "name_en": "Shampoo", "type_code": "SHAMPOO"}, nil, &calls)
+	mustOK(t, w, "POST /api/v1/product-types")
 	var pt map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &pt)
 	ptID := pt["id"].(string)
+	if ptID == "" {
+		t.Fatalf("product type response missing id: %s", w.Body.String())
+	}
+	t.Logf("product type created with id=%s", ptID)
+	w = b.callJSON("GET", "/api/v1/product-types/"+ptID, nil, nil, &calls)
+	mustOK(t, w, "GET /api/v1/product-types/"+ptID)
+	w = b.callJSON("GET", "/api/v1/product-types", nil, nil, &calls)
+	mustOK(t, w, "GET /api/v1/product-types")
 	w = b.callJSON("POST", "/api/v1/field-definitions", map[string]interface{}{"name": "Volume", "name_en": "Volume", "field_type": "decimal", "group_name": "General"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/field-definitions")
 	var fd map[string]interface{}
@@ -453,7 +462,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &ids)
 	idsID := ids["id"].(string)
 	// ---- dependencies: ean-series ----
-	w = b.callJSON("POST", "/api/v1/ean-series", map[string]interface{}{"prefix": "73", "start_code": "100", "end_code": "200"}, nil, &calls)
+	w = b.callJSON("POST", "/api/v1/ean-series", map[string]interface{}{"prefix": "74", "start_code": "100", "end_code": "200"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/ean-series")
 	var ean map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &ean)
@@ -462,11 +471,21 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	}
 	eanID := ean["id"].(string)
 	// ---- dependencies: reminders ----
-	w = b.callJSON("POST", "/api/v1/reminders", map[string]interface{}{"reminder_type": "ids_entry", "title": "Renewal", "title_en": "Renewal", "due_date": "2026-02-01"}, nil, &calls)
+	w = b.callJSON("POST", "/api/v1/reminders", map[string]interface{}{"reminder_type": "ids_entry", "ids_entry_id": idsID, "title": "Renewal", "title_en": "Renewal", "due_date": "2026-02-01"}, nil, &calls)
 	var rem map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &rem)
 	remID := rem["id"].(string)
 	// ---- products: CRUD ----
+	t.Logf("creating product with product_type_id=%s", ptID)
+	// Direct DB check: verify product type exists
+	var exists bool
+	err := he.pool.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM product_types WHERE id = $1)", ptID).Scan(&exists)
+	if err != nil {
+		t.Fatalf("DB check product_types: %v", err)
+	}
+	t.Logf("product type exists in DB: %v", exists)
+	// Also verify the exact UUID format
+	t.Logf("ptID bytes: %x", []byte(ptID))
 	w = b.callJSON("POST", "/api/v1/products", map[string]interface{}{"name": "Dog Shampoo", "name_en": "Dog Shampoo", "product_type_id": ptID, "volume": 500, "volume_unit": "ml", "unit": "bottle", "base_price_sek": 19900, "cost_price_sek": 8000, "vat_rate": 0.25}, nil, &calls)
 	var prod map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &prod)

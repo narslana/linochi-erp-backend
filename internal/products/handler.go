@@ -2,6 +2,7 @@ package products
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -375,6 +376,7 @@ func (h *Handler) createProduct(w http.ResponseWriter, r *http.Request) {
 
 	p, err := h.svc.CreateProduct(r.Context(), body.Name, body.Sku, eanStr, uuid.UUID(body.ProductTypeId), shortDesc, wholesalePriceSEK, msrpSEK, wholesaleCurrency, msrpCurrency, status, attributes)
 	if err != nil {
+		h.logger.ErrorContext(r.Context(), "CreateProduct failed", "error", err, "product_type_id", body.ProductTypeId, "product_type_id_hex", fmt.Sprintf("%x", []byte(body.ProductTypeId.String())))
 		httpx.Error(w, r, err)
 		return
 	}
@@ -530,7 +532,11 @@ func (h *Handler) UpdateProductImage(w http.ResponseWriter, r *http.Request, pro
 		}
 
 		isMain := ptrOrBool(body.IsMain, false)
-		img, err := h.svc.UpdateProductImage(r.Context(), uuid.UUID(imageId), *body.Url, sortOrder, &isMain, body.Version)
+		var url string
+		if body.Url != nil {
+			url = *body.Url
+		}
+		img, err := h.svc.UpdateProductImage(r.Context(), uuid.UUID(imageId), url, sortOrder, &isMain, body.Version)
 		if err != nil {
 			httpx.Error(w, r, err)
 			return

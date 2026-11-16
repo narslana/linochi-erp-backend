@@ -60,6 +60,12 @@ func (h *Handler) createReminder(w http.ResponseWriter, r *http.Request) {
 		externalRefID = uuid.UUID(*body.ExternalRefId)
 	}
 
+	// An ids_entry reminder must reference a real entry; a zero UUID is never valid.
+	if body.ReminderType == "ids_entry" && idsEntryID == uuid.Nil {
+		httpx.WriteProblem(w, r, httpx.Problem{Code: "invalid-request", Title: "ids_entry_id is required for ids_entry reminders", Status: http.StatusBadRequest})
+		return
+	}
+
 	var externalRefType, titleEn, description string
 	if body.ExternalRefType != nil {
 		externalRefType = *body.ExternalRefType
