@@ -341,7 +341,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	he.idp.Configure(func(bh *oidctest.Behavior) { bh.DenyAuthorize = "access_denied" })
 	w = b.call("GET", "/auth/login", nil, &calls)
 	b.call("GET", he.callbackTarget(t, w.Header().Get("Location")), nil, &calls)
- 	// A login that cannot start.
+	// A login that cannot start.
 	he.idp.Configure(func(bh *oidctest.Behavior) { bh.DenyAuthorize = ""; bh.DiscoveryStatus = http.StatusServiceUnavailable })
 	b2 := he.browser(t)
 	b2.call("GET", "/auth/login", nil, &calls)
