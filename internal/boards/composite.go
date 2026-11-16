@@ -13,7 +13,6 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/kiosk"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/orders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
-	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/products"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/purchasing"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/reminders"
