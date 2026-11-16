@@ -356,29 +356,29 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	w = b.callJSON("POST", "/api/v1/boards", map[string]interface{}{"name": "Sprint 1"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/boards")
 	var board map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &board)
+	_ = json.Unmarshal(w.Body.Bytes(), &board)
 	boardID := board["id"].(string)
 	w = b.callJSON("POST", "/api/v1/boards/"+boardID+"/columns", map[string]interface{}{"name": "To do"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/boards/"+boardID+"/columns")
 	var col1 map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &col1)
+	_ = json.Unmarshal(w.Body.Bytes(), &col1)
 	col1ID := col1["id"].(string)
 	w = b.callJSON("POST", "/api/v1/boards/"+boardID+"/cards", map[string]interface{}{"title": "First card", "column_id": col1ID}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/boards/"+boardID+"/cards")
 	var card1 map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &card1)
+	_ = json.Unmarshal(w.Body.Bytes(), &card1)
 	card1ID := card1["id"].(string)
 	w = b.callJSON("POST", "/api/v1/boards/"+boardID+"/cards/"+card1ID+"/checklist", map[string]interface{}{"title": "Check one"}, nil, &calls)
 	mustOK(t, w, "POST checklist")
 	var clItem map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &clItem)
+	_ = json.Unmarshal(w.Body.Bytes(), &clItem)
 	clItemID := clItem["id"].(string)
 	b.callJSON("POST", "/api/v1/boards/"+boardID+"/cards/"+card1ID+"/comments", map[string]interface{}{"body_md": "note"}, nil, &calls)
 	// ---- dependencies: product-types ----
 	w = b.callJSON("POST", "/api/v1/product-types", map[string]interface{}{"name": "Shampoo", "name_en": "Shampoo", "type_code": "SHAMPOO"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/product-types")
 	var pt map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &pt)
+	_ = json.Unmarshal(w.Body.Bytes(), &pt)
 	ptID := pt["id"].(string)
 	if ptID == "" {
 		t.Fatalf("product type response missing id: %s", w.Body.String())
@@ -391,7 +391,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	w = b.callJSON("POST", "/api/v1/field-definitions", map[string]interface{}{"name": "Volume", "name_en": "Volume", "field_type": "decimal", "group_name": "General"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/field-definitions")
 	var fd map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &fd)
+	_ = json.Unmarshal(w.Body.Bytes(), &fd)
 	if fd["id"] == nil {
 		t.Fatalf("field definition response missing id: %s", w.Body.String())
 	}
@@ -399,35 +399,35 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- dependencies: locations ----
 	w = b.callJSON("POST", "/api/v1/locations", map[string]interface{}{"name": "Warehouse A"}, nil, &calls)
 	var loc map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &loc)
+	_ = json.Unmarshal(w.Body.Bytes(), &loc)
 	locID := loc["id"].(string)
 	// ---- dependencies: suppliers ----
 	w = b.callJSON("POST", "/api/v1/suppliers", map[string]interface{}{"name": "Raw Materials AB", "role": "manufacturer", "currency": "SEK"}, nil, &calls)
 	var sup map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &sup)
+	_ = json.Unmarshal(w.Body.Bytes(), &sup)
 	supID := sup["id"].(string)
 	b.callJSON("POST", "/api/v1/suppliers/"+supID+"/contacts", map[string]interface{}{"name": "Contact Person", "email": "contact@example.com"}, nil, &calls)
 	var supContact map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &supContact)
+	_ = json.Unmarshal(w.Body.Bytes(), &supContact)
 	supContactID := supContact["id"].(string)
 	// ---- dependencies: purchase-orders ----
 	w = b.callJSON("POST", "/api/v1/purchase-orders", map[string]interface{}{"supplier_id": supID, "order_number": "PO-001", "order_date": "2026-01-15", "currency": "SEK"}, nil, &calls)
 	var po map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &po)
-	poID := po["id"].(string)
+	_ = json.Unmarshal(w.Body.Bytes(), &po)
+	var poID string // reassigned on line 531
 	// ---- dependencies: customers ----
 	w = b.callJSON("POST", "/api/v1/customers", map[string]interface{}{"name": "Dog Shop AB", "type_code": "SHOP", "currency": "SEK"}, nil, &calls)
 	var cust map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &cust)
+	_ = json.Unmarshal(w.Body.Bytes(), &cust)
 	custID := cust["id"].(string)
 	b.callJSON("POST", "/api/v1/customers/"+custID+"/contacts", map[string]interface{}{"customer_id": custID, "first_name": "Anna", "last_name": "Smith", "email": "anna@example.com"}, nil, &calls)
 	b.callJSON("POST", "/api/v1/customers/"+custID+"/ean-series", map[string]interface{}{"prefix": "73", "start_code": "100", "end_code": "200"}, nil, &calls)
 	// ---- dependencies: leads ----
-	w = b.callJSON("POST", "/api/v1/leads", map[string]interface{}{"company": "Paws Inc", "email": "info@paws.com", "status": "new"}, nil, &calls)
+	b.callJSON("POST", "/api/v1/leads", map[string]interface{}{"company": "Paws Inc", "email": "info@paws.com", "status": "new"}, nil, &calls)
 	// ---- dependencies: workflow steps ----
 	w = b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "draft", "name": "Draft", "name_en": "Draft", "is_start": true}, nil, &calls)
 	var stepDraft map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &stepDraft)
+	_ = json.Unmarshal(w.Body.Bytes(), &stepDraft)
 	draftStepID := stepDraft["id"].(string)
 	b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "accepted", "name": "Accepted", "name_en": "Accepted"}, nil, &calls)
 	b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "shipped", "name": "Shipped", "name_en": "Shipped"}, nil, &calls)
@@ -435,37 +435,37 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- dependencies: workflow transitions ----
 	w = b.callJSON("POST", "/api/v1/workflow/transitions", map[string]interface{}{"step_key": "accepted", "from_key": "draft", "to_key": "accepted", "label": "Accept"}, nil, &calls)
 	var trans map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &trans)
+	_ = json.Unmarshal(w.Body.Bytes(), &trans)
 	transID := trans["id"].(string)
 	// ---- dependencies: ical-sources ----
 	w = b.callJSON("POST", "/api/v1/ical-sources", map[string]interface{}{"name": "Work", "ical_url": "https://example.com/calendar.ics"}, nil, &calls)
 	var ical map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &ical)
+	_ = json.Unmarshal(w.Body.Bytes(), &ical)
 	icalID := ical["id"].(string)
 	// ---- dependencies: kiosk devices and playlists ----
 	w = b.callJSON("POST", "/api/v1/kiosk/devices", map[string]interface{}{"name": "Kiosk TV"}, nil, &calls)
 	var dev map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &dev)
+	_ = json.Unmarshal(w.Body.Bytes(), &dev)
 	devID := dev["id"].(string)
 	w = b.callJSON("POST", "/api/v1/kiosk/playlists", map[string]interface{}{"name": "Main"}, nil, &calls)
 	var pl map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &pl)
+	_ = json.Unmarshal(w.Body.Bytes(), &pl)
 	plID := pl["id"].(string)
 	w = b.callJSON("POST", "/api/v1/kiosk/playlists/"+plID+"/views", map[string]interface{}{"view_type": "map", "sort_order": 1, "duration_sec": 30}, nil, &calls)
 	var plView map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &plView)
+	_ = json.Unmarshal(w.Body.Bytes(), &plView)
 	plViewID := plView["id"].(string)
 	b.callJSON("POST", "/api/v1/kiosk/pair", map[string]interface{}{}, nil, &calls)
 	// ---- dependencies: ids entries ----
 	w = b.callJSON("POST", "/api/v1/ids", map[string]interface{}{"category": "eori", "name": "SE1234567890000", "value": "SE1234567890000"}, nil, &calls)
 	var ids map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &ids)
+	_ = json.Unmarshal(w.Body.Bytes(), &ids)
 	idsID := ids["id"].(string)
 	// ---- dependencies: ean-series ----
 	w = b.callJSON("POST", "/api/v1/ean-series", map[string]interface{}{"prefix": "74", "start_code": "100", "end_code": "200"}, nil, &calls)
 	mustOK(t, w, "POST /api/v1/ean-series")
 	var ean map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &ean)
+	_ = json.Unmarshal(w.Body.Bytes(), &ean)
 	if ean["id"] == nil {
 		t.Fatalf("ean-series response missing id: %s", w.Body.String())
 	}
@@ -473,7 +473,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- dependencies: reminders ----
 	w = b.callJSON("POST", "/api/v1/reminders", map[string]interface{}{"reminder_type": "ids_entry", "ids_entry_id": idsID, "title": "Renewal", "title_en": "Renewal", "due_date": "2026-02-01"}, nil, &calls)
 	var rem map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &rem)
+	_ = json.Unmarshal(w.Body.Bytes(), &rem)
 	remID := rem["id"].(string)
 	// ---- products: CRUD ----
 	t.Logf("creating product with product_type_id=%s", ptID)
@@ -488,19 +488,19 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	t.Logf("ptID bytes: %x", []byte(ptID))
 	w = b.callJSON("POST", "/api/v1/products", map[string]interface{}{"name": "Dog Shampoo", "name_en": "Dog Shampoo", "product_type_id": ptID, "volume": 500, "volume_unit": "ml", "unit": "bottle", "base_price_sek": 19900, "cost_price_sek": 8000, "vat_rate": 0.25}, nil, &calls)
 	var prod map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &prod)
+	_ = json.Unmarshal(w.Body.Bytes(), &prod)
 	prodID := prod["id"].(string)
 	b.call("GET", "/api/v1/products", nil, &calls)
 	b.callJSON("PATCH", "/api/v1/products/"+prodID, map[string]interface{}{"id": prodID, "version": 1, "name": "Dog Shampoo Updated"}, nil, &calls)
 	w = b.callJSON("POST", "/api/v1/products/"+prodID+"/images", map[string]interface{}{"url": "https://example.com/img.jpg"}, nil, &calls)
 	var img map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &img)
+	_ = json.Unmarshal(w.Body.Bytes(), &img)
 	imgID := img["id"].(string)
 	b.call("GET", "/api/v1/products/"+prodID+"/images", nil, &calls)
 	b.callJSON("PATCH", "/api/v1/products/"+prodID+"/images/"+imgID, map[string]interface{}{"version": 1, "is_main": true}, nil, &calls)
 	w = b.callJSON("POST", "/api/v1/products/"+prodID+"/documents", map[string]interface{}{"title": "SDS", "title_en": "SDS", "document_type": "sds", "url": "https://example.com/sds.pdf"}, nil, &calls)
 	var docResp map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &docResp)
+	_ = json.Unmarshal(w.Body.Bytes(), &docResp)
 	docID := docResp["id"].(string)
 	b.call("GET", "/api/v1/products/"+prodID+"/documents", nil, &calls)
 	b.callJSON("PATCH", "/api/v1/products/"+prodID+"/documents/"+docID, map[string]interface{}{"version": 1, "title": "SDS Updated"}, nil, &calls)
@@ -519,7 +519,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("PATCH", "/api/v1/suppliers/"+supID+"/contacts/"+supContactID, map[string]interface{}{"version": 1, "name": "Updated Contact"}, nil, &calls)
 	w = b.callJSON("POST", "/api/v1/suppliers/"+supID+"/products", map[string]interface{}{"product_id": prodID, "purchase_price": 8000, "purchase_currency": "SEK"}, nil, &calls)
 	var sp map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &sp)
+	_ = json.Unmarshal(w.Body.Bytes(), &sp)
 	spID := sp["id"].(string)
 	b.call("GET", "/api/v1/suppliers/"+supID+"/products", nil, &calls)
 	b.callJSON("DELETE", "/api/v1/suppliers/"+supID+"/products/"+spID, map[string]interface{}{}, nil, &calls)
@@ -527,12 +527,12 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- purchasing: CRUD ----
 	b.call("GET", "/api/v1/purchase-orders", nil, &calls)
 	w = b.callJSON("POST", "/api/v1/purchase-orders", map[string]interface{}{"supplier_id": supID, "order_number": "PO-002", "order_date": "2026-01-20", "currency": "SEK"}, nil, &calls)
-	json.Unmarshal(w.Body.Bytes(), &po)
+	_ = json.Unmarshal(w.Body.Bytes(), &po)
 	poID = po["id"].(string)
 	b.call("GET", "/api/v1/purchase-orders/"+poID, nil, &calls)
 	b.callJSON("POST", "/api/v1/purchase-orders/"+poID+"/lines", map[string]interface{}{"product_id": prodID, "quantity": 100, "unit_price": 8000}, nil, &calls)
 	var pol map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &pol)
+	_ = json.Unmarshal(w.Body.Bytes(), &pol)
 	polID := pol["id"].(string)
 	b.call("GET", "/api/v1/purchase-orders/"+poID+"/lines", nil, &calls)
 	b.callJSON("PATCH", "/api/v1/purchase-orders/"+poID+"/lines/"+polID, map[string]interface{}{"version": 1, "quantity": 120}, nil, &calls)
@@ -541,7 +541,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- shipments: CRUD ----
 	w = b.callJSON("POST", "/api/v1/shipments", map[string]interface{}{"purchase_order_id": poID, "from_location": "Factory", "to_location": "Warehouse", "carrier": "PostNord", "batch_number": "B001", "status": "planned"}, nil, &calls)
 	var ship map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &ship)
+	_ = json.Unmarshal(w.Body.Bytes(), &ship)
 	shipID := ship["id"].(string)
 	b.call("GET", "/api/v1/shipments", nil, &calls)
 	b.call("GET", "/api/v1/shipments/"+shipID, nil, &calls)
@@ -551,7 +551,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- inventory: CRUD ----
 	w = b.callJSON("POST", "/api/v1/locations", map[string]interface{}{"name": "Warehouse B"}, nil, &calls)
 	var loc2 map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &loc2)
+	_ = json.Unmarshal(w.Body.Bytes(), &loc2)
 	loc2ID := loc2["id"].(string)
 	b.call("GET", "/api/v1/locations", nil, &calls)
 	b.call("GET", "/api/v1/locations/"+locID, nil, &calls)
@@ -575,7 +575,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	// ---- orders: CRUD ----
 	w = b.callJSON("POST", "/api/v1/orders", map[string]interface{}{"customer_id": custID, "channel": "direct", "currency": "SEK", "exchange_rate_sek": 1.0, "lines": []map[string]interface{}{{"product_id": prodID, "quantity": 2, "unit_price_sek": 19900}}}, nil, &calls)
 	var ord map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &ord)
+	_ = json.Unmarshal(w.Body.Bytes(), &ord)
 	ordID := ord["id"].(string)
 	ordVer := int(ord["version"].(float64))
 	b.call("GET", "/api/v1/orders", nil, &calls)
@@ -654,7 +654,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.call("GET", "/api/v1/product-types/"+ptID+"/fields", nil, &calls)
 	w = b.callJSON("POST", "/api/v1/product-types/"+ptID+"/fields", map[string]interface{}{"field_definition_id": fdID, "sort_order": 1}, nil, &calls)
 	var ptf map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &ptf)
+	_ = json.Unmarshal(w.Body.Bytes(), &ptf)
 	ptfID := ptf["id"].(string)
 	b.callJSON("PATCH", "/api/v1/product-types/"+ptID+"/fields/"+ptfID, map[string]interface{}{"version": 1, "sort_order": 2}, nil, &calls)
 	b.callJSON("DELETE", "/api/v1/product-types/"+ptID+"/fields/"+ptfID, map[string]interface{}{}, nil, &calls)
