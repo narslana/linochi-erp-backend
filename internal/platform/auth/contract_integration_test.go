@@ -81,6 +81,16 @@ func validate(t *testing.T, find func(*http.Request) (*openapi3filter.RequestVal
 	}
 }
 
+// mustOK fails the test when a call that should succeed returns >= 400.
+// Contract validation alone is not enough because a 500 problem response can
+// still match the spec.
+func mustOK(t *testing.T, w *httptest.ResponseRecorder, what string) {
+	t.Helper()
+	if w.Code >= 400 {
+		t.Fatalf("%s returned %d: %s", what, w.Code, w.Body.String())
+	}
+}
+
 // recorded is a browser that records the request of every call, so that each
 // answer can be checked against the spec afterwards.
 type recorded struct {
@@ -344,30 +354,22 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 
 	// ---- dependencies: boards ----
 	w = b.callJSON("POST", "/api/v1/boards", map[string]interface{}{"name": "Sprint 1"}, nil, &calls)
-	if w.Code >= 400 {
-		t.Fatalf("POST /api/v1/boards returned %d: %s", w.Code, w.Body.String())
-	}
+	mustOK(t, w, "POST /api/v1/boards")
 	var board map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &board)
 	boardID := board["id"].(string)
 	w = b.callJSON("POST", "/api/v1/boards/"+boardID+"/columns", map[string]interface{}{"name": "To do"}, nil, &calls)
-	if w.Code >= 400 {
-		t.Fatalf("POST /api/v1/boards/%s/columns returned %d: %s", boardID, w.Code, w.Body.String())
-	}
+	mustOK(t, w, "POST /api/v1/boards/"+boardID+"/columns")
 	var col1 map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &col1)
 	col1ID := col1["id"].(string)
 	w = b.callJSON("POST", "/api/v1/boards/"+boardID+"/cards", map[string]interface{}{"title": "First card", "column_id": col1ID}, nil, &calls)
-	if w.Code >= 400 {
-		t.Fatalf("POST /api/v1/boards/%s/cards returned %d: %s", boardID, w.Code, w.Body.String())
-	}
+	mustOK(t, w, "POST /api/v1/boards/"+boardID+"/cards")
 	var card1 map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &card1)
 	card1ID := card1["id"].(string)
 	w = b.callJSON("POST", "/api/v1/boards/"+boardID+"/cards/"+card1ID+"/checklist", map[string]interface{}{"title": "Check one"}, nil, &calls)
-	if w.Code >= 400 {
-		t.Fatalf("POST checklist returned %d: %s", w.Code, w.Body.String())
-	}
+	mustOK(t, w, "POST checklist")
 	var clItem map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &clItem)
 	clItemID := clItem["id"].(string)
@@ -378,9 +380,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &pt)
 	ptID := pt["id"].(string)
 	w = b.callJSON("POST", "/api/v1/field-definitions", map[string]interface{}{"name": "Volume", "name_en": "Volume", "field_type": "decimal", "group_name": "General"}, nil, &calls)
-	if w.Code >= 400 {
-		t.Fatalf("POST /api/v1/field-definitions returned %d: %s", w.Code, w.Body.String())
-	}
+	mustOK(t, w, "POST /api/v1/field-definitions")
 	var fd map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &fd)
 	if fd["id"] == nil {
@@ -454,9 +454,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	idsID := ids["id"].(string)
 	// ---- dependencies: ean-series ----
 	w = b.callJSON("POST", "/api/v1/ean-series", map[string]interface{}{"prefix": "73", "start_code": "100", "end_code": "200"}, nil, &calls)
-	if w.Code >= 400 {
-		t.Fatalf("POST /api/v1/ean-series returned %d: %s", w.Code, w.Body.String())
-	}
+	mustOK(t, w, "POST /api/v1/ean-series")
 	var ean map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &ean)
 	if ean["id"] == nil {
