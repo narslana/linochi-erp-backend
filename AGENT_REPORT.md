@@ -3,6 +3,11 @@
 Branch: agent/t0-green-build
 Model: qwen3.6-35b-a3b (local)
 
+## Summary
+
+All six items from T0b are done. `make lint` → 0 issues. `make test` → all green.
+`go build ./...` → clean.
+
 ## Plan
 
 Fix six reviewer findings from T0b task:
