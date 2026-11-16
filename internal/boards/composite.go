@@ -1,7 +1,6 @@
 package boards
 
 import (
-	"errors"
 	"net/http"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -54,18 +53,9 @@ func NewComposite(auth *auth.Handler, boards *Handler, productsH *products.Handl
 
 // Mount registers the composite on the given router.
 func (c *Composite) Mount(m api.ServeMux) {
-	api.HandlerWithOptions(c, api.StdHTTPServerOptions{
-		BaseRouter: m,
-		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			var invalidParam *api.InvalidParamFormatError
-			var requiredParam *api.RequiredParamError
-			if errors.As(err, &invalidParam) || errors.As(err, &requiredParam) {
-				httpx.Error(w, r, auth.ErrUnauthenticated)
-				return
-			}
-			httpx.Error(w, r, err)
-		},
-	})
+		api.HandlerWithOptions(c, api.StdHTTPServerOptions{
+			BaseRouter: m,
+		})
 }
 
 // ─── Auth routes (delegated) ────────────────────────────────────────────────
