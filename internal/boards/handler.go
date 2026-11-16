@@ -11,7 +11,6 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/api"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
-	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 )
 
@@ -54,22 +53,17 @@ func (h *Handler) createBoard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	err := db.InTx(ctx, nil, func(tx *db.Tx) error {
-		actor, _ := audit.ActorFrom(ctx)
-		ctx := audit.WithActor(ctx, actor)
+	actor, _ := audit.ActorFrom(ctx)
+	ctx = audit.WithActor(ctx, actor)
 
-		board, err := h.svc.CreateBoard(ctx, body.Name)
-		if err != nil {
-			return err
-		}
-
-		w.Header().Set("Location", "/api/v1/boards/"+board.ID.String())
-		writeJSON(w, http.StatusCreated, board)
-		return nil
-	})
+	board, err := h.svc.CreateBoard(ctx, body.Name)
 	if err != nil {
 		httpx.Error(w, r, err)
+		return
 	}
+
+	w.Header().Set("Location", "/api/v1/boards/"+board.ID.String())
+	writeJSON(w, http.StatusCreated, board)
 }
 
 func (h *Handler) GetBoard(w http.ResponseWriter, r *http.Request, boardId openapi_types.UUID) {

@@ -214,7 +214,7 @@ INSERT INTO ean_series (
 -- name: RegisterEANSeries :one
 -- REG-04: register a new EAN series
 INSERT INTO ean_series (
-    id, prefix, start_code, end_code, description
+    prefix, start_code, end_code, description
 ) VALUES (
-    gen_random_uuid(), $1, $2, $3, $4
+    $1, $2, $3, $4
 ) RETURNING *;

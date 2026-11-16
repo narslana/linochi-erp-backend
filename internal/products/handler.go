@@ -55,6 +55,8 @@ func (h *Handler) createFieldDefinition(w http.ResponseWriter, r *http.Request) 
 	var choices json.RawMessage
 	if body.Choices != nil {
 		choices, _ = json.Marshal(body.Choices)
+	} else {
+		choices = json.RawMessage("[]")
 	}
 
 	var helpText, unit string

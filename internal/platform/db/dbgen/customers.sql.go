@@ -842,9 +842,9 @@ func (q *Queries) RegisterCustomerEANSeries(ctx context.Context, arg RegisterCus
 
 const registerEANSeries = `-- name: RegisterEANSeries :one
 INSERT INTO ean_series (
-    id, prefix, start_code, end_code, description
+    prefix, start_code, end_code, description
 ) VALUES (
-    gen_random_uuid(), $1, $2, $3, $4
+    $1, $2, $3, $4
 ) RETURNING id, prefix, start_code, end_code, description, assigned_count, archived, archived_at, version, created_at, updated_at
 `
 
