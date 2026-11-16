@@ -40,6 +40,11 @@ func SystemActor(label string) Actor { return Actor{Type: ActorSystem, Label: la
 // transaction fails and is rolled back: an unattributed change is not saved.
 var ErrNoActor = errors.New("audit: no actor in the context")
 
+// ErrNeedsTransaction means Record was called without a transaction. Audit
+// entries must always be written to the database in the same transaction as
+// the change they describe (INS-05).
+var ErrNeedsTransaction = errors.New("audit: Record needs a transaction")
+
 type actorKey struct{}
 
 // WithActor returns a context carrying the actor. The auth middleware sets it

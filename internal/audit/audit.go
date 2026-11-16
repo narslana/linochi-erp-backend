@@ -172,11 +172,7 @@ func (r *Recorder) Record(ctx context.Context, tx *db.Tx, e Entry) error {
 		params.TraceID = &traceID
 	}
 	if tx == nil {
-		// No transaction: log to Loki and update metrics only.
-		// The audit entry will be missing from the database until the
-		// caller wraps the operation in a transaction.
-		r.published(ctx, id, actor, e, names)
-		return nil
+		return ErrNeedsTransaction
 	}
 	if _, err := tx.Queries().InsertAuditEntry(ctx, params); err != nil {
 		return fmt.Errorf("audit: insert entry: %w", err)
