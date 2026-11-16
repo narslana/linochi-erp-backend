@@ -1,6 +1,7 @@
 package boards
 
 import (
+	"errors"
 	"net/http"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -13,6 +14,7 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/kiosk"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/orders"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/products"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/purchasing"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/reminders"
@@ -21,6 +23,9 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/suppliers"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/workflow"
 )
+
+// Composite implements api.ServerInterface. A missing delegation fails the build.
+var _ api.ServerInterface = (*Composite)(nil)
 
 // Composite implements api.ServerInterface by delegating to auth, boards, products, ids, suppliers, purchasing, shipments, inventory, calendar and kiosk handlers.
 // It is mounted once via api.HandlerWithOptions so that routes are registered only once.
@@ -49,7 +54,18 @@ func NewComposite(auth *auth.Handler, boards *Handler, productsH *products.Handl
 
 // Mount registers the composite on the given router.
 func (c *Composite) Mount(m api.ServeMux) {
-	api.HandlerWithOptions(c, api.StdHTTPServerOptions{BaseRouter: m})
+	api.HandlerWithOptions(c, api.StdHTTPServerOptions{
+		BaseRouter: m,
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			var invalidParam *api.InvalidParamFormatError
+			var requiredParam *api.RequiredParamError
+			if errors.As(err, &invalidParam) || errors.As(err, &requiredParam) {
+				httpx.Error(w, r, auth.ErrUnauthenticated)
+				return
+			}
+			httpx.Error(w, r, err)
+		},
+	})
 }
 
 // ─── Auth routes (delegated) ────────────────────────────────────────────────
