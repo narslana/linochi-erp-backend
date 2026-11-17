@@ -93,6 +93,14 @@ func (s *Store) ListPlaylistViews(ctx context.Context, playlistID uuid.UUID) ([]
 	return out, nil
 }
 
+func (s *Store) GetPlaylistView(ctx context.Context, id uuid.UUID) (PlaylistView, error) {
+	row, err := s.q.GetPlaylistView(ctx, id)
+	if err != nil {
+		return PlaylistView{}, err
+	}
+	return dbRowToPlaylistView(row), nil
+}
+
 func (s *Store) CreatePlaylistView(ctx context.Context, id, playlistID uuid.UUID, viewType string, sortOrder, durationSec int32, settings json.RawMessage) (PlaylistView, error) {
 	row, err := s.q.CreatePlaylistView(ctx, dbgen.CreatePlaylistViewParams{
 		ID:          id,

@@ -50,54 +50,72 @@ func (s *Service) CreateKioskPlaylist(ctx context.Context, name, nameEn string) 
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "kiosk",
 			EntityType: "playlist",
 			EntityID:   p.ID,
 			Action:     "Create",
 			After:      map[string]any{"name": name},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return p, err
 }
 
 // UpdateKioskPlaylist updates a playlist (KIO-01).
 func (s *Service) UpdateKioskPlaylist(ctx context.Context, id uuid.UUID, name, nameEn *string, version int) (Playlist, error) {
-	p, err := s.store.UpdateKioskPlaylist(ctx, name, nameEn, id, version)
-	if err != nil {
-		return p, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "playlist",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"name": name},
-		Reason:     actor.ID.String(),
+	var updated Playlist
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		p, err := s.store.GetKioskPlaylist(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateKioskPlaylist(ctx, name, nameEn, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if name != nil {
+			after["name"] = *name
+		}
+		if nameEn != nil {
+			after["name_en"] = *nameEn
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "playlist",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"name": p.Name, "name_en": p.NameEn},
+			After:      after,
+		})
 	})
-	return p, nil
+	return updated, err
 }
 
 // ArchiveKioskPlaylist archives a playlist (NFK-09).
 func (s *Service) ArchiveKioskPlaylist(ctx context.Context, id uuid.UUID, version int) (Playlist, error) {
-	p, err := s.store.ArchiveKioskPlaylist(ctx, id, version)
-	if err != nil {
-		return p, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "playlist",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"name": p.Name},
-		Reason:     actor.ID.String(),
+	var updated Playlist
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		p, err := s.store.GetKioskPlaylist(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveKioskPlaylist(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "playlist",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"name": p.Name},
+		})
 	})
-	return p, nil
+	return updated, err
 }
 
 // ─── Playlist Views ───────────────────────────────────────────────────────────
@@ -129,22 +147,24 @@ func (s *Service) CreatePlaylistView(ctx context.Context, playlistID uuid.UUID, 
 		durationSec = 30
 	}
 
-	id := uuid.New()
-	v, err := s.store.CreatePlaylistView(ctx, id, playlistID, viewType, int32(sortOrder), int32(durationSec), settingsJSON) //nolint:gosec // sortOrder and durationSec are bounded by UI
-	if err != nil {
-		return v, err
-	}
+	var v PlaylistView
+	err = db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		id := uuid.New()
+		var err error
+		v, err = s.store.CreatePlaylistView(ctx, id, playlistID, viewType, int32(sortOrder), int32(durationSec), settingsJSON) //nolint:gosec // sortOrder and durationSec are bounded by UI
+		if err != nil {
+			return err
+		}
 
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "playlist_view",
-		EntityID:   id,
-		Action:     "Create",
-		After:      map[string]any{"view_type": viewType, "playlist_id": playlistID},
-		Reason:     actor.ID.String(),
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "playlist_view",
+			EntityID:   v.ID,
+			Action:     "Create",
+			After:      map[string]any{"view_type": viewType, "playlist_id": playlistID},
+		})
 	})
-	return v, nil
+	return v, err
 }
 
 // UpdatePlaylistView updates a view (KIO-01).
@@ -173,38 +193,59 @@ func (s *Service) UpdatePlaylistView(ctx context.Context, id uuid.UUID, viewType
 		settingsJSON = &raw
 	}
 
-	v, err := s.store.UpdatePlaylistView(ctx, vType, sOrder, dSec, settingsJSON, id, version)
-	if err != nil {
-		return v, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "playlist_view",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"view_type": viewType},
-		Reason:     actor.ID.String(),
+	var updated PlaylistView
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		v, err := s.store.GetPlaylistView(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdatePlaylistView(ctx, vType, sOrder, dSec, settingsJSON, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if viewType != nil {
+			after["view_type"] = *viewType
+		}
+		if sortOrder != nil {
+			after["sort_order"] = *sortOrder
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "playlist_view",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"view_type": v.ViewType, "sort_order": v.SortOrder},
+			After:      after,
+		})
 	})
-	return v, nil
+	return updated, err
 }
 
 // ArchivePlaylistView removes a view from a playlist (KIO-01).
 func (s *Service) ArchivePlaylistView(ctx context.Context, id uuid.UUID, version int) (PlaylistView, error) {
-	v, err := s.store.ArchivePlaylistView(ctx, id, version)
-	if err != nil {
-		return v, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "playlist_view",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"view_type": v.ViewType},
-		Reason:     actor.ID.String(),
+	var updated PlaylistView
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		v, err := s.store.GetPlaylistView(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchivePlaylistView(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "playlist_view",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"view_type": v.ViewType},
+		})
 	})
-	return v, nil
+	return updated, err
 }
 
 // ─── Devices ──────────────────────────────────────────────────────────────────
@@ -237,16 +278,13 @@ func (s *Service) CreateKioskDevice(ctx context.Context, name string) (KioskDevi
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "kiosk",
 			EntityType: "device",
 			EntityID:   d.ID,
 			Action:     "Create",
 			After:      map[string]any{"name": name, "pairing_code": pairingCode},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return d, err
 }
@@ -261,47 +299,59 @@ func (s *Service) ApproveKioskDevice(ctx context.Context, id uuid.UUID, playlist
 		}
 	}
 
-	d, err := s.store.UpdateKioskDevice(ctx, nil, nil, pid, nil, nil, id, version)
-	if err != nil {
-		return d, ProblemError(err)
-	}
+	var updated KioskDevice
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		d, err := s.store.GetKioskDevice(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateKioskDevice(ctx, nil, nil, pid, nil, nil, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
 
-	// Re-generate API key on approval
-	newKey := generateAPIKey()
-	newHash := hashAPIKey(newKey)
-	d, err = s.store.UpdateKioskDevice(ctx, nil, nil, pid, nil, &newHash, id, version+1)
-	if err != nil {
-		return d, err
-	}
+		// Re-generate API key on approval
+		newKey := generateAPIKey()
+		newHash := hashAPIKey(newKey)
+		_, err = s.store.UpdateKioskDevice(ctx, nil, nil, pid, nil, &newHash, id, version+1)
+		if err != nil {
+			return err
+		}
 
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "device",
-		EntityID:   id,
-		Action:     "Approve",
-		After:      map[string]any{"approved": true, "playlist_id": playlistID},
-		Reason:     actor.ID.String(),
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "device",
+			EntityID:   id,
+			Action:     "Approve",
+			Before:     map[string]any{"approved": d.Approved},
+			After:      map[string]any{"approved": true, "playlist_id": playlistID},
+		})
 	})
-	return d, nil
+	return updated, err
 }
 
 // ArchiveKioskDevice revokes and archives a device (KIO-06).
 func (s *Service) ArchiveKioskDevice(ctx context.Context, id uuid.UUID, version int) (KioskDevice, error) {
-	d, err := s.store.ArchiveKioskDevice(ctx, id, version)
-	if err != nil {
-		return d, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "kiosk",
-		EntityType: "device",
-		EntityID:   id,
-		Action:     "Revoke",
-		Before:     map[string]any{"approved": d.Approved},
-		Reason:     actor.ID.String(),
+	var updated KioskDevice
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		d, err := s.store.GetKioskDevice(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveKioskDevice(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "kiosk",
+			EntityType: "device",
+			EntityID:   id,
+			Action:     "Revoke",
+			Before:     map[string]any{"approved": d.Approved},
+		})
 	})
-	return d, nil
+	return updated, err
 }
 
 // ValidateKioskAPIKey validates a kiosk API key and returns the device (KIO-06).

@@ -465,6 +465,29 @@ func (q *Queries) GetKioskPlaylist(ctx context.Context, id uuid.UUID) (KioskPlay
 	return i, err
 }
 
+const getPlaylistView = `-- name: GetPlaylistView :one
+SELECT id, playlist_id, view_type, sort_order, duration_sec, settings, archived, archived_at, version, created_at, updated_at FROM kiosk_playlist_views WHERE id = $1 AND archived = false
+`
+
+func (q *Queries) GetPlaylistView(ctx context.Context, id uuid.UUID) (KioskPlaylistView, error) {
+	row := q.db.QueryRow(ctx, getPlaylistView, id)
+	var i KioskPlaylistView
+	err := row.Scan(
+		&i.ID,
+		&i.PlaylistID,
+		&i.ViewType,
+		&i.SortOrder,
+		&i.DurationSec,
+		&i.Settings,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listCalendarEvents = `-- name: ListCalendarEvents :many
 SELECT id, source_type, source_id, ical_uid, title, description, start_time, end_time, all_day, color, erp_link_type, erp_link_id, archived, archived_at, version, created_at, updated_at FROM calendar_events
 WHERE archived = false

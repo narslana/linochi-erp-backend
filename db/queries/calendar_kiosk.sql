@@ -98,6 +98,9 @@ SELECT * FROM kiosk_playlist_views
 WHERE playlist_id = $1 AND archived = false
 ORDER BY sort_order;
 
+-- name: GetPlaylistView :one
+SELECT * FROM kiosk_playlist_views WHERE id = $1 AND archived = false;
+
 -- name: CreatePlaylistView :one
 INSERT INTO kiosk_playlist_views (
     id, playlist_id, view_type, sort_order, duration_sec, settings
