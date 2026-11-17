@@ -120,6 +120,14 @@ func (s *Store) ListContacts(ctx context.Context, customerID uuid.UUID) ([]Conta
 	return out, nil
 }
 
+func (s *Store) GetContact(ctx context.Context, id uuid.UUID) (Contact, error) {
+	row, err := s.q.GetContact(ctx, id)
+	if err != nil {
+		return Contact{}, err
+	}
+	return dbRowToContact(row), nil
+}
+
 func (s *Store) CreateContact(ctx context.Context, id, customerID uuid.UUID, firstName, lastName, email, phone string) (Contact, error) {
 	row, err := s.q.CreateContact(ctx, dbgen.CreateContactParams{
 		ID:         id,
