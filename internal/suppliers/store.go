@@ -185,6 +185,14 @@ func (s *Store) ListSupplierProducts(ctx context.Context, supplierID uuid.UUID) 
 	return out, nil
 }
 
+func (s *Store) GetSupplierProduct(ctx context.Context, id uuid.UUID) (SupplierProduct, error) {
+	row, err := s.q.GetSupplierProduct(ctx, id)
+	if err != nil {
+		return SupplierProduct{}, err
+	}
+	return dbRowToSupplierProduct(row), nil
+}
+
 func (s *Store) CreateSupplierProduct(ctx context.Context, id, supplierID, productID uuid.UUID, purchasePrice int64, purchaseCurrency string) (SupplierProduct, error) {
 	row, err := s.q.CreateSupplierProduct(ctx, dbgen.CreateSupplierProductParams{
 		ID:               id,
