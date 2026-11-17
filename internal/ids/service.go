@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 )
 
 // Service holds the business logic for the numbers and IDs registry (REG-01, REG-02, REG-03).
@@ -38,67 +39,75 @@ func (s *Service) GetIdsEntry(ctx context.Context, id uuid.UUID) (IdsEntry, erro
 }
 
 func (s *Service) CreateIdsEntry(ctx context.Context, category, name, value, issuer, owner, note, documentURL string, validFrom, validTo *time.Time) (IdsEntry, error) {
-	id := uuid.New()
-	e, err := s.store.CreateIdsEntry(ctx, id, category, name, value, issuer, owner, note, documentURL, validFrom, validTo)
-	if err != nil {
-		return e, err
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "ids_entries",
-		EntityType: "ids_entry",
-		EntityID:   id,
-		Action:     "Create",
-		After:      map[string]any{"category": category, "name": name, "value": value},
-		Reason:     actor.ID.String(),
+	var e IdsEntry
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		id := uuid.New()
+		var err error
+		e, err = s.store.CreateIdsEntry(ctx, id, category, name, value, issuer, owner, note, documentURL, validFrom, validTo)
+		if err != nil {
+			return err
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "ids_entries",
+			EntityType: "ids_entry",
+			EntityID:   id,
+			Action:     "Create",
+			After:      map[string]any{"category": category, "name": name, "value": value},
+		})
 	})
-	return e, nil
+	return e, err
 }
 
 func (s *Service) UpdateIdsEntry(ctx context.Context, id uuid.UUID, category, name, value, issuer, owner, note, documentURL string, validFrom, validTo *time.Time, version int) (IdsEntry, error) {
-	e, err := s.store.GetIdsEntry(ctx, id)
-	if err != nil {
-		return e, ProblemError(err)
-	}
-	if version == 0 {
-		version = e.Version
-	}
-	updated, err := s.store.UpdateIdsEntry(ctx, category, name, value, issuer, owner, note, documentURL, validFrom, validTo, id, version)
-	if err != nil {
-		return updated, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "ids_entries",
-		EntityType: "ids_entry",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"category": category, "name": name, "value": value},
-		Reason:     actor.ID.String(),
+	var updated IdsEntry
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		e, err := s.store.GetIdsEntry(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		if version == 0 {
+			version = e.Version
+		}
+		updated, err = s.store.UpdateIdsEntry(ctx, category, name, value, issuer, owner, note, documentURL, validFrom, validTo, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "ids_entries",
+			EntityType: "ids_entry",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"category": e.Category, "name": e.Name, "value": e.Value},
+			After:      map[string]any{"category": category, "name": name, "value": value},
+		})
 	})
-	return updated, nil
+	return updated, err
 }
 
 func (s *Service) ArchiveIdsEntry(ctx context.Context, id uuid.UUID, version int) (IdsEntry, error) {
-	e, err := s.store.GetIdsEntry(ctx, id)
-	if err != nil {
-		return e, ProblemError(err)
-	}
-	if version == 0 {
-		version = e.Version
-	}
-	updated, err := s.store.ArchiveIdsEntry(ctx, id, version)
-	if err != nil {
-		return updated, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "ids_entries",
-		EntityType: "ids_entry",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"name": e.Name, "value": e.Value},
-		Reason:     actor.ID.String(),
+	var updated IdsEntry
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		e, err := s.store.GetIdsEntry(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		if version == 0 {
+			version = e.Version
+		}
+		updated, err = s.store.ArchiveIdsEntry(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "ids_entries",
+			EntityType: "ids_entry",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"name": e.Name, "value": e.Value},
+		})
 	})
-	return updated, nil
+	return updated, err
 }
