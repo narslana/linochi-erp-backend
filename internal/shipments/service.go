@@ -55,58 +55,69 @@ func (s *Service) CreateShipment(ctx context.Context, poID uuid.UUID, fromLocati
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "shipments",
 			EntityType: "shipment",
 			EntityID:   sh.ID,
 			Action:     "Create",
 			After:      map[string]any{"po_id": poID, "status": status},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return sh, err
 }
 
 // UpdateShipment updates a shipment (INK-02).
 func (s *Service) UpdateShipment(ctx context.Context, id uuid.UUID, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status *string, shippedAt, estimatedArrival, actualArrival *time.Time, documents *json.RawMessage, version int) (Shipment, error) {
-	sh, err := s.store.UpdateShipment(ctx, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status, shippedAt, estimatedArrival, actualArrival, documents, id, version)
-	if err != nil {
-		return sh, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	after := map[string]any{}
-	if status != nil {
-		after["status"] = *status
-	}
-	if trackingNumber != nil {
-		after["tracking_number"] = *trackingNumber
-	}
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "shipments",
-		EntityType: "shipment",
-		EntityID:   id,
-		Action:     "Update",
-		After:      after,
-		Reason:     actor.ID.String(),
+	var sh Shipment
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		var err error
+		sh, err = s.store.UpdateShipment(ctx, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status, shippedAt, estimatedArrival, actualArrival, documents, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if status != nil {
+			after["status"] = *status
+		}
+		if trackingNumber != nil {
+			after["tracking_number"] = *trackingNumber
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "shipments",
+			EntityType: "shipment",
+			EntityID:   id,
+			Action:     "Update",
+			After:      after,
+		})
 	})
-	return sh, nil
+	return sh, err
 }
 
 // ArchiveShipment archives a shipment (NFK-09).
 func (s *Service) ArchiveShipment(ctx context.Context, id uuid.UUID, version int) (Shipment, error) {
-	sh, err := s.store.ArchiveShipment(ctx, id, version)
-	if err != nil {
-		return sh, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "shipments",
-		EntityType: "shipment",
-		EntityID:   id,
-		Action:     "Archive",
-		Reason:     actor.ID.String(),
+	var updated Shipment
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		sh, err := s.store.GetShipment(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		if version == 0 {
+			version = sh.Version
+		}
+		updated, err = s.store.ArchiveShipment(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "shipments",
+			EntityType: "shipment",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"po_id": sh.PurchaseOrderID, "status": sh.Status},
+		})
 	})
-	return sh, nil
+	return updated, err
 }
