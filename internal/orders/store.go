@@ -260,6 +260,14 @@ func (s *Store) ListOrderLines(ctx context.Context, orderID uuid.UUID) ([]OrderL
 	return out, nil
 }
 
+func (s *Store) GetOrderLine(ctx context.Context, id uuid.UUID) (OrderLine, error) {
+	row, err := s.q.GetOrderLine(ctx, id)
+	if err != nil {
+		return OrderLine{}, err
+	}
+	return dbRowToOrderLine(row), nil
+}
+
 func (s *Store) CreateOrderLine(ctx context.Context, id, orderID, productID uuid.UUID, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek int64, taxRate float64) (OrderLine, error) {
 	var taxRateNumeric pgtype.Numeric
 	taxRateNumeric.Int = big.NewInt(int64(taxRate * 100))

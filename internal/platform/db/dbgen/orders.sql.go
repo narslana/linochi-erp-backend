@@ -362,6 +362,32 @@ func (q *Queries) GetOrderByExternalId(ctx context.Context, externalID string) (
 	return i, err
 }
 
+const getOrderLine = `-- name: GetOrderLine :one
+SELECT id, order_id, product_id, quantity, quantity_shipped, unit_price_sek, tax_rate, tax_amount_sek, total_sek, archived, archived_at, version, created_at, updated_at FROM order_lines WHERE id = $1 AND archived = false
+`
+
+func (q *Queries) GetOrderLine(ctx context.Context, id uuid.UUID) (OrderLine, error) {
+	row := q.db.QueryRow(ctx, getOrderLine, id)
+	var i OrderLine
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.QuantityShipped,
+		&i.UnitPriceSek,
+		&i.TaxRate,
+		&i.TaxAmountSek,
+		&i.TotalSek,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listOrderLines = `-- name: ListOrderLines :many
 SELECT id, order_id, product_id, quantity, quantity_shipped, unit_price_sek, tax_rate, tax_amount_sek, total_sek, archived, archived_at, version, created_at, updated_at FROM order_lines WHERE order_id = $1 AND archived = false ORDER BY id
 `

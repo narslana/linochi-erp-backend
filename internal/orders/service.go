@@ -40,16 +40,13 @@ func (s *Service) CreateOrder(ctx context.Context, customerID uuid.UUID, externa
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "orders",
 			EntityType: "order",
 			EntityID:   order.ID,
 			Action:     "Create",
 			After:      map[string]any{"channel": channel, "status": status},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return order, err
 }
@@ -74,56 +71,84 @@ func (s *Service) GetOrderByExternalID(ctx context.Context, externalID string) (
 
 // UpdateOrder updates an order (ORD-01).
 func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes *string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek *int64, customerID *uuid.UUID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry *string, id uuid.UUID, version int) (Order, error) {
-	order, err := s.store.UpdateOrder(ctx, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, customerID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, nil, nil, id, version)
-	if err != nil {
-		return order, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "order",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"status": status},
-		Reason:     actor.ID.String(),
+	var updated Order
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		order, err := s.store.GetOrder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateOrder(ctx, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, customerID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, nil, nil, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if status != nil {
+			after["status"] = *status
+		}
+		if notes != nil {
+			after["notes"] = *notes
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "order",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"status": order.Status, "notes": order.Notes},
+			After:      after,
+		})
 	})
-	return order, nil
+	return updated, err
 }
 
 // ArchiveOrder archives an order (NFK-09).
 func (s *Service) ArchiveOrder(ctx context.Context, id uuid.UUID, version int) (Order, error) {
-	order, err := s.store.ArchiveOrder(ctx, id, version)
-	if err != nil {
-		return order, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "order",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"channel": order.Channel},
-		Reason:     actor.ID.String(),
+	var updated Order
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		order, err := s.store.GetOrder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveOrder(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "order",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"channel": order.Channel},
+		})
 	})
-	return order, nil
+	return updated, err
 }
 
 // UpdateOrderStatus changes the order status and runs workflow effects (WF-06).
 func (s *Service) UpdateOrderStatus(ctx context.Context, status string, shippedAt, deliveredAt *string, trackingNumber, carrier *string, id uuid.UUID, version int) (Order, error) {
-	order, err := s.store.UpdateOrderStatus(ctx, status, shippedAt, deliveredAt, trackingNumber, carrier, id, version)
-	if err != nil {
-		return order, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "order",
-		EntityID:   id,
-		Action:     "UpdateStatus",
-		After:      map[string]any{"status": status},
-		Reason:     actor.ID.String(),
+	var updated Order
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		order, err := s.store.GetOrder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateOrderStatus(ctx, status, shippedAt, deliveredAt, trackingNumber, carrier, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "order",
+			EntityID:   id,
+			Action:     "UpdateStatus",
+			Before:     map[string]any{"status": order.Status},
+			After:      map[string]any{"status": status},
+		})
 	})
-	return order, nil
+	return updated, err
 }
 
 // ─── Order Lines ──────────────────────────────────────────────────────────────
@@ -144,114 +169,169 @@ func (s *Service) CreateOrderLine(ctx context.Context, orderID, productID uuid.U
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "orders",
 			EntityType: "orderline",
 			EntityID:   line.ID,
 			Action:     "Create",
 			After:      map[string]any{"product_id": productID.String(), "quantity": quantity},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return line, err
 }
 
 // UpdateOrderLine updates an order line (ORD-01).
 func (s *Service) UpdateOrderLine(ctx context.Context, quantity, quantityShipped *int, unitPriceSek, taxAmountSek, totalSek *int64, taxRate *float64, id uuid.UUID, version int) (OrderLine, error) {
-	line, err := s.store.UpdateOrderLine(ctx, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek, taxRate, id, version)
-	if err != nil {
-		return line, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "orderline",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"quantity": quantity},
-		Reason:     actor.ID.String(),
+	var updated OrderLine
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		line, err := s.store.GetOrderLine(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateOrderLine(ctx, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek, taxRate, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if quantity != nil {
+			after["quantity"] = *quantity
+		}
+		if quantityShipped != nil {
+			after["quantity_shipped"] = *quantityShipped
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "orderline",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"quantity": line.Quantity, "quantity_shipped": line.QuantityShipped},
+			After:      after,
+		})
 	})
-	return line, nil
+	return updated, err
 }
 
 // ArchiveOrderLine archives an order line (NFK-09).
 func (s *Service) ArchiveOrderLine(ctx context.Context, id uuid.UUID, version int) (OrderLine, error) {
-	line, err := s.store.ArchiveOrderLine(ctx, id, version)
-	if err != nil {
-		return line, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "orderline",
-		EntityID:   id,
-		Action:     "Archive",
-		Reason:     actor.ID.String(),
+	var updated OrderLine
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		line, err := s.store.GetOrderLine(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveOrderLine(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "orderline",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"product_id": line.ProductID, "quantity": line.Quantity},
+		})
 	})
-	return line, nil
+	return updated, err
 }
 
 // AcceptOrder accepts an order with preview and optional override (ORD-04, WF-05).
 func (s *Service) AcceptOrder(ctx context.Context, status string, reason *string, id uuid.UUID) (Order, error) {
-	order, err := s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
-	if err != nil {
-		return order, ProblemError(err)
-	}
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "order",
-		EntityID:   order.ID,
-		Action:     "Accept",
-		Reason:     reasonString(reason),
+	var updated Order
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		order, err := s.store.GetOrder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "order",
+			EntityID:   id,
+			Action:     "Accept",
+			Before:     map[string]any{"status": order.Status},
+			Reason:     reasonString(reason),
+		})
 	})
-	return order, nil
+	return updated, err
 }
 
 // ShipOrder ships an order (ORD-06).
 func (s *Service) ShipOrder(ctx context.Context, status string, id uuid.UUID) (Order, error) {
-	order, err := s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
-	if err != nil {
-		return order, ProblemError(err)
-	}
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "order",
-		EntityID:   order.ID,
-		Action:     "Ship",
+	var updated Order
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		order, err := s.store.GetOrder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "order",
+			EntityID:   id,
+			Action:     "Ship",
+			Before:     map[string]any{"status": order.Status},
+		})
 	})
-	return order, nil
+	return updated, err
 }
 
 // CancelOrder cancels an order (ORD-07).
 func (s *Service) CancelOrder(ctx context.Context, status string, id uuid.UUID) (Order, error) {
-	order, err := s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
-	if err != nil {
-		return order, ProblemError(err)
-	}
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "orders",
-		EntityType: "order",
-		EntityID:   order.ID,
-		Action:     "Cancel",
+	var updated Order
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		order, err := s.store.GetOrder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "orders",
+			EntityType: "order",
+			EntityID:   id,
+			Action:     "Cancel",
+			Before:     map[string]any{"status": order.Status},
+		})
 	})
-	return order, nil
+	return updated, err
 }
 
 // DeleteOrderLine deletes an order line (NFK-09).
 func (s *Service) DeleteOrderLine(ctx context.Context, id uuid.UUID) (OrderLine, error) {
-	line, err := s.store.ArchiveOrderLine(ctx, id, 0)
-	if err != nil {
-		return line, ProblemError(err)
-	}
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "order_lines",
-		EntityType: "order_line",
-		EntityID:   id,
-		Action:     "Delete",
+	var updated OrderLine
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		line, err := s.store.GetOrderLine(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveOrderLine(ctx, id, 0)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "order_lines",
+			EntityType: "order_line",
+			EntityID:   id,
+			Action:     "Delete",
+			Before:     map[string]any{"product_id": line.ProductID, "quantity": line.Quantity},
+		})
 	})
-	return line, nil
+	return updated, err
 }
 
 // CalculateTotals calculates order totals from lines (ORD-02).

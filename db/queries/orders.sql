@@ -81,6 +81,9 @@ RETURNING *;
 -- name: ListOrderLines :many
 SELECT * FROM order_lines WHERE order_id = $1 AND archived = false ORDER BY id;
 
+-- name: GetOrderLine :one
+SELECT * FROM order_lines WHERE id = $1 AND archived = false;
+
 -- name: CreateOrderLine :one
 INSERT INTO order_lines (
     id, order_id, product_id, quantity, quantity_shipped,
