@@ -339,7 +339,6 @@ func dbRowToOrder(r dbgen.Order) Order {
 	}
 	o := Order{
 		ID:                 r.ID,
-		ExternalID:         r.ExternalID,
 		Channel:            r.Channel,
 		Status:             r.Status,
 		Currency:           r.Currency,
@@ -366,6 +365,9 @@ func dbRowToOrder(r dbgen.Order) Order {
 		Version:            int(r.Version),
 		CreatedAt:          r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:          r.UpdatedAt.Format(time.RFC3339),
+	}
+	if r.ExternalID != "" {
+		o.ExternalID = &r.ExternalID
 	}
 	if r.ShippedAt != nil {
 		t := r.ShippedAt.Format(time.RFC3339)

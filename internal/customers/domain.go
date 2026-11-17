@@ -51,8 +51,8 @@ type Customer struct {
 	Address    string    `json:"address"`
 	City       string    `json:"city"`
 	Country    string    `json:"country"`
-	Eori       string    `json:"eori,omitempty"`
-	Epr        string    `json:"epr,omitempty"`
+	Eori       *string   `json:"eori"`
+	Epr        *string   `json:"epr"`
 	Currency   string    `json:"currency"`
 	Notes      string    `json:"notes,omitempty"`
 	Archived   bool      `json:"-"`

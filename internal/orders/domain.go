@@ -43,7 +43,7 @@ func ProblemError(err error) error {
 // Order is a sales order (ORD-01).
 type Order struct {
 	ID                 uuid.UUID `json:"id"`
-	ExternalID         string    `json:"external_id,omitempty"`
+	ExternalID         *string   `json:"external_id"`
 	Channel            string    `json:"channel"`
 	Status             string    `json:"status"`
 	Currency           string    `json:"currency"`

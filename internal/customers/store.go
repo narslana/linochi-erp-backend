@@ -443,13 +443,17 @@ func dbRowToCustomer(r dbgen.Customer) Customer {
 		Address:   r.Address,
 		City:      r.City,
 		Country:   r.Country,
-		Eori:      r.Eori,
-		Epr:       r.Epr,
 		Currency:  r.Currency,
 		Notes:     r.Notes,
 		Version:   int(r.Version),
 		CreatedAt: r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
+	}
+	if r.Eori != "" {
+		c.Eori = &r.Eori
+	}
+	if r.Epr != "" {
+		c.Epr = &r.Epr
 	}
 	if r.ArchivedAt != nil {
 		c.Archived = true
