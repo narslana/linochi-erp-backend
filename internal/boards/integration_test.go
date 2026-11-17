@@ -98,7 +98,7 @@ func newEnv(t *testing.T) *env {
 // ─── TAV-01: Boards ─────────────────────────────────────────────────────────
 
 func TestTAV01_ListBoards(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	// Create a board.
@@ -121,7 +121,7 @@ func TestTAV01_ListBoards(t *testing.T) {
 }
 
 func TestTAV01_CreateBoard(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	board, err := e.boardsSVC.CreateBoard(ctx, "Project Alpha")
@@ -137,7 +137,7 @@ func TestTAV01_CreateBoard(t *testing.T) {
 }
 
 func TestTAV01_ArchiveBoard(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	board, err := e.boardsSVC.CreateBoard(ctx, "To Archive")
@@ -157,7 +157,7 @@ func TestTAV01_ArchiveBoard(t *testing.T) {
 // ─── TAV-02: Columns ────────────────────────────────────────────────────────
 
 func TestTAV02_DefaultColumns(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	_, err := e.boardsSVC.CreateBoard(ctx, "Column Test")
@@ -190,7 +190,7 @@ func TestTAV02_DefaultColumns(t *testing.T) {
 }
 
 func TestTAV02_CreateColumn(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -204,7 +204,7 @@ func TestTAV02_CreateColumn(t *testing.T) {
 }
 
 func TestTAV02_UpdateColumn(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -223,7 +223,7 @@ func TestTAV02_UpdateColumn(t *testing.T) {
 }
 
 func TestTAV02_ArchiveColumn(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -244,7 +244,7 @@ func TestTAV02_ArchiveColumn(t *testing.T) {
 // ─── TAV-03: Cards ──────────────────────────────────────────────────────────
 
 func TestTAV03_CreateCard(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -266,7 +266,7 @@ func TestTAV03_CreateCard(t *testing.T) {
 }
 
 func TestTAV03_CardWithDueDate(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -288,7 +288,7 @@ func TestTAV03_CardWithDueDate(t *testing.T) {
 // ─── TAV-04: Update Card (Move) ─────────────────────────────────────────────
 
 func TestTAV04_MoveCard(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -318,7 +318,7 @@ func TestTAV04_MoveCard(t *testing.T) {
 // ─── TAV-05: Checklists ─────────────────────────────────────────────────────
 
 func TestTAV05_CreateChecklistItem(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -337,7 +337,7 @@ func TestTAV05_CreateChecklistItem(t *testing.T) {
 }
 
 func TestTAV05_UpdateChecklistItem(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -358,7 +358,7 @@ func TestTAV05_UpdateChecklistItem(t *testing.T) {
 }
 
 func TestTAV05_ListChecklistItems(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -385,7 +385,7 @@ func TestTAV05_ListChecklistItems(t *testing.T) {
 // ─── TAV-06: Comments ───────────────────────────────────────────────────────
 
 func TestTAV06_CreateComment(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
@@ -410,7 +410,7 @@ func TestTAV06_CreateComment(t *testing.T) {
 }
 
 func TestTAV06_ListComments(t *testing.T) {
-	ctx := context.Background()
+	ctx := audit.WithActor(context.Background(), audit.SystemActor("test"))
 	e := newEnv(t)
 
 	boardID := createBoard(t, ctx, e)
