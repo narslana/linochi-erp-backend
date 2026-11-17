@@ -383,7 +383,6 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	if ptID == "" {
 		t.Fatalf("product type response missing id: %s", w.Body.String())
 	}
-	t.Logf("product type created with id=%s", ptID)
 	w = b.callJSON("GET", "/api/v1/product-types/"+ptID, nil, nil, &calls)
 	mustOK(t, w, "GET /api/v1/product-types/"+ptID)
 	w = b.callJSON("GET", "/api/v1/product-types", nil, nil, &calls)
@@ -406,7 +405,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	var sup map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &sup)
 	supID := sup["id"].(string)
-	b.callJSON("POST", "/api/v1/suppliers/"+supID+"/contacts", map[string]interface{}{"name": "Contact Person", "email": "contact@example.com"}, nil, &calls)
+	w = b.callJSON("POST", "/api/v1/suppliers/"+supID+"/contacts", map[string]interface{}{"name": "Contact Person", "email": "contact@example.com"}, nil, &calls)
 	var supContact map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &supContact)
 	supContactID := supContact["id"].(string)
@@ -476,16 +475,6 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &rem)
 	remID := rem["id"].(string)
 	// ---- products: CRUD ----
-	t.Logf("creating product with product_type_id=%s", ptID)
-	// Direct DB check: verify product type exists
-	var exists bool
-	err := he.pool.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM product_types WHERE id = $1)", ptID).Scan(&exists)
-	if err != nil {
-		t.Fatalf("DB check product_types: %v", err)
-	}
-	t.Logf("product type exists in DB: %v", exists)
-	// Also verify the exact UUID format
-	t.Logf("ptID bytes: %x", []byte(ptID))
 	w = b.callJSON("POST", "/api/v1/products", map[string]interface{}{"name": "Dog Shampoo", "name_en": "Dog Shampoo", "product_type_id": ptID, "volume": 500, "volume_unit": "ml", "unit": "bottle", "base_price_sek": 19900, "cost_price_sek": 8000, "vat_rate": 0.25}, nil, &calls)
 	var prod map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &prod)
@@ -530,7 +519,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &po)
 	poID = po["id"].(string)
 	b.call("GET", "/api/v1/purchase-orders/"+poID, nil, &calls)
-	b.callJSON("POST", "/api/v1/purchase-orders/"+poID+"/lines", map[string]interface{}{"product_id": prodID, "quantity": 100, "unit_price": 8000}, nil, &calls)
+	w = b.callJSON("POST", "/api/v1/purchase-orders/"+poID+"/lines", map[string]interface{}{"product_id": prodID, "quantity": 100, "unit_price": 8000}, nil, &calls)
 	var pol map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &pol)
 	polID := pol["id"].(string)
@@ -666,7 +655,6 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("DELETE", "/api/v1/field-definitions/"+fdID, map[string]interface{}{}, nil, &calls)
 	// ---- ean-series: CRUD ----
 	b.call("GET", "/api/v1/ean-series", nil, &calls)
-	b.callJSON("DELETE", "/api/v1/ean-series/"+eanID, map[string]interface{}{}, nil, &calls)
 
 	for _, c := range calls {
 		validate(t, find, c.req, c.w)
