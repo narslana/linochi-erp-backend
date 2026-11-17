@@ -3817,11 +3817,7 @@ paths:
                 properties:
                   message: { type: string }
         "401":
-          description: Not approved or invalid key.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Problem"
+          $ref: "#/components/responses/Unauthenticated"
         "400": { $ref: "#/components/responses/BadRequest" }
 
   /api/v1/kiosk/data:
