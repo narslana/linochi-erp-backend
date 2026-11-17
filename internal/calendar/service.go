@@ -56,54 +56,72 @@ func (s *Service) CreateICalSource(ctx context.Context, name, nameEn, icalURL, c
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "calendar",
 			EntityType: "ical_source",
 			EntityID:   src.ID,
 			Action:     "Create",
 			After:      map[string]any{"name": name, "color": color},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return src, err
 }
 
 // UpdateICalSource updates an iCal source (KAL-01).
 func (s *Service) UpdateICalSource(ctx context.Context, id uuid.UUID, name, nameEn, icalURL, color *string, syncInterval *int, enabled *bool, version int) (ICalSource, error) {
-	src, err := s.store.UpdateICalSource(ctx, name, nameEn, icalURL, color, syncInterval, enabled, id, version)
-	if err != nil {
-		return src, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "calendar",
-		EntityType: "ical_source",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"name": name},
-		Reason:     actor.ID.String(),
+	var updated ICalSource
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		src, err := s.store.GetICalSource(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateICalSource(ctx, name, nameEn, icalURL, color, syncInterval, enabled, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if name != nil {
+			after["name"] = *name
+		}
+		if color != nil {
+			after["color"] = *color
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "calendar",
+			EntityType: "ical_source",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"name": src.Name, "color": src.Color},
+			After:      after,
+		})
 	})
-	return src, nil
+	return updated, err
 }
 
 // ArchiveICalSource archives an iCal source (NFK-09).
 func (s *Service) ArchiveICalSource(ctx context.Context, id uuid.UUID, version int) (ICalSource, error) {
-	src, err := s.store.ArchiveICalSource(ctx, id, version)
-	if err != nil {
-		return src, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "calendar",
-		EntityType: "ical_source",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"name": src.Name},
-		Reason:     actor.ID.String(),
+	var updated ICalSource
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		src, err := s.store.GetICalSource(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveICalSource(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "calendar",
+			EntityType: "ical_source",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"name": src.Name},
+		})
 	})
-	return src, nil
+	return updated, err
 }
 
 // ─── Calendar Events ──────────────────────────────────────────────────────────
@@ -148,23 +166,25 @@ func (s *Service) CreateInternalEvent(ctx context.Context, title string, startTi
 		color = "#6366f1"
 	}
 
-	id := uuid.New()
-	erpLinkTypeStr := erpLinkType
-	erpLinkIDStr := erpLinkID.String()
+	var ev CalendarEvent
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		id := uuid.New()
+		erpLinkTypeStr := erpLinkType
+		erpLinkIDStr := erpLinkID.String()
 
-	ev, err := s.store.UpsertCalendarEvent(ctx, id, "internal", nil, nil, title, "", startTime, endTime, allDay, color, erpLinkTypeStr, &erpLinkIDStr)
-	if err != nil {
-		return ev, err
-	}
+		var err error
+		ev, err = s.store.UpsertCalendarEvent(ctx, id, "internal", nil, nil, title, "", startTime, endTime, allDay, color, erpLinkTypeStr, &erpLinkIDStr)
+		if err != nil {
+			return err
+		}
 
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "calendar",
-		EntityType: "internal_event",
-		EntityID:   id,
-		Action:     "Create",
-		After:      map[string]any{"title": title, "erp_link_type": erpLinkType},
-		Reason:     actor.ID.String(),
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "calendar",
+			EntityType: "internal_event",
+			EntityID:   id,
+			Action:     "Create",
+			After:      map[string]any{"title": title, "erp_link_type": erpLinkType},
+		})
 	})
-	return ev, nil
+	return ev, err
 }
