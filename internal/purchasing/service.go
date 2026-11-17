@@ -47,9 +47,10 @@ func (s *Service) GetPurchaseOrder(ctx context.Context, id uuid.UUID) (PurchaseO
 func (s *Service) CreatePurchaseOrder(ctx context.Context, supplierID uuid.UUID, orderNumber, currency string, orderDate, expectedDate *time.Time, notes string) (PurchaseOrder, error) {
 	var po PurchaseOrder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		po, err = s.store.CreatePurchaseOrder(ctx, id, supplierID, orderNumber, currency, orderDate, expectedDate, "draft", 0, notes)
+		po, err = st.CreatePurchaseOrder(ctx, id, supplierID, orderNumber, currency, orderDate, expectedDate, "draft", 0, notes)
 		if err != nil {
 			return err
 		}
@@ -69,11 +70,12 @@ func (s *Service) CreatePurchaseOrder(ctx context.Context, supplierID uuid.UUID,
 func (s *Service) UpdatePurchaseOrder(ctx context.Context, id uuid.UUID, status *string, expectedDate *time.Time, totalAmount *int64, notes *string, version int) (PurchaseOrder, error) {
 	var updated PurchaseOrder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		po, err := s.store.GetPurchaseOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		po, err := st.GetPurchaseOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdatePurchaseOrder(ctx, status, expectedDate, totalAmount, notes, id, version)
+		updated, err = st.UpdatePurchaseOrder(ctx, status, expectedDate, totalAmount, notes, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -102,11 +104,12 @@ func (s *Service) UpdatePurchaseOrder(ctx context.Context, id uuid.UUID, status 
 func (s *Service) ArchivePurchaseOrder(ctx context.Context, id uuid.UUID, version int) (PurchaseOrder, error) {
 	var updated PurchaseOrder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		po, err := s.store.GetPurchaseOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		po, err := st.GetPurchaseOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchivePurchaseOrder(ctx, id, version)
+		updated, err = st.ArchivePurchaseOrder(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -131,9 +134,10 @@ func (s *Service) ListLines(ctx context.Context, poID uuid.UUID) ([]PurchaseOrde
 func (s *Service) CreateLine(ctx context.Context, poID, productID uuid.UUID, quantity int, unitPrice, lineTotal int64, unitCurrency string) (PurchaseOrderLine, error) {
 	var line PurchaseOrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		line, err = s.store.CreatePurchaseOrderLine(ctx, id, poID, productID, quantity, unitPrice, lineTotal, unitCurrency)
+		line, err = st.CreatePurchaseOrderLine(ctx, id, poID, productID, quantity, unitPrice, lineTotal, unitCurrency)
 		if err != nil {
 			return err
 		}
@@ -153,11 +157,12 @@ func (s *Service) CreateLine(ctx context.Context, poID, productID uuid.UUID, qua
 func (s *Service) UpdateLine(ctx context.Context, id uuid.UUID, quantity, unitPrice, lineTotal *int, version int) (PurchaseOrderLine, error) {
 	var updated PurchaseOrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		line, err := s.store.GetPurchaseOrderLine(ctx, id)
+		st := s.store.WithTx(tx)
+		line, err := st.GetPurchaseOrderLine(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdatePurchaseOrderLine(ctx, quantity, unitPrice, lineTotal, id, version)
+		updated, err = st.UpdatePurchaseOrderLine(ctx, quantity, unitPrice, lineTotal, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -186,11 +191,12 @@ func (s *Service) UpdateLine(ctx context.Context, id uuid.UUID, quantity, unitPr
 func (s *Service) ArchiveLine(ctx context.Context, id uuid.UUID, version int) (PurchaseOrderLine, error) {
 	var updated PurchaseOrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		line, err := s.store.GetPurchaseOrderLine(ctx, id)
+		st := s.store.WithTx(tx)
+		line, err := st.GetPurchaseOrderLine(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchivePurchaseOrderLine(ctx, id, version)
+		updated, err = st.ArchivePurchaseOrderLine(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

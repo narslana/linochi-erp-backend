@@ -30,9 +30,10 @@ func (s *Service) ListSuppliers(ctx context.Context) ([]Supplier, error) {
 func (s *Service) CreateSupplier(ctx context.Context, name, nameEn, orgNumber, vatNumber, country, address, city, postalCode, website, contactEmail, contactPhone, role string, leadTimeDays, moq int, currency, paymentTerms, deliveryTerms, notes string) (Supplier, error) {
 	var sup Supplier
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		sup, err = s.store.CreateSupplier(ctx, id, name, nameEn, orgNumber, vatNumber, country, address, city, postalCode, website, contactEmail, contactPhone, role, leadTimeDays, moq, currency, paymentTerms, deliveryTerms, notes)
+		sup, err = st.CreateSupplier(ctx, id, name, nameEn, orgNumber, vatNumber, country, address, city, postalCode, website, contactEmail, contactPhone, role, leadTimeDays, moq, currency, paymentTerms, deliveryTerms, notes)
 		if err != nil {
 			return err
 		}
@@ -61,11 +62,12 @@ func (s *Service) GetSupplier(ctx context.Context, id uuid.UUID) (Supplier, erro
 func (s *Service) UpdateSupplier(ctx context.Context, id uuid.UUID, name, nameEn, orgNumber, vatNumber, country, address, city, postalCode, website, contactEmail, contactPhone, role, paymentTerms, deliveryTerms, notes string, leadTimeDays, moq *int, version int) (Supplier, error) {
 	var updated Supplier
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		sup, err := s.store.GetSupplier(ctx, id)
+		st := s.store.WithTx(tx)
+		sup, err := st.GetSupplier(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateSupplier(ctx, name, nameEn, orgNumber, vatNumber, country, address, city, postalCode, website, contactEmail, contactPhone, role, paymentTerms, deliveryTerms, notes, leadTimeDays, moq, id, version)
+		updated, err = st.UpdateSupplier(ctx, name, nameEn, orgNumber, vatNumber, country, address, city, postalCode, website, contactEmail, contactPhone, role, paymentTerms, deliveryTerms, notes, leadTimeDays, moq, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -86,11 +88,12 @@ func (s *Service) UpdateSupplier(ctx context.Context, id uuid.UUID, name, nameEn
 func (s *Service) ArchiveSupplier(ctx context.Context, id uuid.UUID, version int) (Supplier, error) {
 	var updated Supplier
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		sup, err := s.store.GetSupplier(ctx, id)
+		st := s.store.WithTx(tx)
+		sup, err := st.GetSupplier(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveSupplier(ctx, id, version)
+		updated, err = st.ArchiveSupplier(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -115,8 +118,9 @@ func (s *Service) ListContacts(ctx context.Context, supplierID uuid.UUID) ([]Sup
 func (s *Service) CreateContact(ctx context.Context, supplierID, id uuid.UUID, name, nameEn, email, phone, role string) (SupplierContact, error) {
 	var c SupplierContact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		var err error
-		c, err = s.store.CreateSupplierContact(ctx, id, supplierID, name, nameEn, email, phone, role)
+		c, err = st.CreateSupplierContact(ctx, id, supplierID, name, nameEn, email, phone, role)
 		if err != nil {
 			return err
 		}
@@ -136,11 +140,12 @@ func (s *Service) CreateContact(ctx context.Context, supplierID, id uuid.UUID, n
 func (s *Service) UpdateContact(ctx context.Context, id uuid.UUID, name, nameEn, email, phone, role string, version int) (SupplierContact, error) {
 	var updated SupplierContact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		c, err := s.store.GetSupplierContact(ctx, id)
+		st := s.store.WithTx(tx)
+		c, err := st.GetSupplierContact(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateSupplierContact(ctx, name, nameEn, email, phone, role, id, version)
+		updated, err = st.UpdateSupplierContact(ctx, name, nameEn, email, phone, role, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -161,11 +166,12 @@ func (s *Service) UpdateContact(ctx context.Context, id uuid.UUID, name, nameEn,
 func (s *Service) ArchiveContact(ctx context.Context, id uuid.UUID, version int) (SupplierContact, error) {
 	var updated SupplierContact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		c, err := s.store.GetSupplierContact(ctx, id)
+		st := s.store.WithTx(tx)
+		c, err := st.GetSupplierContact(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveSupplierContact(ctx, id, version)
+		updated, err = st.ArchiveSupplierContact(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -190,9 +196,10 @@ func (s *Service) ListSupplierProducts(ctx context.Context, supplierID uuid.UUID
 func (s *Service) CreateSupplierProduct(ctx context.Context, supplierID, productID uuid.UUID, purchasePrice int64, purchaseCurrency string) (SupplierProduct, error) {
 	var sp SupplierProduct
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		sp, err = s.store.CreateSupplierProduct(ctx, id, supplierID, productID, purchasePrice, purchaseCurrency)
+		sp, err = st.CreateSupplierProduct(ctx, id, supplierID, productID, purchasePrice, purchaseCurrency)
 		if err != nil {
 			return err
 		}
@@ -212,11 +219,12 @@ func (s *Service) CreateSupplierProduct(ctx context.Context, supplierID, product
 func (s *Service) ArchiveSupplierProduct(ctx context.Context, id uuid.UUID, version int) (SupplierProduct, error) {
 	var updated SupplierProduct
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		sp, err := s.store.GetSupplierProduct(ctx, id)
+		st := s.store.WithTx(tx)
+		sp, err := st.GetSupplierProduct(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveSupplierProduct(ctx, id, version)
+		updated, err = st.ArchiveSupplierProduct(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

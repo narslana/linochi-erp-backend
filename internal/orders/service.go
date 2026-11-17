@@ -33,9 +33,10 @@ func (s *Service) ListOrders(ctx context.Context, status *string, customerID *uu
 func (s *Service) CreateOrder(ctx context.Context, customerID uuid.UUID, externalID, channel, status, currency string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek int64, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, notes string) (Order, error) {
 	var order Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		order, err = s.store.CreateOrder(ctx, id, customerID, externalID, channel, status, currency, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, nil, nil, notes)
+		order, err = st.CreateOrder(ctx, id, customerID, externalID, channel, status, currency, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, nil, nil, notes)
 		if err != nil {
 			return err
 		}
@@ -73,11 +74,12 @@ func (s *Service) GetOrderByExternalID(ctx context.Context, externalID string) (
 func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes *string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek *int64, customerID *uuid.UUID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry *string, id uuid.UUID, version int) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		order, err := s.store.GetOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		order, err := st.GetOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateOrder(ctx, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, customerID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, nil, nil, id, version)
+		updated, err = st.UpdateOrder(ctx, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, customerID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, nil, nil, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -106,11 +108,12 @@ func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, status, 
 func (s *Service) ArchiveOrder(ctx context.Context, id uuid.UUID, version int) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		order, err := s.store.GetOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		order, err := st.GetOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveOrder(ctx, id, version)
+		updated, err = st.ArchiveOrder(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -130,11 +133,12 @@ func (s *Service) ArchiveOrder(ctx context.Context, id uuid.UUID, version int) (
 func (s *Service) UpdateOrderStatus(ctx context.Context, status string, shippedAt, deliveredAt *string, trackingNumber, carrier *string, id uuid.UUID, version int) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		order, err := s.store.GetOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		order, err := st.GetOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateOrderStatus(ctx, status, shippedAt, deliveredAt, trackingNumber, carrier, id, version)
+		updated, err = st.UpdateOrderStatus(ctx, status, shippedAt, deliveredAt, trackingNumber, carrier, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -162,9 +166,10 @@ func (s *Service) ListOrderLines(ctx context.Context, orderID uuid.UUID) ([]Orde
 func (s *Service) CreateOrderLine(ctx context.Context, orderID, productID uuid.UUID, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek int64, taxRate float64) (OrderLine, error) {
 	var line OrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		line, err = s.store.CreateOrderLine(ctx, id, orderID, productID, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek, taxRate)
+		line, err = st.CreateOrderLine(ctx, id, orderID, productID, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek, taxRate)
 		if err != nil {
 			return err
 		}
@@ -184,11 +189,12 @@ func (s *Service) CreateOrderLine(ctx context.Context, orderID, productID uuid.U
 func (s *Service) UpdateOrderLine(ctx context.Context, quantity, quantityShipped *int, unitPriceSek, taxAmountSek, totalSek *int64, taxRate *float64, id uuid.UUID, version int) (OrderLine, error) {
 	var updated OrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		line, err := s.store.GetOrderLine(ctx, id)
+		st := s.store.WithTx(tx)
+		line, err := st.GetOrderLine(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateOrderLine(ctx, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek, taxRate, id, version)
+		updated, err = st.UpdateOrderLine(ctx, quantity, quantityShipped, unitPriceSek, taxAmountSek, totalSek, taxRate, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -217,11 +223,12 @@ func (s *Service) UpdateOrderLine(ctx context.Context, quantity, quantityShipped
 func (s *Service) ArchiveOrderLine(ctx context.Context, id uuid.UUID, version int) (OrderLine, error) {
 	var updated OrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		line, err := s.store.GetOrderLine(ctx, id)
+		st := s.store.WithTx(tx)
+		line, err := st.GetOrderLine(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveOrderLine(ctx, id, version)
+		updated, err = st.ArchiveOrderLine(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -241,11 +248,12 @@ func (s *Service) ArchiveOrderLine(ctx context.Context, id uuid.UUID, version in
 func (s *Service) AcceptOrder(ctx context.Context, status string, reason *string, id uuid.UUID) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		order, err := s.store.GetOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		order, err := st.GetOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -266,11 +274,12 @@ func (s *Service) AcceptOrder(ctx context.Context, status string, reason *string
 func (s *Service) ShipOrder(ctx context.Context, status string, id uuid.UUID) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		order, err := s.store.GetOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		order, err := st.GetOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -290,11 +299,12 @@ func (s *Service) ShipOrder(ctx context.Context, status string, id uuid.UUID) (O
 func (s *Service) CancelOrder(ctx context.Context, status string, id uuid.UUID) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		order, err := s.store.GetOrder(ctx, id)
+		st := s.store.WithTx(tx)
+		order, err := st.GetOrder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -314,11 +324,12 @@ func (s *Service) CancelOrder(ctx context.Context, status string, id uuid.UUID) 
 func (s *Service) DeleteOrderLine(ctx context.Context, id uuid.UUID) (OrderLine, error) {
 	var updated OrderLine
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		line, err := s.store.GetOrderLine(ctx, id)
+		st := s.store.WithTx(tx)
+		line, err := st.GetOrderLine(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveOrderLine(ctx, id, 0)
+		updated, err = st.ArchiveOrderLine(ctx, id, 0)
 		if err != nil {
 			return ProblemError(err)
 		}

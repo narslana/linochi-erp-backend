@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db/dbgen"
 )
 
@@ -19,6 +20,11 @@ type Store struct {
 
 func NewStore(pool *pgxpool.Pool) *Store {
 	return &Store{q: dbgen.New(pool)}
+}
+
+// WithTx returns a store that runs all queries in the given transaction.
+func (s *Store) WithTx(tx *db.Tx) *Store {
+	return &Store{q: tx.Queries()}
 }
 
 // ─── Boards ─────────────────────────────────────────────────────────────────

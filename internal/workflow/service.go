@@ -34,9 +34,10 @@ func (s *Service) ListWorkflowSteps(ctx context.Context) ([]Step, error) {
 func (s *Service) CreateWorkflowStep(ctx context.Context, key, name, nameEn string, sortOrder int, isStart, isEnd bool) (Step, error) {
 	var step Step
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		step, err = s.store.CreateWorkflowStep(ctx, id, key, name, nameEn, sortOrder, isStart, isEnd)
+		step, err = st.CreateWorkflowStep(ctx, id, key, name, nameEn, sortOrder, isStart, isEnd)
 		if err != nil {
 			return err
 		}
@@ -65,11 +66,12 @@ func (s *Service) GetWorkflowStep(ctx context.Context, id uuid.UUID) (Step, erro
 func (s *Service) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, sortOrder *int, isStart, isEnd *bool, id uuid.UUID, version int) (Step, error) {
 	var updated Step
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		step, err := s.store.GetWorkflowStep(ctx, id)
+		st := s.store.WithTx(tx)
+		step, err := st.GetWorkflowStep(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateWorkflowStep(ctx, name, nameEn, sortOrder, isStart, isEnd, id, version)
+		updated, err = st.UpdateWorkflowStep(ctx, name, nameEn, sortOrder, isStart, isEnd, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -98,11 +100,12 @@ func (s *Service) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, 
 func (s *Service) ArchiveWorkflowStep(ctx context.Context, id uuid.UUID, version int) (Step, error) {
 	var updated Step
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		step, err := s.store.GetWorkflowStep(ctx, id)
+		st := s.store.WithTx(tx)
+		step, err := st.GetWorkflowStep(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveWorkflowStep(ctx, id, version)
+		updated, err = st.ArchiveWorkflowStep(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -138,9 +141,10 @@ func (s *Service) GetWorkflowTransition(ctx context.Context, id uuid.UUID) (Tran
 func (s *Service) CreateWorkflowTransition(ctx context.Context, stepKey, fromKey, toKey uuid.UUID, label, labelEn string, sortOrder int) (Transition, error) {
 	var transition Transition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		transition, err = s.store.CreateWorkflowTransition(ctx, id, stepKey, fromKey, toKey, label, labelEn, sortOrder)
+		transition, err = st.CreateWorkflowTransition(ctx, id, stepKey, fromKey, toKey, label, labelEn, sortOrder)
 		if err != nil {
 			return err
 		}
@@ -160,11 +164,12 @@ func (s *Service) CreateWorkflowTransition(ctx context.Context, stepKey, fromKey
 func (s *Service) UpdateWorkflowTransition(ctx context.Context, fromKey, toKey *string, label, labelEn *string, sortOrder *int, id uuid.UUID, version int) (Transition, error) {
 	var updated Transition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		transition, err := s.store.GetWorkflowTransition(ctx, id)
+		st := s.store.WithTx(tx)
+		transition, err := st.GetWorkflowTransition(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateWorkflowTransition(ctx, fromKey, toKey, label, labelEn, sortOrder, id, version)
+		updated, err = st.UpdateWorkflowTransition(ctx, fromKey, toKey, label, labelEn, sortOrder, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -193,11 +198,12 @@ func (s *Service) UpdateWorkflowTransition(ctx context.Context, fromKey, toKey *
 func (s *Service) ArchiveWorkflowTransition(ctx context.Context, id uuid.UUID, version int) (Transition, error) {
 	var updated Transition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		transition, err := s.store.GetWorkflowTransition(ctx, id)
+		st := s.store.WithTx(tx)
+		transition, err := st.GetWorkflowTransition(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveWorkflowTransition(ctx, id, version)
+		updated, err = st.ArchiveWorkflowTransition(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -224,9 +230,10 @@ func (s *Service) ListWorkflowConditions(ctx context.Context, transitionID uuid.
 func (s *Service) CreateWorkflowCondition(ctx context.Context, transitionID uuid.UUID, kind string, config json.RawMessage) (Condition, error) {
 	var condition Condition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		condition, err = s.store.CreateWorkflowCondition(ctx, id, transitionID, kind, config)
+		condition, err = st.CreateWorkflowCondition(ctx, id, transitionID, kind, config)
 		if err != nil {
 			return err
 		}
@@ -246,11 +253,12 @@ func (s *Service) CreateWorkflowCondition(ctx context.Context, transitionID uuid
 func (s *Service) ArchiveWorkflowCondition(ctx context.Context, id uuid.UUID, version int) (Condition, error) {
 	var updated Condition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		condition, err := s.store.GetWorkflowCondition(ctx, id)
+		st := s.store.WithTx(tx)
+		condition, err := st.GetWorkflowCondition(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveWorkflowCondition(ctx, id, version)
+		updated, err = st.ArchiveWorkflowCondition(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -277,9 +285,10 @@ func (s *Service) ListWorkflowEffects(ctx context.Context, transitionID uuid.UUI
 func (s *Service) CreateWorkflowEffect(ctx context.Context, transitionID uuid.UUID, kind string, config json.RawMessage) (Effect, error) {
 	var effect Effect
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		effect, err = s.store.CreateWorkflowEffect(ctx, id, transitionID, kind, config)
+		effect, err = st.CreateWorkflowEffect(ctx, id, transitionID, kind, config)
 		if err != nil {
 			return err
 		}
@@ -299,11 +308,12 @@ func (s *Service) CreateWorkflowEffect(ctx context.Context, transitionID uuid.UU
 func (s *Service) ArchiveWorkflowEffect(ctx context.Context, id uuid.UUID, version int) (Effect, error) {
 	var updated Effect
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		effect, err := s.store.GetWorkflowEffect(ctx, id)
+		st := s.store.WithTx(tx)
+		effect, err := st.GetWorkflowEffect(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveWorkflowEffect(ctx, id, version)
+		updated, err = st.ArchiveWorkflowEffect(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

@@ -48,9 +48,10 @@ func (s *Service) GetShipment(ctx context.Context, id uuid.UUID) (Shipment, erro
 func (s *Service) CreateShipment(ctx context.Context, poID uuid.UUID, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status string, shippedAt, estimatedArrival, actualArrival *time.Time, documents json.RawMessage) (Shipment, error) {
 	var sh Shipment
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		sh, err = s.store.CreateShipment(ctx, id, poID, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status, shippedAt, estimatedArrival, actualArrival, documents)
+		sh, err = st.CreateShipment(ctx, id, poID, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status, shippedAt, estimatedArrival, actualArrival, documents)
 		if err != nil {
 			return err
 		}
@@ -70,8 +71,9 @@ func (s *Service) CreateShipment(ctx context.Context, poID uuid.UUID, fromLocati
 func (s *Service) UpdateShipment(ctx context.Context, id uuid.UUID, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status *string, shippedAt, estimatedArrival, actualArrival *time.Time, documents *json.RawMessage, version int) (Shipment, error) {
 	var sh Shipment
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		var err error
-		sh, err = s.store.UpdateShipment(ctx, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status, shippedAt, estimatedArrival, actualArrival, documents, id, version)
+		sh, err = st.UpdateShipment(ctx, fromLocation, toLocation, carrier, trackingNumber, batchNumber, status, shippedAt, estimatedArrival, actualArrival, documents, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -99,14 +101,15 @@ func (s *Service) UpdateShipment(ctx context.Context, id uuid.UUID, fromLocation
 func (s *Service) ArchiveShipment(ctx context.Context, id uuid.UUID, version int) (Shipment, error) {
 	var updated Shipment
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		sh, err := s.store.GetShipment(ctx, id)
+		st := s.store.WithTx(tx)
+		sh, err := st.GetShipment(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = sh.Version
 		}
-		updated, err = s.store.ArchiveShipment(ctx, id, version)
+		updated, err = st.ArchiveShipment(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

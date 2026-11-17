@@ -30,9 +30,10 @@ func (s *Service) ListReminders(ctx context.Context) ([]Reminder, error) {
 func (s *Service) CreateReminder(ctx context.Context, idsEntryID, externalRefID uuid.UUID, reminderType, externalRefType, title, titleEn, description, dueDate string) (Reminder, error) {
 	var reminder Reminder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		reminder, err = s.store.CreateReminder(ctx, id, idsEntryID, externalRefID, reminderType, externalRefType, title, titleEn, description, dueDate)
+		reminder, err = st.CreateReminder(ctx, id, idsEntryID, externalRefID, reminderType, externalRefType, title, titleEn, description, dueDate)
 		if err != nil {
 			return err
 		}
@@ -61,11 +62,12 @@ func (s *Service) GetReminder(ctx context.Context, id uuid.UUID) (Reminder, erro
 func (s *Service) UpdateReminder(ctx context.Context, title, titleEn, description *string, dueDate *string, id uuid.UUID, version int) (Reminder, error) {
 	var updated Reminder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		reminder, err := s.store.GetReminder(ctx, id)
+		st := s.store.WithTx(tx)
+		reminder, err := st.GetReminder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateReminder(ctx, title, titleEn, description, dueDate, id, version)
+		updated, err = st.UpdateReminder(ctx, title, titleEn, description, dueDate, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -86,11 +88,12 @@ func (s *Service) UpdateReminder(ctx context.Context, title, titleEn, descriptio
 func (s *Service) ArchiveReminder(ctx context.Context, id uuid.UUID, version int) (Reminder, error) {
 	var updated Reminder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		reminder, err := s.store.GetReminder(ctx, id)
+		st := s.store.WithTx(tx)
+		reminder, err := st.GetReminder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveReminder(ctx, id, version)
+		updated, err = st.ArchiveReminder(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -110,11 +113,12 @@ func (s *Service) ArchiveReminder(ctx context.Context, id uuid.UUID, version int
 func (s *Service) MarkReminderNotified(ctx context.Context, id uuid.UUID, version int) (Reminder, error) {
 	var updated Reminder
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		reminder, err := s.store.GetReminder(ctx, id)
+		st := s.store.WithTx(tx)
+		reminder, err := st.GetReminder(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.MarkReminderNotified(ctx, id, version)
+		updated, err = st.MarkReminderNotified(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

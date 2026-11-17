@@ -33,9 +33,10 @@ func (s *Service) ListBoards(ctx context.Context) ([]Board, error) {
 func (s *Service) CreateBoard(ctx context.Context, name string) (Board, error) {
 	var b Board
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		b, err = s.store.CreateBoard(ctx, id, name)
+		b, err = st.CreateBoard(ctx, id, name)
 		if err != nil {
 			return err
 		}
@@ -51,7 +52,7 @@ func (s *Service) CreateBoard(ctx context.Context, name string) (Board, error) {
 		}
 		for _, dc := range defaultCols {
 			colID := uuid.New()
-			_, err = s.store.CreateColumn(ctx, colID, id, dc.name, dc.order)
+			_, err = st.CreateColumn(ctx, colID, id, dc.name, dc.order)
 			if err != nil {
 				return err
 			}
@@ -81,14 +82,15 @@ func (s *Service) GetBoard(ctx context.Context, id uuid.UUID) (Board, error) {
 func (s *Service) UpdateBoard(ctx context.Context, id uuid.UUID, name string, version int) (Board, error) {
 	var updated Board
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		b, err := s.store.GetBoard(ctx, id)
+		st := s.store.WithTx(tx)
+		b, err := st.GetBoard(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = b.Version
 		}
-		updated, err = s.store.UpdateBoard(ctx, name, id, version)
+		updated, err = st.UpdateBoard(ctx, name, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -109,11 +111,12 @@ func (s *Service) UpdateBoard(ctx context.Context, id uuid.UUID, name string, ve
 func (s *Service) ArchiveBoard(ctx context.Context, id uuid.UUID) (Board, error) {
 	var updated Board
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		b, err := s.store.GetBoard(ctx, id)
+		st := s.store.WithTx(tx)
+		b, err := st.GetBoard(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveBoard(ctx, id)
+		updated, err = st.ArchiveBoard(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -143,12 +146,13 @@ func (s *Service) GetColumn(ctx context.Context, id uuid.UUID) (Column, error) {
 func (s *Service) CreateColumn(ctx context.Context, boardID uuid.UUID, name string, sortOrder *int32) (Column, error) {
 	var col Column
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		order := int32(0)
 		if sortOrder != nil {
 			order = *sortOrder
 		} else {
 			// Append last: get the max sort_order and add 1.
-			cols, err := s.store.ListColumnsForBoard(ctx, boardID)
+			cols, err := st.ListColumnsForBoard(ctx, boardID)
 			if err != nil {
 				return err
 			}
@@ -161,7 +165,7 @@ func (s *Service) CreateColumn(ctx context.Context, boardID uuid.UUID, name stri
 
 		colID := uuid.New()
 		var err error
-		col, err = s.store.CreateColumn(ctx, colID, boardID, name, order)
+		col, err = st.CreateColumn(ctx, colID, boardID, name, order)
 		if err != nil {
 			return err
 		}
@@ -181,7 +185,8 @@ func (s *Service) CreateColumn(ctx context.Context, boardID uuid.UUID, name stri
 func (s *Service) UpdateColumn(ctx context.Context, id uuid.UUID, name *string, sortOrder *int32, version int) (Column, error) {
 	var updated Column
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		col, err := s.store.GetColumn(ctx, id)
+		st := s.store.WithTx(tx)
+		col, err := st.GetColumn(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -195,7 +200,7 @@ func (s *Service) UpdateColumn(ctx context.Context, id uuid.UUID, name *string, 
 			newOrder = *sortOrder
 		}
 
-		updated, err = s.store.UpdateColumn(ctx, newName, int32(newOrder), id, version)
+		updated, err = st.UpdateColumn(ctx, newName, int32(newOrder), id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -216,11 +221,12 @@ func (s *Service) UpdateColumn(ctx context.Context, id uuid.UUID, name *string, 
 func (s *Service) ArchiveColumn(ctx context.Context, id uuid.UUID) (Column, error) {
 	var updated Column
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		col, err := s.store.GetColumn(ctx, id)
+		st := s.store.WithTx(tx)
+		col, err := st.GetColumn(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveColumn(ctx, id)
+		updated, err = st.ArchiveColumn(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -245,6 +251,7 @@ func (s *Service) ListCardsForBoard(ctx context.Context, boardID uuid.UUID) ([]C
 func (s *Service) CreateCard(ctx context.Context, boardID, columnID uuid.UUID, title string, descriptionMD *string, assigneeID *uuid.UUID, dueDate *string, labels json.RawMessage) (Card, error) {
 	var c Card
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		cardID := uuid.New()
 
 		var due *time.Time
@@ -258,7 +265,7 @@ func (s *Service) CreateCard(ctx context.Context, boardID, columnID uuid.UUID, t
 		}
 
 		var err error
-		c, err = s.store.CreateCard(ctx, cardID, boardID, columnID, title, descriptionMD, assigneeID, due, labels)
+		c, err = st.CreateCard(ctx, cardID, boardID, columnID, title, descriptionMD, assigneeID, due, labels)
 		if err != nil {
 			return err
 		}
@@ -287,7 +294,8 @@ func (s *Service) GetCard(ctx context.Context, id uuid.UUID) (Card, error) {
 func (s *Service) UpdateCard(ctx context.Context, id uuid.UUID, title *string, columnID *uuid.UUID, descriptionMD *string, assigneeID *uuid.UUID, dueDate *string, labels json.RawMessage, version int) (Card, error) {
 	var updated Card
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		c, err := s.store.GetCard(ctx, id)
+		st := s.store.WithTx(tx)
+		c, err := st.GetCard(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -310,7 +318,7 @@ func (s *Service) UpdateCard(ctx context.Context, id uuid.UUID, title *string, c
 			labels = c.Labels
 		}
 
-		updated, err = s.store.UpdateCard(ctx, newTitle, newCol, descriptionMD, assigneeID, newDue, labels, id, version)
+		updated, err = st.UpdateCard(ctx, newTitle, newCol, descriptionMD, assigneeID, newDue, labels, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -331,11 +339,12 @@ func (s *Service) UpdateCard(ctx context.Context, id uuid.UUID, title *string, c
 func (s *Service) ArchiveCard(ctx context.Context, id uuid.UUID) (Card, error) {
 	var updated Card
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		c, err := s.store.GetCard(ctx, id)
+		st := s.store.WithTx(tx)
+		c, err := st.GetCard(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveCard(ctx, id)
+		updated, err = st.ArchiveCard(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -360,11 +369,12 @@ func (s *Service) ListChecklistItems(ctx context.Context, cardID uuid.UUID) ([]C
 func (s *Service) CreateChecklistItem(ctx context.Context, cardID uuid.UUID, title string, sortOrder *int32) (ChecklistItem, error) {
 	var item ChecklistItem
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		order := int32(0)
 		if sortOrder != nil {
 			order = *sortOrder
 		} else {
-			items, err := s.store.ListChecklistItemsForCard(ctx, cardID)
+			items, err := st.ListChecklistItemsForCard(ctx, cardID)
 			if err != nil {
 				return err
 			}
@@ -377,7 +387,7 @@ func (s *Service) CreateChecklistItem(ctx context.Context, cardID uuid.UUID, tit
 
 		itemID := uuid.New()
 		var err error
-		item, err = s.store.CreateChecklistItem(ctx, itemID, cardID, title, false, order)
+		item, err = st.CreateChecklistItem(ctx, itemID, cardID, title, false, order)
 		if err != nil {
 			return err
 		}
@@ -397,7 +407,8 @@ func (s *Service) CreateChecklistItem(ctx context.Context, cardID uuid.UUID, tit
 func (s *Service) UpdateChecklistItem(ctx context.Context, id uuid.UUID, title *string, completed *bool, sortOrder *int32, version int) (ChecklistItem, error) {
 	var updated ChecklistItem
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		item, err := s.store.GetChecklistItem(ctx, id)
+		st := s.store.WithTx(tx)
+		item, err := st.GetChecklistItem(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -415,7 +426,7 @@ func (s *Service) UpdateChecklistItem(ctx context.Context, id uuid.UUID, title *
 			newOrder = *sortOrder
 		}
 
-		updated, err = s.store.UpdateChecklistItem(ctx, newTitle, newCompleted, int32(newOrder), id, version)
+		updated, err = st.UpdateChecklistItem(ctx, newTitle, newCompleted, int32(newOrder), id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -436,11 +447,12 @@ func (s *Service) UpdateChecklistItem(ctx context.Context, id uuid.UUID, title *
 func (s *Service) ArchiveChecklistItem(ctx context.Context, id uuid.UUID) (ChecklistItem, error) {
 	var updated ChecklistItem
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		it, err := s.store.GetChecklistItem(ctx, id)
+		st := s.store.WithTx(tx)
+		it, err := st.GetChecklistItem(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveChecklistItem(ctx, id)
+		updated, err = st.ArchiveChecklistItem(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -460,9 +472,10 @@ func (s *Service) ArchiveChecklistItem(ctx context.Context, id uuid.UUID) (Check
 func (s *Service) CreateComment(ctx context.Context, cardID, authorID uuid.UUID, bodyMD string) (Comment, error) {
 	var c Comment
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		commentID := uuid.New()
 		var err error
-		c, err = s.store.CreateComment(ctx, commentID, cardID, authorID, bodyMD)
+		c, err = st.CreateComment(ctx, commentID, cardID, authorID, bodyMD)
 		if err != nil {
 			return err
 		}

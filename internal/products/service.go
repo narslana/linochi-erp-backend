@@ -40,9 +40,10 @@ func (s *Service) GetFieldDefinition(ctx context.Context, id uuid.UUID) (FieldDe
 func (s *Service) CreateFieldDefinition(ctx context.Context, name, nameEn, fieldType, groupName, helpText string, mandatory bool, choices json.RawMessage, unit string, showOnCard bool) (FieldDefinition, error) {
 	var fd FieldDefinition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		fd, err = s.store.CreateFieldDefinition(ctx, id, name, nameEn, fieldType, groupName, helpText, mandatory, choices, unit, showOnCard)
+		fd, err = st.CreateFieldDefinition(ctx, id, name, nameEn, fieldType, groupName, helpText, mandatory, choices, unit, showOnCard)
 		if err != nil {
 			return err
 		}
@@ -61,14 +62,15 @@ func (s *Service) CreateFieldDefinition(ctx context.Context, name, nameEn, field
 func (s *Service) UpdateFieldDefinition(ctx context.Context, id uuid.UUID, name, nameEn, fieldType, groupName, helpText, unit string, mandatory bool, choices json.RawMessage, showOnCard bool, version int) (FieldDefinition, error) {
 	var updated FieldDefinition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		fd, err := s.store.GetFieldDefinition(ctx, id)
+		st := s.store.WithTx(tx)
+		fd, err := st.GetFieldDefinition(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = fd.Version
 		}
-		updated, err = s.store.UpdateFieldDefinition(ctx, name, nameEn, fieldType, groupName, helpText, unit, mandatory, choices, showOnCard, id, version)
+		updated, err = st.UpdateFieldDefinition(ctx, name, nameEn, fieldType, groupName, helpText, unit, mandatory, choices, showOnCard, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -88,14 +90,15 @@ func (s *Service) UpdateFieldDefinition(ctx context.Context, id uuid.UUID, name,
 func (s *Service) ArchiveFieldDefinition(ctx context.Context, id uuid.UUID, version int) (FieldDefinition, error) {
 	var updated FieldDefinition
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		fd, err := s.store.GetFieldDefinition(ctx, id)
+		st := s.store.WithTx(tx)
+		fd, err := st.GetFieldDefinition(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = fd.Version
 		}
-		updated, err = s.store.ArchiveFieldDefinition(ctx, id, version)
+		updated, err = st.ArchiveFieldDefinition(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -128,9 +131,10 @@ func (s *Service) GetProductType(ctx context.Context, id uuid.UUID) (ProductType
 func (s *Service) CreateProductType(ctx context.Context, name, nameEn, typeCode string) (ProductType, error) {
 	var pt ProductType
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		pt, err = s.store.CreateProductType(ctx, id, name, nameEn, typeCode)
+		pt, err = st.CreateProductType(ctx, id, name, nameEn, typeCode)
 		if err != nil {
 			return err
 		}
@@ -149,14 +153,15 @@ func (s *Service) CreateProductType(ctx context.Context, name, nameEn, typeCode 
 func (s *Service) UpdateProductType(ctx context.Context, id uuid.UUID, name, nameEn, typeCode string, version int) (ProductType, error) {
 	var updated ProductType
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		pt, err := s.store.GetProductType(ctx, id)
+		st := s.store.WithTx(tx)
+		pt, err := st.GetProductType(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = pt.Version
 		}
-		updated, err = s.store.UpdateProductType(ctx, name, nameEn, typeCode, id, version)
+		updated, err = st.UpdateProductType(ctx, name, nameEn, typeCode, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -176,14 +181,15 @@ func (s *Service) UpdateProductType(ctx context.Context, id uuid.UUID, name, nam
 func (s *Service) ArchiveProductType(ctx context.Context, id uuid.UUID, version int) (ProductType, error) {
 	var updated ProductType
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		pt, err := s.store.GetProductType(ctx, id)
+		st := s.store.WithTx(tx)
+		pt, err := st.GetProductType(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = pt.Version
 		}
-		updated, err = s.store.ArchiveProductType(ctx, id, version)
+		updated, err = st.ArchiveProductType(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -208,11 +214,12 @@ func (s *Service) ListProductTypeFields(ctx context.Context, productTypeID uuid.
 func (s *Service) AssignFieldToProductType(ctx context.Context, productTypeID, fieldDefinitionID uuid.UUID, sortOrder *int32, mandatoryOverride *bool) (ProductTypeField, error) {
 	var ptf ProductTypeField
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		order := int32(0)
 		if sortOrder != nil {
 			order = *sortOrder
 		} else {
-			fields, err := s.store.ListProductTypeFields(ctx, productTypeID)
+			fields, err := st.ListProductTypeFields(ctx, productTypeID)
 			if err != nil {
 				return err
 			}
@@ -224,7 +231,7 @@ func (s *Service) AssignFieldToProductType(ctx context.Context, productTypeID, f
 		}
 		id := uuid.New()
 		var err error
-		ptf, err = s.store.AssignFieldToProductType(ctx, id, productTypeID, fieldDefinitionID, order, mandatoryOverride)
+		ptf, err = st.AssignFieldToProductType(ctx, id, productTypeID, fieldDefinitionID, order, mandatoryOverride)
 		if err != nil {
 			return err
 		}
@@ -247,11 +254,12 @@ func (s *Service) UpdateProductTypeField(ctx context.Context, id uuid.UUID, sort
 	}
 	var updated ProductTypeField
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		ptf, err := s.store.GetProductTypeField(ctx, id)
+		st := s.store.WithTx(tx)
+		ptf, err := st.GetProductTypeField(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateProductTypeField(ctx, sortOrderVal, mandatoryOverride, id, version)
+		updated, err = st.UpdateProductTypeField(ctx, sortOrderVal, mandatoryOverride, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -271,11 +279,12 @@ func (s *Service) UpdateProductTypeField(ctx context.Context, id uuid.UUID, sort
 func (s *Service) ArchiveProductTypeField(ctx context.Context, id uuid.UUID, version int) (ProductTypeField, error) {
 	var updated ProductTypeField
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		ptf, err := s.store.GetProductTypeField(ctx, id)
+		st := s.store.WithTx(tx)
+		ptf, err := st.GetProductTypeField(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveProductTypeField(ctx, id, version)
+		updated, err = st.ArchiveProductTypeField(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -311,6 +320,7 @@ func (s *Service) GetProduct(ctx context.Context, id uuid.UUID) (Product, error)
 func (s *Service) CreateProduct(ctx context.Context, name, sku, ean string, productTypeID uuid.UUID, shortDesc string, wholesalePriceSEK, msrpSEK int64, wholesaleCurrency, msrpCurrency, status string, attributes json.RawMessage) (Product, error) {
 	var p Product
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		if status == "" {
 			status = "draft"
@@ -325,7 +335,7 @@ func (s *Service) CreateProduct(ctx context.Context, name, sku, ean string, prod
 			attributes = json.RawMessage("{}")
 		}
 		var err error
-		p, err = s.store.CreateProduct(ctx, id, productTypeID, name, sku, ean, shortDesc, wholesaleCurrency, msrpCurrency, status, wholesalePriceSEK, msrpSEK, attributes)
+		p, err = st.CreateProduct(ctx, id, productTypeID, name, sku, ean, shortDesc, wholesaleCurrency, msrpCurrency, status, wholesalePriceSEK, msrpSEK, attributes)
 		if err != nil {
 			return err
 		}
@@ -344,7 +354,8 @@ func (s *Service) CreateProduct(ctx context.Context, name, sku, ean string, prod
 func (s *Service) UpdateProduct(ctx context.Context, id uuid.UUID, name, sku, ean string, productTypeID uuid.UUID, shortDesc string, wholesalePriceSEK, msrpSEK int64, wholesaleCurrency, msrpCurrency, status string, attributes json.RawMessage, version int) (Product, error) {
 	var updated Product
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		p, err := s.store.GetProduct(ctx, id)
+		st := s.store.WithTx(tx)
+		p, err := st.GetProduct(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -360,7 +371,7 @@ func (s *Service) UpdateProduct(ctx context.Context, id uuid.UUID, name, sku, ea
 		if productTypeID == uuid.Nil {
 			productTypeID = p.ProductTypeID
 		}
-		updated, err = s.store.UpdateProduct(ctx, name, sku, ean, productTypeID, shortDesc, wholesalePriceSEK, msrpSEK, wholesaleCurrency, msrpCurrency, status, attributes, id, version)
+		updated, err = st.UpdateProduct(ctx, name, sku, ean, productTypeID, shortDesc, wholesalePriceSEK, msrpSEK, wholesaleCurrency, msrpCurrency, status, attributes, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -380,14 +391,15 @@ func (s *Service) UpdateProduct(ctx context.Context, id uuid.UUID, name, sku, ea
 func (s *Service) ArchiveProduct(ctx context.Context, id uuid.UUID, version int) (Product, error) {
 	var updated Product
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		p, err := s.store.GetProduct(ctx, id)
+		st := s.store.WithTx(tx)
+		p, err := st.GetProduct(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = p.Version
 		}
-		updated, err = s.store.ArchiveProduct(ctx, id, version)
+		updated, err = st.ArchiveProduct(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -406,14 +418,15 @@ func (s *Service) ArchiveProduct(ctx context.Context, id uuid.UUID, version int)
 func (s *Service) LockSKU(ctx context.Context, id uuid.UUID, version int) (Product, error) {
 	var updated Product
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		p, err := s.store.GetProduct(ctx, id)
+		st := s.store.WithTx(tx)
+		p, err := st.GetProduct(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = p.Version
 		}
-		updated, err = s.store.LockSKU(ctx, id, version)
+		updated, err = st.LockSKU(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -438,11 +451,12 @@ func (s *Service) ListProductImages(ctx context.Context, productID uuid.UUID) ([
 func (s *Service) CreateProductImage(ctx context.Context, productID uuid.UUID, url string, sortOrder *int32, isMain bool) (ProductImage, error) {
 	var img ProductImage
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		order := int32(0)
 		if sortOrder != nil {
 			order = *sortOrder
 		} else {
-			images, err := s.store.ListProductImages(ctx, productID)
+			images, err := st.ListProductImages(ctx, productID)
 			if err != nil {
 				return err
 			}
@@ -454,7 +468,7 @@ func (s *Service) CreateProductImage(ctx context.Context, productID uuid.UUID, u
 		}
 		id := uuid.New()
 		var err error
-		img, err = s.store.CreateProductImage(ctx, id, productID, url, order, isMain)
+		img, err = st.CreateProductImage(ctx, id, productID, url, order, isMain)
 		if err != nil {
 			return err
 		}
@@ -473,7 +487,8 @@ func (s *Service) CreateProductImage(ctx context.Context, productID uuid.UUID, u
 func (s *Service) UpdateProductImage(ctx context.Context, id uuid.UUID, url string, sortOrder *int32, isMain *bool, version int) (ProductImage, error) {
 	var updated ProductImage
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		img, err := s.store.GetProductImage(ctx, id)
+		st := s.store.WithTx(tx)
+		img, err := st.GetProductImage(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -488,7 +503,7 @@ func (s *Service) UpdateProductImage(ctx context.Context, id uuid.UUID, url stri
 		if isMain != nil {
 			newIsMain = *isMain
 		}
-		updated, err = s.store.UpdateProductImage(ctx, url, newOrder, newIsMain, id, version)
+		updated, err = st.UpdateProductImage(ctx, url, newOrder, newIsMain, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -508,14 +523,15 @@ func (s *Service) UpdateProductImage(ctx context.Context, id uuid.UUID, url stri
 func (s *Service) ArchiveProductImage(ctx context.Context, id uuid.UUID, version int) (ProductImage, error) {
 	var updated ProductImage
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		img, err := s.store.GetProductImage(ctx, id)
+		st := s.store.WithTx(tx)
+		img, err := st.GetProductImage(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = img.Version
 		}
-		updated, err = s.store.ArchiveProductImage(ctx, id, version)
+		updated, err = st.ArchiveProductImage(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -540,9 +556,10 @@ func (s *Service) ListProductDocuments(ctx context.Context, productID uuid.UUID)
 func (s *Service) CreateProductDocument(ctx context.Context, productID uuid.UUID, title, titleEn, documentType, url string, expiresAt *time.Time) (ProductDocument, error) {
 	var doc ProductDocument
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		doc, err = s.store.CreateProductDocument(ctx, id, productID, title, titleEn, documentType, url, expiresAt)
+		doc, err = st.CreateProductDocument(ctx, id, productID, title, titleEn, documentType, url, expiresAt)
 		if err != nil {
 			return err
 		}
@@ -561,14 +578,15 @@ func (s *Service) CreateProductDocument(ctx context.Context, productID uuid.UUID
 func (s *Service) UpdateProductDocument(ctx context.Context, id uuid.UUID, title, titleEn, documentType, url string, expiresAt *time.Time, version int) (ProductDocument, error) {
 	var updated ProductDocument
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		doc, err := s.store.GetProductDocument(ctx, id)
+		st := s.store.WithTx(tx)
+		doc, err := st.GetProductDocument(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = doc.Version
 		}
-		updated, err = s.store.UpdateProductDocument(ctx, title, titleEn, documentType, url, expiresAt, id, version)
+		updated, err = st.UpdateProductDocument(ctx, title, titleEn, documentType, url, expiresAt, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -588,14 +606,15 @@ func (s *Service) UpdateProductDocument(ctx context.Context, id uuid.UUID, title
 func (s *Service) ArchiveProductDocument(ctx context.Context, id uuid.UUID, version int) (ProductDocument, error) {
 	var updated ProductDocument
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		doc, err := s.store.GetProductDocument(ctx, id)
+		st := s.store.WithTx(tx)
+		doc, err := st.GetProductDocument(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = doc.Version
 		}
-		updated, err = s.store.ArchiveProductDocument(ctx, id, version)
+		updated, err = st.ArchiveProductDocument(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

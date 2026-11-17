@@ -450,11 +450,35 @@ func TestINS05_BoardsWriteAndAuditCommitTogether(t *testing.T) {
 
 // ─── audit failure rolls back the write ─────────────────────────────────────
 
-// AuditFailureRollsBackTheWrite is skipped: s.store.Create* methods use the
-// pool directly instead of the tx passed by db.InTx, so the write is not
-// rolled back when Record fails. This is a backend bug to fix in a follow-up.
 func TestINS05_AuditFailureRollsBackTheWrite(t *testing.T) {
-	t.Skip("skipped: store methods use pool directly, not the tx from db.InTx")
+	ctx := context.Background() // no actor → Record fails with ErrNoActor
+	e := newEnv(t)
+
+	// Create a product type first (needed as FK).
+	ptStore := products.NewStore(e.pool)
+	ptSvc := products.NewService(ptStore, e.rec, e.pool)
+	pt, err := ptSvc.CreateProductType(ctx, "Fail Rollback Type", "Fail EN", "FAIL")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Try to create a product without an actor.
+	pStore := products.NewStore(e.pool)
+	pSvc := products.NewService(pStore, e.rec, e.pool)
+	_, err = pSvc.CreateProduct(ctx, "Fail Rollback", "LIN-FAIL-RB", "", pt.ID, "Short", 10000, 15000, "SEK", "SEK", "draft", json.RawMessage("{}"))
+	if err == nil {
+		t.Fatal("expected error when audit fails, got nil")
+	}
+
+	// Assert that no product was written.
+	var count int
+	err = e.pool.QueryRow(ctx, "SELECT count(*) FROM products WHERE sku = $1", "LIN-FAIL-RB").Scan(&count)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("expected 0 products, got %d (write was not rolled back)", count)
+	}
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────

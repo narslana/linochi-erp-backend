@@ -41,9 +41,10 @@ func (s *Service) GetIdsEntry(ctx context.Context, id uuid.UUID) (IdsEntry, erro
 func (s *Service) CreateIdsEntry(ctx context.Context, category, name, value, issuer, owner, note, documentURL string, validFrom, validTo *time.Time) (IdsEntry, error) {
 	var e IdsEntry
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		e, err = s.store.CreateIdsEntry(ctx, id, category, name, value, issuer, owner, note, documentURL, validFrom, validTo)
+		e, err = st.CreateIdsEntry(ctx, id, category, name, value, issuer, owner, note, documentURL, validFrom, validTo)
 		if err != nil {
 			return err
 		}
@@ -62,14 +63,15 @@ func (s *Service) CreateIdsEntry(ctx context.Context, category, name, value, iss
 func (s *Service) UpdateIdsEntry(ctx context.Context, id uuid.UUID, category, name, value, issuer, owner, note, documentURL string, validFrom, validTo *time.Time, version int) (IdsEntry, error) {
 	var updated IdsEntry
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		e, err := s.store.GetIdsEntry(ctx, id)
+		st := s.store.WithTx(tx)
+		e, err := st.GetIdsEntry(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = e.Version
 		}
-		updated, err = s.store.UpdateIdsEntry(ctx, category, name, value, issuer, owner, note, documentURL, validFrom, validTo, id, version)
+		updated, err = st.UpdateIdsEntry(ctx, category, name, value, issuer, owner, note, documentURL, validFrom, validTo, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -89,14 +91,15 @@ func (s *Service) UpdateIdsEntry(ctx context.Context, id uuid.UUID, category, na
 func (s *Service) ArchiveIdsEntry(ctx context.Context, id uuid.UUID, version int) (IdsEntry, error) {
 	var updated IdsEntry
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		e, err := s.store.GetIdsEntry(ctx, id)
+		st := s.store.WithTx(tx)
+		e, err := st.GetIdsEntry(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
 		if version == 0 {
 			version = e.Version
 		}
-		updated, err = s.store.ArchiveIdsEntry(ctx, id, version)
+		updated, err = st.ArchiveIdsEntry(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

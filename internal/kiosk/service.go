@@ -43,9 +43,10 @@ func (s *Service) GetKioskPlaylist(ctx context.Context, id uuid.UUID) (Playlist,
 func (s *Service) CreateKioskPlaylist(ctx context.Context, name, nameEn string) (Playlist, error) {
 	var p Playlist
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		p, err = s.store.CreateKioskPlaylist(ctx, id, name, nameEn)
+		p, err = st.CreateKioskPlaylist(ctx, id, name, nameEn)
 		if err != nil {
 			return err
 		}
@@ -65,11 +66,12 @@ func (s *Service) CreateKioskPlaylist(ctx context.Context, name, nameEn string) 
 func (s *Service) UpdateKioskPlaylist(ctx context.Context, id uuid.UUID, name, nameEn *string, version int) (Playlist, error) {
 	var updated Playlist
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		p, err := s.store.GetKioskPlaylist(ctx, id)
+		st := s.store.WithTx(tx)
+		p, err := st.GetKioskPlaylist(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateKioskPlaylist(ctx, name, nameEn, id, version)
+		updated, err = st.UpdateKioskPlaylist(ctx, name, nameEn, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -98,11 +100,12 @@ func (s *Service) UpdateKioskPlaylist(ctx context.Context, id uuid.UUID, name, n
 func (s *Service) ArchiveKioskPlaylist(ctx context.Context, id uuid.UUID, version int) (Playlist, error) {
 	var updated Playlist
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		p, err := s.store.GetKioskPlaylist(ctx, id)
+		st := s.store.WithTx(tx)
+		p, err := st.GetKioskPlaylist(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveKioskPlaylist(ctx, id, version)
+		updated, err = st.ArchiveKioskPlaylist(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -152,9 +155,10 @@ func (s *Service) CreatePlaylistView(ctx context.Context, playlistID uuid.UUID, 
 
 	var v PlaylistView
 	err = db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		v, err = s.store.CreatePlaylistView(ctx, id, playlistID, viewType, int32(sortOrder), int32(durationSec), settingsJSON) //nolint:gosec // sortOrder and durationSec are bounded by UI
+		v, err = st.CreatePlaylistView(ctx, id, playlistID, viewType, int32(sortOrder), int32(durationSec), settingsJSON) //nolint:gosec // sortOrder and durationSec are bounded by UI
 		if err != nil {
 			return err
 		}
@@ -198,11 +202,12 @@ func (s *Service) UpdatePlaylistView(ctx context.Context, id uuid.UUID, viewType
 
 	var updated PlaylistView
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		v, err := s.store.GetPlaylistView(ctx, id)
+		st := s.store.WithTx(tx)
+		v, err := st.GetPlaylistView(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdatePlaylistView(ctx, vType, sOrder, dSec, settingsJSON, id, version)
+		updated, err = st.UpdatePlaylistView(ctx, vType, sOrder, dSec, settingsJSON, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -231,11 +236,12 @@ func (s *Service) UpdatePlaylistView(ctx context.Context, id uuid.UUID, viewType
 func (s *Service) ArchivePlaylistView(ctx context.Context, id uuid.UUID, version int) (PlaylistView, error) {
 	var updated PlaylistView
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		v, err := s.store.GetPlaylistView(ctx, id)
+		st := s.store.WithTx(tx)
+		v, err := st.GetPlaylistView(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchivePlaylistView(ctx, id, version)
+		updated, err = st.ArchivePlaylistView(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -275,8 +281,9 @@ func (s *Service) CreateKioskDevice(ctx context.Context, name string) (KioskDevi
 
 	var d KioskDevice
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		var err error
-		d, err = s.store.CreateKioskDevice(ctx, id, name, pairingCode, apiKeyHash, false, nil, nil, true)
+		d, err = st.CreateKioskDevice(ctx, id, name, pairingCode, apiKeyHash, false, nil, nil, true)
 		if err != nil {
 			return err
 		}
@@ -304,11 +311,12 @@ func (s *Service) ApproveKioskDevice(ctx context.Context, id uuid.UUID, playlist
 
 	var updated KioskDevice
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		d, err := s.store.GetKioskDevice(ctx, id)
+		st := s.store.WithTx(tx)
+		d, err := st.GetKioskDevice(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateKioskDevice(ctx, nil, nil, pid, nil, nil, id, version)
+		updated, err = st.UpdateKioskDevice(ctx, nil, nil, pid, nil, nil, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -316,7 +324,7 @@ func (s *Service) ApproveKioskDevice(ctx context.Context, id uuid.UUID, playlist
 		// Re-generate API key on approval
 		newKey := generateAPIKey()
 		newHash := hashAPIKey(newKey)
-		_, err = s.store.UpdateKioskDevice(ctx, nil, nil, pid, nil, &newHash, id, version+1)
+		_, err = st.UpdateKioskDevice(ctx, nil, nil, pid, nil, &newHash, id, version+1)
 		if err != nil {
 			return err
 		}
@@ -337,11 +345,12 @@ func (s *Service) ApproveKioskDevice(ctx context.Context, id uuid.UUID, playlist
 func (s *Service) ArchiveKioskDevice(ctx context.Context, id uuid.UUID, version int) (KioskDevice, error) {
 	var updated KioskDevice
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		d, err := s.store.GetKioskDevice(ctx, id)
+		st := s.store.WithTx(tx)
+		d, err := st.GetKioskDevice(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveKioskDevice(ctx, id, version)
+		updated, err = st.ArchiveKioskDevice(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

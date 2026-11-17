@@ -35,9 +35,10 @@ func (s *Service) ListLocations(ctx context.Context) ([]Location, error) {
 func (s *Service) CreateLocation(ctx context.Context, name, nameEn, address, city, country string, channelBuffer int) (Location, error) {
 	var loc Location
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		loc, err = s.store.CreateLocation(ctx, id, name, nameEn, address, city, country, channelBuffer)
+		loc, err = st.CreateLocation(ctx, id, name, nameEn, address, city, country, channelBuffer)
 		if err != nil {
 			return err
 		}
@@ -66,11 +67,12 @@ func (s *Service) GetLocation(ctx context.Context, id uuid.UUID) (Location, erro
 func (s *Service) UpdateLocation(ctx context.Context, id uuid.UUID, name, nameEn, address, city, country *string, channelBuffer *int, version int) (Location, error) {
 	var updated Location
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		loc, err := s.store.GetLocation(ctx, id)
+		st := s.store.WithTx(tx)
+		loc, err := st.GetLocation(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateLocation(ctx, name, nameEn, address, city, country, channelBuffer, id, version)
+		updated, err = st.UpdateLocation(ctx, name, nameEn, address, city, country, channelBuffer, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -99,11 +101,12 @@ func (s *Service) UpdateLocation(ctx context.Context, id uuid.UUID, name, nameEn
 func (s *Service) ArchiveLocation(ctx context.Context, id uuid.UUID, version int) (Location, error) {
 	var updated Location
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		loc, err := s.store.GetLocation(ctx, id)
+		st := s.store.WithTx(tx)
+		loc, err := st.GetLocation(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveLocation(ctx, id, version)
+		updated, err = st.ArchiveLocation(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -145,9 +148,10 @@ func (s *Service) CreateStockMovement(ctx context.Context, productID, locationID
 
 	var movement StockMovement
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		movement, err = s.store.CreateStockMovement(ctx, id, productID, locationID, batchNumber, manufacturingDate, bestBeforeDate, movementType, quantity, reason, referenceType, referenceID)
+		movement, err = st.CreateStockMovement(ctx, id, productID, locationID, batchNumber, manufacturingDate, bestBeforeDate, movementType, quantity, reason, referenceType, referenceID)
 		if err != nil {
 			return err
 		}

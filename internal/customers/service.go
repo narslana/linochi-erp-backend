@@ -34,9 +34,10 @@ func (s *Service) ListCustomers(ctx context.Context) ([]Customer, error) {
 func (s *Service) CreateCustomer(ctx context.Context, name, typeCode, address, city, country, eori, epr, currency, notes string) (Customer, error) {
 	var cust Customer
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		cust, err = s.store.CreateCustomer(ctx, id, name, typeCode, address, city, country, eori, epr, currency, notes)
+		cust, err = st.CreateCustomer(ctx, id, name, typeCode, address, city, country, eori, epr, currency, notes)
 		if err != nil {
 			return err
 		}
@@ -65,11 +66,12 @@ func (s *Service) GetCustomer(ctx context.Context, id uuid.UUID) (Customer, erro
 func (s *Service) UpdateCustomer(ctx context.Context, name, typeCode, address, city, country, eori, epr, currency, notes *string, id uuid.UUID, version int) (Customer, error) {
 	var updated Customer
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		cust, err := s.store.GetCustomer(ctx, id)
+		st := s.store.WithTx(tx)
+		cust, err := st.GetCustomer(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateCustomer(ctx, name, typeCode, address, city, country, eori, epr, currency, notes, id, version)
+		updated, err = st.UpdateCustomer(ctx, name, typeCode, address, city, country, eori, epr, currency, notes, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -98,11 +100,12 @@ func (s *Service) UpdateCustomer(ctx context.Context, name, typeCode, address, c
 func (s *Service) ArchiveCustomer(ctx context.Context, id uuid.UUID, version int) (Customer, error) {
 	var updated Customer
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		cust, err := s.store.GetCustomer(ctx, id)
+		st := s.store.WithTx(tx)
+		cust, err := st.GetCustomer(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveCustomer(ctx, id, version)
+		updated, err = st.ArchiveCustomer(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -129,8 +132,9 @@ func (s *Service) ListContacts(ctx context.Context, customerID uuid.UUID) ([]Con
 func (s *Service) CreateContact(ctx context.Context, customerID, id uuid.UUID, firstName, lastName, email, phone string) (Contact, error) {
 	var contact Contact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		var err error
-		contact, err = s.store.CreateContact(ctx, id, customerID, firstName, lastName, email, phone)
+		contact, err = st.CreateContact(ctx, id, customerID, firstName, lastName, email, phone)
 		if err != nil {
 			return err
 		}
@@ -150,11 +154,12 @@ func (s *Service) CreateContact(ctx context.Context, customerID, id uuid.UUID, f
 func (s *Service) UpdateContact(ctx context.Context, firstName, lastName, email, phone *string, id uuid.UUID, version int) (Contact, error) {
 	var updated Contact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		contact, err := s.store.GetContact(ctx, id)
+		st := s.store.WithTx(tx)
+		contact, err := st.GetContact(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateContact(ctx, firstName, lastName, email, phone, id, version)
+		updated, err = st.UpdateContact(ctx, firstName, lastName, email, phone, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -183,11 +188,12 @@ func (s *Service) UpdateContact(ctx context.Context, firstName, lastName, email,
 func (s *Service) ArchiveContact(ctx context.Context, id uuid.UUID, version int) (Contact, error) {
 	var updated Contact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		contact, err := s.store.GetContact(ctx, id)
+		st := s.store.WithTx(tx)
+		contact, err := st.GetContact(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveContact(ctx, id, version)
+		updated, err = st.ArchiveContact(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -207,11 +213,12 @@ func (s *Service) ArchiveContact(ctx context.Context, id uuid.UUID, version int)
 func (s *Service) AnonymiseContact(ctx context.Context, id uuid.UUID, version int) (Contact, error) {
 	var updated Contact
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		contact, err := s.store.GetContact(ctx, id)
+		st := s.store.WithTx(tx)
+		contact, err := st.GetContact(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.AnonymiseContact(ctx, id, version)
+		updated, err = st.AnonymiseContact(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -238,9 +245,10 @@ func (s *Service) ListLeads(ctx context.Context) ([]Lead, error) {
 func (s *Service) CreateLead(ctx context.Context, company, contactName, email, phone, address, city, country, status, notes string) (Lead, error) {
 	var lead Lead
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		lead, err = s.store.CreateLead(ctx, id, company, contactName, email, phone, address, city, country, status, notes)
+		lead, err = st.CreateLead(ctx, id, company, contactName, email, phone, address, city, country, status, notes)
 		if err != nil {
 			return err
 		}
@@ -269,11 +277,12 @@ func (s *Service) GetLead(ctx context.Context, id uuid.UUID) (Lead, error) {
 func (s *Service) UpdateLead(ctx context.Context, company, contactName, email, phone, address, city, country, status, notes *string, id uuid.UUID, version int) (Lead, error) {
 	var updated Lead
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		lead, err := s.store.GetLead(ctx, id)
+		st := s.store.WithTx(tx)
+		lead, err := st.GetLead(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateLead(ctx, company, contactName, email, phone, address, city, country, status, notes, id, version)
+		updated, err = st.UpdateLead(ctx, company, contactName, email, phone, address, city, country, status, notes, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -302,11 +311,12 @@ func (s *Service) UpdateLead(ctx context.Context, company, contactName, email, p
 func (s *Service) ArchiveLead(ctx context.Context, id uuid.UUID, version int) (Lead, error) {
 	var updated Lead
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		lead, err := s.store.GetLead(ctx, id)
+		st := s.store.WithTx(tx)
+		lead, err := st.GetLead(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveLead(ctx, id, version)
+		updated, err = st.ArchiveLead(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -333,9 +343,10 @@ func (s *Service) ListEanSeries(ctx context.Context) ([]EanSeries, error) {
 func (s *Service) CreateEanSeries(ctx context.Context, prefix, startCode, endCode, description string) (EanSeries, error) {
 	var ean EanSeries
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		ean, err = s.store.CreateEanSeries(ctx, id, prefix, startCode, endCode, description)
+		ean, err = st.CreateEanSeries(ctx, id, prefix, startCode, endCode, description)
 		if err != nil {
 			return err
 		}
@@ -364,11 +375,12 @@ func (s *Service) GetEanSeries(ctx context.Context, id uuid.UUID) (EanSeries, er
 func (s *Service) UpdateEanSeries(ctx context.Context, prefix, startCode, endCode, description *string, id uuid.UUID, version int) (EanSeries, error) {
 	var updated EanSeries
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		ean, err := s.store.GetEanSeries(ctx, id)
+		st := s.store.WithTx(tx)
+		ean, err := st.GetEanSeries(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateEanSeries(ctx, prefix, startCode, endCode, description, id, version)
+		updated, err = st.UpdateEanSeries(ctx, prefix, startCode, endCode, description, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -397,11 +409,12 @@ func (s *Service) UpdateEanSeries(ctx context.Context, prefix, startCode, endCod
 func (s *Service) ArchiveEanSeries(ctx context.Context, id uuid.UUID, version int) (EanSeries, error) {
 	var updated EanSeries
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		ean, err := s.store.GetEanSeries(ctx, id)
+		st := s.store.WithTx(tx)
+		ean, err := st.GetEanSeries(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveEanSeries(ctx, id, version)
+		updated, err = st.ArchiveEanSeries(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}

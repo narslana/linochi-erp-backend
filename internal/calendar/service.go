@@ -49,9 +49,10 @@ func (s *Service) CreateICalSource(ctx context.Context, name, nameEn, icalURL, c
 
 	var src ICalSource
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		src, err = s.store.CreateICalSource(ctx, id, name, nameEn, icalURL, color, syncInterval)
+		src, err = st.CreateICalSource(ctx, id, name, nameEn, icalURL, color, syncInterval)
 		if err != nil {
 			return err
 		}
@@ -71,11 +72,12 @@ func (s *Service) CreateICalSource(ctx context.Context, name, nameEn, icalURL, c
 func (s *Service) UpdateICalSource(ctx context.Context, id uuid.UUID, name, nameEn, icalURL, color *string, syncInterval *int, enabled *bool, version int) (ICalSource, error) {
 	var updated ICalSource
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		src, err := s.store.GetICalSource(ctx, id)
+		st := s.store.WithTx(tx)
+		src, err := st.GetICalSource(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.UpdateICalSource(ctx, name, nameEn, icalURL, color, syncInterval, enabled, id, version)
+		updated, err = st.UpdateICalSource(ctx, name, nameEn, icalURL, color, syncInterval, enabled, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -104,11 +106,12 @@ func (s *Service) UpdateICalSource(ctx context.Context, id uuid.UUID, name, name
 func (s *Service) ArchiveICalSource(ctx context.Context, id uuid.UUID, version int) (ICalSource, error) {
 	var updated ICalSource
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		src, err := s.store.GetICalSource(ctx, id)
+		st := s.store.WithTx(tx)
+		src, err := st.GetICalSource(ctx, id)
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = s.store.ArchiveICalSource(ctx, id, version)
+		updated, err = st.ArchiveICalSource(ctx, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -168,12 +171,13 @@ func (s *Service) CreateInternalEvent(ctx context.Context, title string, startTi
 
 	var ev CalendarEvent
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		st := s.store.WithTx(tx)
 		id := uuid.New()
 		erpLinkTypeStr := erpLinkType
 		erpLinkIDStr := erpLinkID.String()
 
 		var err error
-		ev, err = s.store.UpsertCalendarEvent(ctx, id, "internal", nil, nil, title, "", startTime, endTime, allDay, color, erpLinkTypeStr, &erpLinkIDStr)
+		ev, err = st.UpsertCalendarEvent(ctx, id, "internal", nil, nil, title, "", startTime, endTime, allDay, color, erpLinkTypeStr, &erpLinkIDStr)
 		if err != nil {
 			return err
 		}
