@@ -468,7 +468,6 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	if ean["id"] == nil {
 		t.Fatalf("ean-series response missing id: %s", w.Body.String())
 	}
-	eanID := ean["id"].(string)
 	// ---- dependencies: reminders ----
 	w = b.callJSON("POST", "/api/v1/reminders", map[string]interface{}{"reminder_type": "ids_entry", "ids_entry_id": idsID, "title": "Renewal", "title_en": "Renewal", "due_date": "2026-02-01"}, nil, &calls)
 	var rem map[string]interface{}
