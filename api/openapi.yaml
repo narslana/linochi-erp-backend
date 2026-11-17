@@ -6356,8 +6356,8 @@ components:
         address: { type: string }
         city: { type: string }
         country: { type: string }
-        eori: { type: string, nullable: true }
-        epr: { type: string, nullable: true }
+        eori: { type: [ string, "null" ] }
+        epr: { type: [ string, "null" ] }
         currency: { type: string }
         notes: { type: string }
         archived_at: { type: string, format: date-time }
@@ -6434,7 +6434,7 @@ components:
         country: { type: string }
         status: { type: string, enum: [new, contacted, interested, customer, not_relevant] }
         notes: { type: string }
-        converted_customer_id: { type: string, format: uuid, nullable: true }
+        converted_customer_id: { type: [ string, "null" ], format: uuid }
         archived_at: { type: string, format: date-time }
         version: { type: integer }
         created_at: { type: string, format: date-time }
@@ -6619,7 +6619,7 @@ components:
       required: [id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, version, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
-        external_id: { type: string, nullable: true }
+        external_id: { type: [ string, "null" ] }
         channel: { type: string }
         status: { type: string }
         currency: { type: string }
@@ -6643,8 +6643,8 @@ components:
         tracking_number: { type: string }
         carrier: { type: string }
         shipping_label_url: { type: string }
-        shipped_at: { type: string, format: date-time, nullable: true }
-        delivered_at: { type: string, format: date-time, nullable: true }
+        shipped_at: { type: [ string, "null" ], format: date-time }
+        delivered_at: { type: [ string, "null" ], format: date-time }
         notes: { type: string }
         lines:
           type: array
@@ -6768,7 +6768,7 @@ components:
       required: [status]
       properties:
         status: { type: string, enum: [accepted] }
-        reason: { type: string, maxLength: 2000, nullable: true }
+        reason: { type: [ string, "null" ], maxLength: 2000 }
 
     ShipOrder:
       type: object
@@ -6820,7 +6820,7 @@ components:
       properties:
         title: { type: string }
         value: { type: string }
-        change: { type: string, nullable: true }
+        change: { type: [ string, "null" ] }
 
     Reminder:
       type: object
@@ -6828,16 +6828,16 @@ components:
       properties:
         id: { type: string, format: uuid }
         reminder_type: { type: string, enum: [ids_entry, external] }
-        ids_entry_id: { type: string, format: uuid, nullable: true }
+        ids_entry_id: { type: [ string, "null" ], format: uuid }
         external_ref_type: { type: string }
-        external_ref_id: { type: string, format: uuid, nullable: true }
+        external_ref_id: { type: [ string, "null" ], format: uuid }
         title: { type: string }
         title_en: { type: string }
         description: { type: string }
         due_date: { type: string, format: date }
         notified: { type: boolean }
-        notified_at: { type: string, format: date-time, nullable: true }
-        calendar_event_id: { type: string, format: uuid, nullable: true }
+        notified_at: { type: [ string, "null" ], format: date-time }
+        calendar_event_id: { type: [ string, "null" ], format: uuid }
         archived_at: { type: string, format: date-time }
         version: { type: integer }
         created_at: { type: string, format: date-time }
@@ -6848,9 +6848,9 @@ components:
       required: [reminder_type, title, due_date]
       properties:
         reminder_type: { type: string, enum: [ids_entry, external] }
-        ids_entry_id: { type: string, format: uuid, nullable: true }
+        ids_entry_id: { type: [ string, "null" ], format: uuid }
         external_ref_type: { type: string, maxLength: 64 }
-        external_ref_id: { type: string, format: uuid, nullable: true }
+        external_ref_id: { type: [ string, "null" ], format: uuid }
         title: { type: string, maxLength: 500 }
         title_en: { type: string, maxLength: 500 }
         description: { type: string, maxLength: 2000 }
@@ -6863,9 +6863,9 @@ components:
         id: { type: string, format: uuid }
         version: { type: integer }
         reminder_type: { type: string, enum: [ids_entry, external] }
-        ids_entry_id: { type: string, format: uuid, nullable: true }
+        ids_entry_id: { type: [ string, "null" ], format: uuid }
         external_ref_type: { type: string, maxLength: 64 }
-        external_ref_id: { type: string, format: uuid, nullable: true }
+        external_ref_id: { type: [ string, "null" ], format: uuid }
         title: { type: string, maxLength: 500 }
         title_en: { type: string, maxLength: 500 }
         description: { type: string, maxLength: 2000 }
