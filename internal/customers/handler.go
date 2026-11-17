@@ -55,11 +55,11 @@ func (h *Handler) createCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var eori, epr, notes string
-	if body.Eori != "" {
-		eori = body.Eori
+	if body.Eori != nil {
+		eori = *body.Eori
 	}
-	if body.Epr != "" {
-		epr = body.Epr
+	if body.Epr != nil {
+		epr = *body.Epr
 	}
 	if body.Notes != nil {
 		notes = *body.Notes
@@ -125,11 +125,11 @@ func (h *Handler) updateCustomer(w http.ResponseWriter, r *http.Request, custome
 	if body.Country != "" {
 		country = &body.Country
 	}
-	if body.Eori != "" {
-		eori = &body.Eori
+	if body.Eori != nil {
+		eori = body.Eori
 	}
-	if body.Epr != "" {
-		epr = &body.Epr
+	if body.Epr != nil {
+		epr = body.Epr
 	}
 	if body.Currency != "" {
 		currency = &body.Currency

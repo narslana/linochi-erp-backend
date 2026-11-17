@@ -6348,7 +6348,7 @@ components:
 
     Customer:
       type: object
-      required: [id, name, type_code, address, city, country, eori, epr, currency, version, created_at, updated_at]
+      required: [id, name, type_code, address, city, country, currency, version, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -6356,8 +6356,8 @@ components:
         address: { type: string }
         city: { type: string }
         country: { type: string }
-        eori: { type: string }
-        epr: { type: string }
+        eori: { type: string, nullable: true }
+        epr: { type: string, nullable: true }
         currency: { type: string }
         notes: { type: string }
         archived_at: { type: string, format: date-time }
@@ -6616,10 +6616,10 @@ components:
 
     Order:
       type: object
-      required: [id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, version, created_at, updated_at]
+      required: [id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, version, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
-        external_id: { type: string }
+        external_id: { type: string, nullable: true }
         channel: { type: string }
         status: { type: string }
         currency: { type: string }

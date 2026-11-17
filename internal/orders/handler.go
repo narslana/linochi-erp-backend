@@ -63,6 +63,10 @@ func (h *Handler) createOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var externalID string
+	if body.ExternalId != nil {
+		externalID = *body.ExternalId
+	}
 	var shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry string
 	if body.ShippingName != nil {
 		shippingName = *body.ShippingName
@@ -111,7 +115,7 @@ func (h *Handler) createOrder(w http.ResponseWriter, r *http.Request) {
 		notes = *body.Notes
 	}
 
-	order, err := h.svc.CreateOrder(r.Context(), body.CustomerId, body.ExternalId, body.Channel, body.Status, body.Currency,
+	order, err := h.svc.CreateOrder(r.Context(), body.CustomerId, externalID, body.Channel, body.Status, body.Currency,
 		int64(body.ExchangeRateSek), int64(body.SubtotalSek), int64(body.TaxSek), int64(body.FreightSek),
 		int64(body.CommissionSek), int64(body.TotalSek),
 		shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry,
@@ -175,8 +179,8 @@ func (h *Handler) updateOrder(w http.ResponseWriter, r *http.Request, orderId op
 	}
 
 	var externalID, trackingNumber, carrier, shippingLabelUrl *string
-	if body.ExternalId != "" {
-		externalID = &body.ExternalId
+	if body.ExternalId != nil {
+		externalID = body.ExternalId
 	}
 	if body.TrackingNumber != nil {
 		trackingNumber = body.TrackingNumber
