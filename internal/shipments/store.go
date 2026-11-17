@@ -109,22 +109,22 @@ func (s *Store) UpdateShipment(ctx context.Context, fromLocation, toLocation, ca
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
 	if fromLocation != nil {
-		params.FromLocation = *fromLocation
+		params.FromLocation = fromLocation
 	}
 	if toLocation != nil {
-		params.ToLocation = *toLocation
+		params.ToLocation = toLocation
 	}
 	if carrier != nil {
-		params.Carrier = *carrier
+		params.Carrier = carrier
 	}
 	if trackingNumber != nil {
-		params.TrackingNumber = *trackingNumber
+		params.TrackingNumber = trackingNumber
 	}
 	if batchNumber != nil {
-		params.BatchNumber = *batchNumber
+		params.BatchNumber = batchNumber
 	}
 	if status != nil {
-		params.Status = *status
+		params.Status = status
 	}
 	if documents != nil {
 		params.Documents = *documents

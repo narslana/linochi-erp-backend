@@ -61,6 +61,15 @@ func (s *Service) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 	return order, nil
 }
 
+// GetOrderLine returns an order line by ID.
+func (s *Service) GetOrderLine(ctx context.Context, id uuid.UUID) (OrderLine, error) {
+	line, err := s.store.GetOrderLine(ctx, id)
+	if err != nil {
+		return line, ProblemError(err)
+	}
+	return line, nil
+}
+
 // GetOrderByExternalID returns an order by external marketplace ID (ORD-06).
 func (s *Service) GetOrderByExternalID(ctx context.Context, externalID string) (Order, error) {
 	order, err := s.store.GetOrderByExternalId(ctx, externalID)
@@ -253,7 +262,7 @@ func (s *Service) AcceptOrder(ctx context.Context, status string, reason *string
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, order.Version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -279,7 +288,7 @@ func (s *Service) ShipOrder(ctx context.Context, status string, id uuid.UUID) (O
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, order.Version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -304,7 +313,7 @@ func (s *Service) CancelOrder(ctx context.Context, status string, id uuid.UUID) 
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, 0)
+		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, order.Version)
 		if err != nil {
 			return ProblemError(err)
 		}
@@ -329,7 +338,7 @@ func (s *Service) DeleteOrderLine(ctx context.Context, id uuid.UUID) (OrderLine,
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = st.ArchiveOrderLine(ctx, id, 0)
+		updated, err = st.ArchiveOrderLine(ctx, id, line.Version)
 		if err != nil {
 			return ProblemError(err)
 		}

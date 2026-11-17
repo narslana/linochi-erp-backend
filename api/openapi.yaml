@@ -3999,13 +3999,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
-          description: Customer archived.
+        "200":
+          description: The archived customer.
           headers:
             Cache-Control:
               schema:
                 type: string
                 const: no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
@@ -4251,13 +4254,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
-          description: Lead archived.
+        "200":
+          description: The archived lead.
           headers:
             Cache-Control:
               schema:
                 type: string
                 const: no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lead" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
@@ -4470,13 +4476,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
-          description: Step archived.
+        "200":
+          description: The archived workflow step.
           headers:
             Cache-Control:
               schema:
                 type: string
                 const: no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkflowStep" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
@@ -4619,13 +4628,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
-          description: Transition archived.
+        "200":
+          description: The archived workflow transition.
           headers:
             Cache-Control:
               schema:
                 type: string
                 const: no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkflowTransition" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
@@ -4923,13 +4935,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
-          description: Order archived.
+        "200":
+          description: The archived order.
           headers:
             Cache-Control:
               schema:
                 type: string
                 const: no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
@@ -5573,13 +5588,16 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
-          description: Reminder archived.
+        "200":
+          description: The archived reminder.
           headers:
             Cache-Control:
               schema:
                 type: string
                 const: no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Reminder" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":

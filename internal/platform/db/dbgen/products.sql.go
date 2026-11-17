@@ -1230,15 +1230,15 @@ func (q *Queries) SearchProducts(ctx context.Context, name string) ([]Product, e
 
 const updateFieldDefinition = `-- name: UpdateFieldDefinition :one
 UPDATE field_definitions
-SET name = $1,
-    name_en = $2,
-    field_type = $3,
-    group_name = $4,
-    help_text = $5,
-    mandatory = $6,
-    choices = $7,
-    unit = $8,
-    show_on_card = $9,
+SET name = COALESCE($1, name),
+    name_en = COALESCE($2, name_en),
+    field_type = COALESCE($3, field_type),
+    group_name = COALESCE($4, group_name),
+    help_text = COALESCE($5, help_text),
+    mandatory = COALESCE($6, mandatory),
+    choices = COALESCE($7, choices),
+    unit = COALESCE($8, unit),
+    show_on_card = COALESCE($9, show_on_card),
     updated_at = now(),
     version = version + 1
 WHERE id = $10 AND version = $11
@@ -1246,15 +1246,15 @@ RETURNING id, name, name_en, field_type, group_name, help_text, mandatory, choic
 `
 
 type UpdateFieldDefinitionParams struct {
-	Name       string          `json:"name"`
-	NameEn     string          `json:"name_en"`
-	FieldType  string          `json:"field_type"`
-	GroupName  string          `json:"group_name"`
-	HelpText   string          `json:"help_text"`
-	Mandatory  bool            `json:"mandatory"`
+	Name       *string         `json:"name"`
+	NameEn     *string         `json:"name_en"`
+	FieldType  *string         `json:"field_type"`
+	GroupName  *string         `json:"group_name"`
+	HelpText   *string         `json:"help_text"`
+	Mandatory  *bool           `json:"mandatory"`
 	Choices    json.RawMessage `json:"choices"`
-	Unit       string          `json:"unit"`
-	ShowOnCard bool            `json:"show_on_card"`
+	Unit       *string         `json:"unit"`
+	ShowOnCard *bool           `json:"show_on_card"`
 	ID         uuid.UUID       `json:"id"`
 	Version    int32           `json:"version"`
 }

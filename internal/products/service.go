@@ -128,6 +128,15 @@ func (s *Service) GetProductType(ctx context.Context, id uuid.UUID) (ProductType
 	return pt, nil
 }
 
+// GetProductTypeField returns a product type field assignment by ID.
+func (s *Service) GetProductTypeField(ctx context.Context, id uuid.UUID) (ProductTypeField, error) {
+	ptf, err := s.store.GetProductTypeField(ctx, id)
+	if err != nil {
+		return ptf, ProblemError(err)
+	}
+	return ptf, nil
+}
+
 func (s *Service) CreateProductType(ctx context.Context, name, nameEn, typeCode string) (ProductType, error) {
 	var pt ProductType
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {

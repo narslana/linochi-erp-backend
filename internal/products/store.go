@@ -68,19 +68,33 @@ func (s *Store) CreateFieldDefinition(ctx context.Context, id uuid.UUID, name, n
 }
 
 func (s *Store) UpdateFieldDefinition(ctx context.Context, name, nameEn, fieldType, groupName, helpText, unit string, mandatory bool, choices json.RawMessage, showOnCard bool, id uuid.UUID, version int) (FieldDefinition, error) {
-	row, err := s.q.UpdateFieldDefinition(ctx, dbgen.UpdateFieldDefinitionParams{
-		Name:       name,
-		NameEn:     nameEn,
-		FieldType:  fieldType,
-		GroupName:  groupName,
-		HelpText:   helpText,
-		Mandatory:  mandatory,
-		Choices:    choices,
-		Unit:       unit,
-		ShowOnCard: showOnCard,
-		ID:         id,
-		Version:    int32(version), //nolint:gosec // version is bounded by optimistic locking
-	})
+	var params dbgen.UpdateFieldDefinitionParams
+	params.ID = id
+	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
+	if name != "" {
+		params.Name = &name
+	}
+	if nameEn != "" {
+		params.NameEn = &nameEn
+	}
+	if fieldType != "" {
+		params.FieldType = &fieldType
+	}
+	if groupName != "" {
+		params.GroupName = &groupName
+	}
+	if helpText != "" {
+		params.HelpText = &helpText
+	}
+	params.Mandatory = &mandatory
+	if choices != nil {
+		params.Choices = choices
+	}
+	if unit != "" {
+		params.Unit = &unit
+	}
+	params.ShowOnCard = &showOnCard
+	row, err := s.q.UpdateFieldDefinition(ctx, params)
 	if err != nil {
 		return FieldDefinition{}, err
 	}

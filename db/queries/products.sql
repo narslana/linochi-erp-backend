@@ -16,18 +16,18 @@ RETURNING id, name, name_en, field_type, group_name, help_text, mandatory, choic
 
 -- name: UpdateFieldDefinition :one
 UPDATE field_definitions
-SET name = $1,
-    name_en = $2,
-    field_type = $3,
-    group_name = $4,
-    help_text = $5,
-    mandatory = $6,
-    choices = $7,
-    unit = $8,
-    show_on_card = $9,
+SET name = COALESCE(sqlc.narg(name), name),
+    name_en = COALESCE(sqlc.narg(name_en), name_en),
+    field_type = COALESCE(sqlc.narg(field_type), field_type),
+    group_name = COALESCE(sqlc.narg(group_name), group_name),
+    help_text = COALESCE(sqlc.narg(help_text), help_text),
+    mandatory = COALESCE(sqlc.narg(mandatory), mandatory),
+    choices = COALESCE(sqlc.narg(choices), choices),
+    unit = COALESCE(sqlc.narg(unit), unit),
+    show_on_card = COALESCE(sqlc.narg(show_on_card), show_on_card),
     updated_at = now(),
     version = version + 1
-WHERE id = $10 AND version = $11
+WHERE id = sqlc.arg(id) AND version = sqlc.arg(version)
 RETURNING id, name, name_en, field_type, group_name, help_text, mandatory, choices, unit, show_on_card, archived, archived_at, version, created_at, updated_at;
 
 -- name: ArchiveFieldDefinition :one

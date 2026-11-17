@@ -1142,10 +1142,10 @@ RETURNING id, supplier_id, order_number, currency, order_date, expected_date, st
 type UpdatePurchaseOrderParams struct {
 	ID           uuid.UUID   `json:"id"`
 	Version      int32       `json:"version"`
-	Status       string      `json:"status"`
+	Status       *string     `json:"status"`
 	ExpectedDate pgtype.Date `json:"expected_date"`
-	TotalAmount  int64       `json:"total_amount"`
-	Notes        string      `json:"notes"`
+	TotalAmount  *int64      `json:"total_amount"`
+	Notes        *string     `json:"notes"`
 }
 
 func (q *Queries) UpdatePurchaseOrder(ctx context.Context, arg UpdatePurchaseOrderParams) (PurchaseOrder, error) {
@@ -1191,9 +1191,9 @@ RETURNING id, purchase_order_id, product_id, quantity, unit_price, unit_currency
 type UpdatePurchaseOrderLineParams struct {
 	ID        uuid.UUID `json:"id"`
 	Version   int32     `json:"version"`
-	Quantity  int32     `json:"quantity"`
-	UnitPrice int64     `json:"unit_price"`
-	LineTotal int64     `json:"line_total"`
+	Quantity  *int32    `json:"quantity"`
+	UnitPrice *int64    `json:"unit_price"`
+	LineTotal *int64    `json:"line_total"`
 }
 
 func (q *Queries) UpdatePurchaseOrderLine(ctx context.Context, arg UpdatePurchaseOrderLineParams) (PurchaseOrderLine, error) {
@@ -1243,15 +1243,15 @@ RETURNING id, purchase_order_id, from_location, to_location, carrier, tracking_n
 type UpdateShipmentParams struct {
 	ID               uuid.UUID       `json:"id"`
 	Version          int32           `json:"version"`
-	FromLocation     string          `json:"from_location"`
-	ToLocation       string          `json:"to_location"`
-	Carrier          string          `json:"carrier"`
-	TrackingNumber   string          `json:"tracking_number"`
+	FromLocation     *string         `json:"from_location"`
+	ToLocation       *string         `json:"to_location"`
+	Carrier          *string         `json:"carrier"`
+	TrackingNumber   *string         `json:"tracking_number"`
 	ShippedAt        *time.Time      `json:"shipped_at"`
 	EstimatedArrival pgtype.Date     `json:"estimated_arrival"`
 	ActualArrival    pgtype.Date     `json:"actual_arrival"`
-	BatchNumber      string          `json:"batch_number"`
-	Status           string          `json:"status"`
+	BatchNumber      *string         `json:"batch_number"`
+	Status           *string         `json:"status"`
 	Documents        json.RawMessage `json:"documents"`
 }
 
@@ -1322,24 +1322,24 @@ RETURNING id, name, name_en, org_number, vat_number, country, address, city, pos
 type UpdateSupplierParams struct {
 	ID            uuid.UUID `json:"id"`
 	Version       int32     `json:"version"`
-	Name          string    `json:"name"`
-	NameEn        string    `json:"name_en"`
-	OrgNumber     string    `json:"org_number"`
-	VatNumber     string    `json:"vat_number"`
-	Country       string    `json:"country"`
-	Address       string    `json:"address"`
-	City          string    `json:"city"`
-	PostalCode    string    `json:"postal_code"`
-	Website       string    `json:"website"`
-	ContactEmail  string    `json:"contact_email"`
-	ContactPhone  string    `json:"contact_phone"`
-	Role          string    `json:"role"`
-	LeadTimeDays  int32     `json:"lead_time_days"`
-	Moq           int32     `json:"moq"`
-	Currency      string    `json:"currency"`
-	PaymentTerms  string    `json:"payment_terms"`
-	DeliveryTerms string    `json:"delivery_terms"`
-	Notes         string    `json:"notes"`
+	Name          *string   `json:"name"`
+	NameEn        *string   `json:"name_en"`
+	OrgNumber     *string   `json:"org_number"`
+	VatNumber     *string   `json:"vat_number"`
+	Country       *string   `json:"country"`
+	Address       *string   `json:"address"`
+	City          *string   `json:"city"`
+	PostalCode    *string   `json:"postal_code"`
+	Website       *string   `json:"website"`
+	ContactEmail  *string   `json:"contact_email"`
+	ContactPhone  *string   `json:"contact_phone"`
+	Role          *string   `json:"role"`
+	LeadTimeDays  *int32    `json:"lead_time_days"`
+	Moq           *int32    `json:"moq"`
+	Currency      *string   `json:"currency"`
+	PaymentTerms  *string   `json:"payment_terms"`
+	DeliveryTerms *string   `json:"delivery_terms"`
+	Notes         *string   `json:"notes"`
 }
 
 func (q *Queries) UpdateSupplier(ctx context.Context, arg UpdateSupplierParams) (Supplier, error) {
@@ -1411,11 +1411,11 @@ RETURNING id, supplier_id, name, name_en, email, phone, role, archived, archived
 type UpdateSupplierContactParams struct {
 	ID      uuid.UUID `json:"id"`
 	Version int32     `json:"version"`
-	Name    string    `json:"name"`
-	NameEn  string    `json:"name_en"`
-	Email   string    `json:"email"`
-	Phone   string    `json:"phone"`
-	Role    string    `json:"role"`
+	Name    *string   `json:"name"`
+	NameEn  *string   `json:"name_en"`
+	Email   *string   `json:"email"`
+	Phone   *string   `json:"phone"`
+	Role    *string   `json:"role"`
 }
 
 func (q *Queries) UpdateSupplierContact(ctx context.Context, arg UpdateSupplierContactParams) (SupplierContact, error) {

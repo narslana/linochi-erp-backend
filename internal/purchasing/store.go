@@ -104,13 +104,13 @@ func (s *Store) UpdatePurchaseOrder(ctx context.Context, status *string, expecte
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
 	if status != nil {
-		params.Status = *status
+		params.Status = status
 	}
 	if totalAmount != nil {
-		params.TotalAmount = *totalAmount
+		params.TotalAmount = totalAmount
 	}
 	if notes != nil {
-		params.Notes = *notes
+		params.Notes = notes
 	}
 	if expectedDate != nil {
 		params.ExpectedDate = pgtype.Date{Time: *expectedDate, Valid: true}
@@ -173,13 +173,16 @@ func (s *Store) UpdatePurchaseOrderLine(ctx context.Context, quantity, unitPrice
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
 	if quantity != nil {
-		params.Quantity = int32(*quantity) //nolint:gosec // quantity is bounded by business logic
+		v := int32(*quantity) //nolint:gosec // quantity is bounded by business logic
+		params.Quantity = &v
 	}
 	if unitPrice != nil {
-		params.UnitPrice = int64(*unitPrice)
+		v := int64(*unitPrice)
+		params.UnitPrice = &v
 	}
 	if lineTotal != nil {
-		params.LineTotal = int64(*lineTotal)
+		v := int64(*lineTotal)
+		params.LineTotal = &v
 	}
 	row, err := s.q.UpdatePurchaseOrderLine(ctx, params)
 	if err != nil {

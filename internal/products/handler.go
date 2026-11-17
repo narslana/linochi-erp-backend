@@ -138,12 +138,17 @@ func (h *Handler) UpdateFieldDefinition(w http.ResponseWriter, r *http.Request, 
 
 func (h *Handler) ArchiveFieldDefinition(w http.ResponseWriter, r *http.Request, fieldDefinitionId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fd, err := h.svc.ArchiveFieldDefinition(r.Context(), uuid.UUID(fieldDefinitionId), 0)
+		fd, err := h.svc.GetFieldDefinition(r.Context(), uuid.UUID(fieldDefinitionId))
 		if err != nil {
 			httpx.Error(w, r, err)
 			return
 		}
-		writeJSON(w, http.StatusOK, fd)
+		archived, err := h.svc.ArchiveFieldDefinition(r.Context(), uuid.UUID(fieldDefinitionId), fd.Version)
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, archived)
 	})).ServeHTTP(w, r)
 }
 
@@ -303,7 +308,17 @@ func (h *Handler) ArchiveProductTypeField(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		ptf, err := h.svc.ArchiveProductTypeField(r.Context(), uuid.UUID(ptfId), body.Version)
+		version := body.Version
+		if version == 0 {
+			ptf, err := h.svc.GetProductTypeField(r.Context(), uuid.UUID(ptfId))
+			if err != nil {
+				httpx.Error(w, r, err)
+				return
+			}
+			version = ptf.Version
+		}
+
+		ptf, err := h.svc.ArchiveProductTypeField(r.Context(), uuid.UUID(ptfId), version)
 		if err != nil {
 			httpx.Error(w, r, err)
 			return

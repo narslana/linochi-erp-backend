@@ -538,31 +538,31 @@ RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtota
 type UpdateOrderParams struct {
 	ID                 uuid.UUID      `json:"id"`
 	Version            int32          `json:"version"`
-	ExternalID         string         `json:"external_id"`
-	Channel            string         `json:"channel"`
-	Status             string         `json:"status"`
-	Currency           string         `json:"currency"`
+	ExternalID         *string        `json:"external_id"`
+	Channel            *string        `json:"channel"`
+	Status             *string        `json:"status"`
+	Currency           *string        `json:"currency"`
 	ExchangeRateSek    pgtype.Numeric `json:"exchange_rate_sek"`
-	SubtotalSek        int64          `json:"subtotal_sek"`
-	TaxSek             int64          `json:"tax_sek"`
-	FreightSek         int64          `json:"freight_sek"`
-	CommissionSek      int64          `json:"commission_sek"`
-	TotalSek           int64          `json:"total_sek"`
-	CustomerID         uuid.UUID      `json:"customer_id"`
-	ShippingName       string         `json:"shipping_name"`
-	ShippingAddress    string         `json:"shipping_address"`
-	ShippingCity       string         `json:"shipping_city"`
-	ShippingPostalCode string         `json:"shipping_postal_code"`
-	ShippingCountry    string         `json:"shipping_country"`
-	BillingName        string         `json:"billing_name"`
-	BillingAddress     string         `json:"billing_address"`
-	BillingCity        string         `json:"billing_city"`
-	BillingPostalCode  string         `json:"billing_postal_code"`
-	BillingCountry     string         `json:"billing_country"`
-	TrackingNumber     string         `json:"tracking_number"`
-	Carrier            string         `json:"carrier"`
-	ShippingLabelUrl   string         `json:"shipping_label_url"`
-	Notes              string         `json:"notes"`
+	SubtotalSek        *int64         `json:"subtotal_sek"`
+	TaxSek             *int64         `json:"tax_sek"`
+	FreightSek         *int64         `json:"freight_sek"`
+	CommissionSek      *int64         `json:"commission_sek"`
+	TotalSek           *int64         `json:"total_sek"`
+	CustomerID         *uuid.UUID     `json:"customer_id"`
+	ShippingName       *string        `json:"shipping_name"`
+	ShippingAddress    *string        `json:"shipping_address"`
+	ShippingCity       *string        `json:"shipping_city"`
+	ShippingPostalCode *string        `json:"shipping_postal_code"`
+	ShippingCountry    *string        `json:"shipping_country"`
+	BillingName        *string        `json:"billing_name"`
+	BillingAddress     *string        `json:"billing_address"`
+	BillingCity        *string        `json:"billing_city"`
+	BillingPostalCode  *string        `json:"billing_postal_code"`
+	BillingCountry     *string        `json:"billing_country"`
+	TrackingNumber     *string        `json:"tracking_number"`
+	Carrier            *string        `json:"carrier"`
+	ShippingLabelUrl   *string        `json:"shipping_label_url"`
+	Notes              *string        `json:"notes"`
 }
 
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
@@ -651,12 +651,12 @@ RETURNING id, order_id, product_id, quantity, quantity_shipped, unit_price_sek, 
 type UpdateOrderLineParams struct {
 	ID              uuid.UUID      `json:"id"`
 	Version         int32          `json:"version"`
-	Quantity        int32          `json:"quantity"`
-	QuantityShipped int32          `json:"quantity_shipped"`
-	UnitPriceSek    int64          `json:"unit_price_sek"`
+	Quantity        *int32         `json:"quantity"`
+	QuantityShipped *int32         `json:"quantity_shipped"`
+	UnitPriceSek    *int64         `json:"unit_price_sek"`
 	TaxRate         pgtype.Numeric `json:"tax_rate"`
-	TaxAmountSek    int64          `json:"tax_amount_sek"`
-	TotalSek        int64          `json:"total_sek"`
+	TaxAmountSek    *int64         `json:"tax_amount_sek"`
+	TotalSek        *int64         `json:"total_sek"`
 }
 
 func (q *Queries) UpdateOrderLine(ctx context.Context, arg UpdateOrderLineParams) (OrderLine, error) {
@@ -709,8 +709,8 @@ type UpdateOrderStatusParams struct {
 	Version        int32      `json:"version"`
 	ShippedAt      *time.Time `json:"shipped_at"`
 	DeliveredAt    *time.Time `json:"delivered_at"`
-	TrackingNumber string     `json:"tracking_number"`
-	Carrier        string     `json:"carrier"`
+	TrackingNumber *string    `json:"tracking_number"`
+	Carrier        *string    `json:"carrier"`
 }
 
 func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error) {

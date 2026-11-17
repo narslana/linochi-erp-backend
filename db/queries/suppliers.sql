@@ -16,24 +16,24 @@ INSERT INTO suppliers (
 
 -- name: UpdateSupplier :one
 UPDATE suppliers SET
-    name = COALESCE(sqlc.arg(name), name),
-    name_en = COALESCE(sqlc.arg(name_en), name_en),
-    org_number = COALESCE(sqlc.arg(org_number), org_number),
-    vat_number = COALESCE(sqlc.arg(vat_number), vat_number),
-    country = COALESCE(sqlc.arg(country), country),
-    address = COALESCE(sqlc.arg(address), address),
-    city = COALESCE(sqlc.arg(city), city),
-    postal_code = COALESCE(sqlc.arg(postal_code), postal_code),
-    website = COALESCE(sqlc.arg(website), website),
-    contact_email = COALESCE(sqlc.arg(contact_email), contact_email),
-    contact_phone = COALESCE(sqlc.arg(contact_phone), contact_phone),
-    role = COALESCE(sqlc.arg(role), role),
-    lead_time_days = COALESCE(sqlc.arg(lead_time_days), lead_time_days),
-    moq = COALESCE(sqlc.arg(moq), moq),
-    currency = COALESCE(sqlc.arg(currency), currency),
-    payment_terms = COALESCE(sqlc.arg(payment_terms), payment_terms),
-    delivery_terms = COALESCE(sqlc.arg(delivery_terms), delivery_terms),
-    notes = COALESCE(sqlc.arg(notes), notes),
+    name = COALESCE(sqlc.narg(name), name),
+    name_en = COALESCE(sqlc.narg(name_en), name_en),
+    org_number = COALESCE(sqlc.narg(org_number), org_number),
+    vat_number = COALESCE(sqlc.narg(vat_number), vat_number),
+    country = COALESCE(sqlc.narg(country), country),
+    address = COALESCE(sqlc.narg(address), address),
+    city = COALESCE(sqlc.narg(city), city),
+    postal_code = COALESCE(sqlc.narg(postal_code), postal_code),
+    website = COALESCE(sqlc.narg(website), website),
+    contact_email = COALESCE(sqlc.narg(contact_email), contact_email),
+    contact_phone = COALESCE(sqlc.narg(contact_phone), contact_phone),
+    role = COALESCE(sqlc.narg(role), role),
+    lead_time_days = COALESCE(sqlc.narg(lead_time_days), lead_time_days),
+    moq = COALESCE(sqlc.narg(moq), moq),
+    currency = COALESCE(sqlc.narg(currency), currency),
+    payment_terms = COALESCE(sqlc.narg(payment_terms), payment_terms),
+    delivery_terms = COALESCE(sqlc.narg(delivery_terms), delivery_terms),
+    notes = COALESCE(sqlc.narg(notes), notes),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
@@ -61,11 +61,11 @@ INSERT INTO supplier_contacts (
 
 -- name: UpdateSupplierContact :one
 UPDATE supplier_contacts SET
-    name = COALESCE(sqlc.arg(name), name),
-    name_en = COALESCE(sqlc.arg(name_en), name_en),
-    email = COALESCE(sqlc.arg(email), email),
-    phone = COALESCE(sqlc.arg(phone), phone),
-    role = COALESCE(sqlc.arg(role), role),
+    name = COALESCE(sqlc.narg(name), name),
+    name_en = COALESCE(sqlc.narg(name_en), name_en),
+    email = COALESCE(sqlc.narg(email), email),
+    phone = COALESCE(sqlc.narg(phone), phone),
+    role = COALESCE(sqlc.narg(role), role),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
@@ -120,10 +120,10 @@ INSERT INTO purchase_orders (
 
 -- name: UpdatePurchaseOrder :one
 UPDATE purchase_orders SET
-    status = COALESCE(sqlc.arg(status), status),
-    expected_date = COALESCE(sqlc.arg(expected_date), expected_date),
-    total_amount = COALESCE(sqlc.arg(total_amount), total_amount),
-    notes = COALESCE(sqlc.arg(notes), notes),
+    status = COALESCE(sqlc.narg(status), status),
+    expected_date = COALESCE(sqlc.narg(expected_date), expected_date),
+    total_amount = COALESCE(sqlc.narg(total_amount), total_amount),
+    notes = COALESCE(sqlc.narg(notes), notes),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
@@ -152,9 +152,9 @@ INSERT INTO purchase_order_lines (
 
 -- name: UpdatePurchaseOrderLine :one
 UPDATE purchase_order_lines SET
-    quantity = COALESCE(sqlc.arg(quantity), quantity),
-    unit_price = COALESCE(sqlc.arg(unit_price), unit_price),
-    line_total = COALESCE(sqlc.arg(line_total), line_total),
+    quantity = COALESCE(sqlc.narg(quantity), quantity),
+    unit_price = COALESCE(sqlc.narg(unit_price), unit_price),
+    line_total = COALESCE(sqlc.narg(line_total), line_total),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
@@ -190,16 +190,16 @@ INSERT INTO shipments (
 
 -- name: UpdateShipment :one
 UPDATE shipments SET
-    from_location = COALESCE(sqlc.arg(from_location), from_location),
-    to_location = COALESCE(sqlc.arg(to_location), to_location),
-    carrier = COALESCE(sqlc.arg(carrier), carrier),
-    tracking_number = COALESCE(sqlc.arg(tracking_number), tracking_number),
-    shipped_at = COALESCE(sqlc.arg(shipped_at), shipped_at),
-    estimated_arrival = COALESCE(sqlc.arg(estimated_arrival), estimated_arrival),
-    actual_arrival = COALESCE(sqlc.arg(actual_arrival), actual_arrival),
-    batch_number = COALESCE(sqlc.arg(batch_number), batch_number),
-    status = COALESCE(sqlc.arg(status), status),
-    documents = COALESCE(sqlc.arg(documents), documents),
+    from_location = COALESCE(sqlc.narg(from_location), from_location),
+    to_location = COALESCE(sqlc.narg(to_location), to_location),
+    carrier = COALESCE(sqlc.narg(carrier), carrier),
+    tracking_number = COALESCE(sqlc.narg(tracking_number), tracking_number),
+    shipped_at = COALESCE(sqlc.narg(shipped_at), shipped_at),
+    estimated_arrival = COALESCE(sqlc.narg(estimated_arrival), estimated_arrival),
+    actual_arrival = COALESCE(sqlc.narg(actual_arrival), actual_arrival),
+    batch_number = COALESCE(sqlc.narg(batch_number), batch_number),
+    status = COALESCE(sqlc.narg(status), status),
+    documents = COALESCE(sqlc.narg(documents), documents),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false

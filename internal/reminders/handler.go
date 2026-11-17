@@ -167,7 +167,17 @@ func (h *Handler) archiveReminder(w http.ResponseWriter, r *http.Request, remind
 		return
 	}
 
-	reminder, err := h.svc.ArchiveReminder(r.Context(), uuid.UUID(reminderId), body.Version)
+	version := body.Version
+	if version == 0 {
+		reminder, err := h.svc.GetReminder(r.Context(), uuid.UUID(reminderId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = reminder.Version
+	}
+
+	reminder, err := h.svc.ArchiveReminder(r.Context(), uuid.UUID(reminderId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("reminder")) {
 			httpx.Error(w, r, err)
@@ -196,7 +206,17 @@ func (h *Handler) markReminderNotified(w http.ResponseWriter, r *http.Request, r
 		return
 	}
 
-	reminder, err := h.svc.MarkReminderNotified(r.Context(), uuid.UUID(reminderId), body.Version)
+	version := body.Version
+	if version == 0 {
+		reminder, err := h.svc.GetReminder(r.Context(), uuid.UUID(reminderId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = reminder.Version
+	}
+
+	reminder, err := h.svc.MarkReminderNotified(r.Context(), uuid.UUID(reminderId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("reminder")) {
 			httpx.Error(w, r, err)

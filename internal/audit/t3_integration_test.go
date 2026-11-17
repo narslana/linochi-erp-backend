@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/boards"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/calendar"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/customers"
@@ -457,7 +458,8 @@ func TestINS05_AuditFailureRollsBackTheWrite(t *testing.T) {
 	// Create a product type first (needed as FK).
 	ptStore := products.NewStore(e.pool)
 	ptSvc := products.NewService(ptStore, e.rec, e.pool)
-	pt, err := ptSvc.CreateProductType(ctx, "Fail Rollback Type", "Fail EN", "FAIL")
+	ptCtx := audit.WithActor(ctx, audit.UserActor(uuid.MustParse("00000000-0000-0000-0000-000000000001")))
+	pt, err := ptSvc.CreateProductType(ptCtx, "Fail Rollback Type", "Fail EN", "FAIL")
 	if err != nil {
 		t.Fatal(err)
 	}

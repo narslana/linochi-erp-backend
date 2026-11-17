@@ -125,16 +125,16 @@ func (s *Store) UpdateOrder(ctx context.Context, externalID, channel, status, cu
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
 	if externalID != nil {
-		params.ExternalID = *externalID
+		params.ExternalID = externalID
 	}
 	if channel != nil {
-		params.Channel = *channel
+		params.Channel = channel
 	}
 	if status != nil {
-		params.Status = *status
+		params.Status = status
 	}
 	if currency != nil {
-		params.Currency = *currency
+		params.Currency = currency
 	}
 	if exchangeRateSek != nil {
 		var er pgtype.Numeric
@@ -143,64 +143,64 @@ func (s *Store) UpdateOrder(ctx context.Context, externalID, channel, status, cu
 		params.ExchangeRateSek = er
 	}
 	if subtotalSek != nil {
-		params.SubtotalSek = *subtotalSek
+		params.SubtotalSek = subtotalSek
 	}
 	if taxSek != nil {
-		params.TaxSek = *taxSek
+		params.TaxSek = taxSek
 	}
 	if freightSek != nil {
-		params.FreightSek = *freightSek
+		params.FreightSek = freightSek
 	}
 	if commissionSek != nil {
-		params.CommissionSek = *commissionSek
+		params.CommissionSek = commissionSek
 	}
 	if totalSek != nil {
-		params.TotalSek = *totalSek
+		params.TotalSek = totalSek
 	}
 	if customerID != nil {
-		params.CustomerID = *customerID
+		params.CustomerID = customerID
 	}
 	if shippingName != nil {
-		params.ShippingName = *shippingName
+		params.ShippingName = shippingName
 	}
 	if shippingAddress != nil {
-		params.ShippingAddress = *shippingAddress
+		params.ShippingAddress = shippingAddress
 	}
 	if shippingCity != nil {
-		params.ShippingCity = *shippingCity
+		params.ShippingCity = shippingCity
 	}
 	if shippingPostalCode != nil {
-		params.ShippingPostalCode = *shippingPostalCode
+		params.ShippingPostalCode = shippingPostalCode
 	}
 	if shippingCountry != nil {
-		params.ShippingCountry = *shippingCountry
+		params.ShippingCountry = shippingCountry
 	}
 	if billingName != nil {
-		params.BillingName = *billingName
+		params.BillingName = billingName
 	}
 	if billingAddress != nil {
-		params.BillingAddress = *billingAddress
+		params.BillingAddress = billingAddress
 	}
 	if billingCity != nil {
-		params.BillingCity = *billingCity
+		params.BillingCity = billingCity
 	}
 	if billingPostalCode != nil {
-		params.BillingPostalCode = *billingPostalCode
+		params.BillingPostalCode = billingPostalCode
 	}
 	if billingCountry != nil {
-		params.BillingCountry = *billingCountry
+		params.BillingCountry = billingCountry
 	}
 	if trackingNumber != nil {
-		params.TrackingNumber = *trackingNumber
+		params.TrackingNumber = trackingNumber
 	}
 	if carrier != nil {
-		params.Carrier = *carrier
+		params.Carrier = carrier
 	}
 	if shippingLabelUrl != nil {
-		params.ShippingLabelUrl = *shippingLabelUrl
+		params.ShippingLabelUrl = shippingLabelUrl
 	}
 	if notes != nil {
-		params.Notes = *notes
+		params.Notes = notes
 	}
 
 	row, err := s.q.UpdateOrder(ctx, params)
@@ -229,22 +229,14 @@ func (s *Store) UpdateOrderStatus(ctx context.Context, status string, shippedAt,
 		dp = &t
 	}
 
-	var tn, c string
-	if trackingNumber != nil {
-		tn = *trackingNumber
-	}
-	if carrier != nil {
-		c = *carrier
-	}
-
 	row, err := s.q.UpdateOrderStatus(ctx, dbgen.UpdateOrderStatusParams{
 		ID:             id,
 		Status:         status,
 		Version:        int32(version), //nolint:gosec // version is bounded by optimistic locking
 		ShippedAt:      sp,
 		DeliveredAt:    dp,
-		TrackingNumber: tn,
-		Carrier:        c,
+		TrackingNumber: trackingNumber,
+		Carrier:        carrier,
 	})
 	if err != nil {
 		return Order{}, err
@@ -301,13 +293,15 @@ func (s *Store) UpdateOrderLine(ctx context.Context, quantity, quantityShipped *
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
 	if quantity != nil {
-		params.Quantity = int32(*quantity) //nolint:gosec // quantity is bounded by business logic
+		v := int32(*quantity) //nolint:gosec // quantity is bounded by business logic
+		params.Quantity = &v
 	}
 	if quantityShipped != nil {
-		params.QuantityShipped = int32(*quantityShipped) //nolint:gosec // quantity shipped is bounded by business logic
+		v := int32(*quantityShipped) //nolint:gosec // quantity shipped is bounded by business logic
+		params.QuantityShipped = &v
 	}
 	if unitPriceSek != nil {
-		params.UnitPriceSek = *unitPriceSek
+		params.UnitPriceSek = unitPriceSek
 	}
 	if taxRate != nil {
 		var tr pgtype.Numeric
@@ -316,10 +310,10 @@ func (s *Store) UpdateOrderLine(ctx context.Context, quantity, quantityShipped *
 		params.TaxRate = tr
 	}
 	if taxAmountSek != nil {
-		params.TaxAmountSek = *taxAmountSek
+		params.TaxAmountSek = taxAmountSek
 	}
 	if totalSek != nil {
-		params.TotalSek = *totalSek
+		params.TotalSek = totalSek
 	}
 	row, err := s.q.UpdateOrderLine(ctx, params)
 	if err != nil {

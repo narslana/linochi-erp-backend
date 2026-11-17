@@ -167,7 +167,17 @@ func (h *Handler) archiveCustomer(w http.ResponseWriter, r *http.Request, custom
 		return
 	}
 
-	cust, err := h.svc.ArchiveCustomer(r.Context(), uuid.UUID(customerId), body.Version)
+	version := body.Version
+	if version == 0 {
+		cust, err := h.svc.GetCustomer(r.Context(), uuid.UUID(customerId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = cust.Version
+	}
+
+	cust, err := h.svc.ArchiveCustomer(r.Context(), uuid.UUID(customerId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("customer")) {
 			httpx.Error(w, r, err)
@@ -224,7 +234,11 @@ func (h *Handler) createContact(w http.ResponseWriter, r *http.Request, customer
 		phone = *body.Phone
 	}
 
-	contact, err := h.svc.CreateContact(r.Context(), customerId, body.Id, body.FirstName, body.LastName, body.Email, phone)
+	id := body.Id
+	if id == uuid.Nil {
+		id = uuid.New()
+	}
+	contact, err := h.svc.CreateContact(r.Context(), customerId, id, body.FirstName, body.LastName, body.Email, phone)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "CreateContact failed", "error", err)
 		httpx.Error(w, r, err)

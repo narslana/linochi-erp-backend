@@ -163,7 +163,17 @@ func (h *Handler) archiveWorkflowStep(w http.ResponseWriter, r *http.Request, id
 		return
 	}
 
-	step, err := h.svc.ArchiveWorkflowStep(r.Context(), id, body.Version)
+	version := body.Version
+	if version == 0 {
+		step, err := h.svc.GetWorkflowStep(r.Context(), id)
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = step.Version
+	}
+
+	step, err := h.svc.ArchiveWorkflowStep(r.Context(), id, version)
 	if err != nil {
 		if errors.Is(err, newNotFound("workflow step")) {
 			httpx.Error(w, r, err)
@@ -301,7 +311,17 @@ func (h *Handler) archiveWorkflowTransition(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	transition, err := h.svc.ArchiveWorkflowTransition(r.Context(), uuid.UUID(transitionId), body.Version)
+	version := body.Version
+	if version == 0 {
+		transition, err := h.svc.GetWorkflowTransition(r.Context(), uuid.UUID(transitionId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = transition.Version
+	}
+
+	transition, err := h.svc.ArchiveWorkflowTransition(r.Context(), uuid.UUID(transitionId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("workflow transition")) {
 			httpx.Error(w, r, err)

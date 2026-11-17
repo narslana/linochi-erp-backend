@@ -162,7 +162,17 @@ func (h *Handler) archiveLocation(w http.ResponseWriter, r *http.Request, locati
 		return
 	}
 
-	loc, err := h.svc.ArchiveLocation(r.Context(), uuid.UUID(locationId), body.Version)
+	version := body.Version
+	if version == 0 {
+		loc, err := h.svc.GetLocation(r.Context(), uuid.UUID(locationId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = loc.Version
+	}
+
+	loc, err := h.svc.ArchiveLocation(r.Context(), uuid.UUID(locationId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("location")) {
 			httpx.Error(w, r, err)

@@ -281,7 +281,17 @@ func (h *Handler) archiveOrder(w http.ResponseWriter, r *http.Request, orderId o
 		return
 	}
 
-	order, err := h.svc.ArchiveOrder(r.Context(), uuid.UUID(orderId), body.Version)
+	version := body.Version
+	if version == 0 {
+		order, err := h.svc.GetOrder(r.Context(), uuid.UUID(orderId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = order.Version
+	}
+
+	order, err := h.svc.ArchiveOrder(r.Context(), uuid.UUID(orderId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("order")) {
 			httpx.Error(w, r, err)
@@ -310,7 +320,13 @@ func (h *Handler) updateOrderStatus(w http.ResponseWriter, r *http.Request, orde
 		return
 	}
 
-	order, err := h.svc.UpdateOrderStatus(r.Context(), body.Status, nil, nil, nil, nil, uuid.UUID(orderId), 0)
+	order, err := h.svc.GetOrder(r.Context(), uuid.UUID(orderId))
+	if err != nil {
+		httpx.Error(w, r, err)
+		return
+	}
+
+	order, err = h.svc.UpdateOrderStatus(r.Context(), body.Status, nil, nil, nil, nil, uuid.UUID(orderId), order.Version)
 	if err != nil {
 		if errors.Is(err, newNotFound("order")) {
 			httpx.Error(w, r, err)
@@ -416,7 +432,17 @@ func (h *Handler) archiveOrderLine(w http.ResponseWriter, r *http.Request, order
 		return
 	}
 
-	line, err := h.svc.ArchiveOrderLine(r.Context(), uuid.UUID(orderLineId), body.Version)
+	version := body.Version
+	if version == 0 {
+		line, err := h.svc.GetOrderLine(r.Context(), uuid.UUID(orderLineId))
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		version = line.Version
+	}
+
+	line, err := h.svc.ArchiveOrderLine(r.Context(), uuid.UUID(orderLineId), version)
 	if err != nil {
 		if errors.Is(err, newNotFound("order line")) {
 			httpx.Error(w, r, err)

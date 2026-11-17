@@ -79,26 +79,58 @@ func (s *Store) UpdateSupplier(ctx context.Context, name, nameEn, orgNumber, vat
 	var params dbgen.UpdateSupplierParams
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
-	params.Name = name
-	params.NameEn = nameEn
-	params.OrgNumber = orgNumber
-	params.VatNumber = vatNumber
-	params.Country = country
-	params.Address = address
-	params.City = city
-	params.PostalCode = postalCode
-	params.Website = website
-	params.ContactEmail = contactEmail
-	params.ContactPhone = contactPhone
-	params.Role = role
-	params.PaymentTerms = paymentTerms
-	params.DeliveryTerms = deliveryTerms
-	params.Notes = notes
+	if name != "" {
+		params.Name = &name
+	}
+	if nameEn != "" {
+		params.NameEn = &nameEn
+	}
+	if orgNumber != "" {
+		params.OrgNumber = &orgNumber
+	}
+	if vatNumber != "" {
+		params.VatNumber = &vatNumber
+	}
+	if country != "" {
+		params.Country = &country
+	}
+	if address != "" {
+		params.Address = &address
+	}
+	if city != "" {
+		params.City = &city
+	}
+	if postalCode != "" {
+		params.PostalCode = &postalCode
+	}
+	if website != "" {
+		params.Website = &website
+	}
+	if contactEmail != "" {
+		params.ContactEmail = &contactEmail
+	}
+	if contactPhone != "" {
+		params.ContactPhone = &contactPhone
+	}
+	if role != "" {
+		params.Role = &role
+	}
+	if paymentTerms != "" {
+		params.PaymentTerms = &paymentTerms
+	}
+	if deliveryTerms != "" {
+		params.DeliveryTerms = &deliveryTerms
+	}
+	if notes != "" {
+		params.Notes = &notes
+	}
 	if leadTimeDays != nil {
-		params.LeadTimeDays = int32(*leadTimeDays) //nolint:gosec // lead time days is bounded by business logic
+		v := int32(*leadTimeDays) //nolint:gosec // lead time days is bounded by business logic
+		params.LeadTimeDays = &v
 	}
 	if moq != nil {
-		params.Moq = int32(*moq) //nolint:gosec // MOQ is bounded by business logic
+		v := int32(*moq) //nolint:gosec // MOQ is bounded by business logic
+		params.Moq = &v
 	}
 	row, err := s.q.UpdateSupplier(ctx, params)
 	if err != nil {
@@ -154,15 +186,25 @@ func (s *Store) CreateSupplierContact(ctx context.Context, id, supplierID uuid.U
 }
 
 func (s *Store) UpdateSupplierContact(ctx context.Context, name, nameEn, email, phone, role string, id uuid.UUID, version int) (SupplierContact, error) {
-	row, err := s.q.UpdateSupplierContact(ctx, dbgen.UpdateSupplierContactParams{
-		ID:      id,
-		Version: int32(version), //nolint:gosec // version is bounded by optimistic locking
-		Name:    name,
-		NameEn:  nameEn,
-		Email:   email,
-		Phone:   phone,
-		Role:    role,
-	})
+	var params dbgen.UpdateSupplierContactParams
+	params.ID = id
+	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
+	if name != "" {
+		params.Name = &name
+	}
+	if nameEn != "" {
+		params.NameEn = &nameEn
+	}
+	if email != "" {
+		params.Email = &email
+	}
+	if phone != "" {
+		params.Phone = &phone
+	}
+	if role != "" {
+		params.Role = &role
+	}
+	row, err := s.q.UpdateSupplierContact(ctx, params)
 	if err != nil {
 		return SupplierContact{}, err
 	}
