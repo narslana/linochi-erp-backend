@@ -134,6 +134,9 @@ func (s *Service) CreatePlaylistView(ctx context.Context, playlistID uuid.UUID, 
 		return PlaylistView{}, fmt.Errorf("invalid view type %q: must be one of map, graph, inventory, orders, calendar", viewType)
 	}
 
+	if settings == nil {
+		settings = map[string]any{}
+	}
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		return PlaylistView{}, fmt.Errorf("marshal settings: %w", err)
