@@ -54,32 +54,42 @@ func TestOBS_PersonalDataIsMaskedInLogs(t *testing.T) {
 	tests := []struct {
 		name string
 		attr slog.Attr
+		key  string
 		leak string
 	}{
-		{"name", slog.String("name", "Anna Svensson"), "Anna"},
-		{"email", slog.String("email", "anna@example.se"), "anna@"},
-		{"phone", slog.String("phone", "070-123 45 67"), "070"},
-		{"address", slog.String("address", "Storgatan 1"), "Storgatan"},
-		{"suffix _name", slog.String("customer_name", "Butik AB"), "Butik"},
-		{"suffix _email", slog.String("contact_email", "x@y.se"), "x@y.se"},
-		{"upper case", slog.String("Email", "Z@z.se"), "Z@z.se"},
-		{"in a group", slog.Group("customer", slog.String("email", "g@g.se")), "g@g.se"},
-		{"Personal value under any key", slog.Any("note", obs.Personal("Kalle Kula")), "Kalle"},
-		{"password", slog.String("password", "hunter2"), "hunter2"},
-		{"token", slog.String("token", "tok-123"), "tok-123"},
-		{"authorization", slog.String("authorization", "Bearer abc"), "Bearer abc"},
-		{"cookie", slog.String("cookie", "__Host-s=abc"), "abc"},
+		{"name", slog.String("name", "Anna Svensson"), "name", "Anna"},
+		{"email", slog.String("email", "anna@example.se"), "email", "anna@"},
+		{"phone", slog.String("phone", "070-123 45 67"), "phone", "070"},
+		{"address", slog.String("address", "Storgatan 1"), "address", "Storgatan"},
+		{"suffix _name", slog.String("customer_name", "Butik AB"), "customer_name", "Butik"},
+		{"suffix _email", slog.String("contact_email", "x@y.se"), "contact_email", "x@y.se"},
+		{"upper case", slog.String("Email", "Z@z.se"), "Email", "Z@z.se"},
+		{"in a group", slog.Group("customer", slog.String("email", "g@g.se")), "customer.email", "g@g.se"},
+		{"Personal value under any key", slog.Any("note", obs.Personal("Kalle Kula")), "note", "Kalle"},
+		{"password", slog.String("password", "hunter2"), "password", "hunter2"},
+		{"token", slog.String("token", "tok-123"), "token", "tok-123"},
+		{"authorization", slog.String("authorization", "Bearer abc"), "authorization", "Bearer abc"},
+		{"cookie", slog.String("cookie", "__Host-s=abc"), "cookie", "abc"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			obs.NewLogger(&buf, slog.LevelInfo).Info("event", tt.attr)
-			out := buf.String()
-			if strings.Contains(out, tt.leak) {
-				t.Errorf("clear text %q leaked: %s", tt.leak, out)
+			m := logLine(t, &buf)
+			// Navigate into groups for nested keys like customer.email.
+			var val any
+			if tt.key == "customer.email" {
+				if grp, ok := m["customer"].(map[string]any); ok {
+					val = grp["email"]
+				}
+			} else {
+				val = m[tt.key]
 			}
-			if !strings.Contains(out, "[masked]") {
-				t.Errorf("expected [masked] in %s", out)
+			if val != "[masked]" {
+				t.Errorf("expected %q to be masked, got %v", tt.leak, val)
+			}
+			if !strings.Contains(buf.String(), "[masked]") {
+				t.Errorf("expected [masked] in %s", buf.String())
 			}
 		})
 	}
