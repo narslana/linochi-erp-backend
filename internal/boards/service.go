@@ -57,16 +57,13 @@ func (s *Service) CreateBoard(ctx context.Context, name string) (Board, error) {
 			}
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "boards",
 			EntityType: "board",
 			EntityID:   b.ID,
 			Action:     "Create",
 			After:      map[string]any{"name": name},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return b, err
 }
