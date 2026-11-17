@@ -42,16 +42,13 @@ func (s *Service) CreateLocation(ctx context.Context, name, nameEn, address, cit
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "inventory",
 			EntityType: "location",
 			EntityID:   loc.ID,
 			Action:     "Create",
 			After:      map[string]any{"name": name, "city": city},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return loc, err
 }
@@ -67,38 +64,59 @@ func (s *Service) GetLocation(ctx context.Context, id uuid.UUID) (Location, erro
 
 // UpdateLocation updates a location (LAG-01).
 func (s *Service) UpdateLocation(ctx context.Context, id uuid.UUID, name, nameEn, address, city, country *string, channelBuffer *int, version int) (Location, error) {
-	loc, err := s.store.UpdateLocation(ctx, name, nameEn, address, city, country, channelBuffer, id, version)
-	if err != nil {
-		return loc, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "inventory",
-		EntityType: "location",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"name": name},
-		Reason:     actor.ID.String(),
+	var updated Location
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		loc, err := s.store.GetLocation(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateLocation(ctx, name, nameEn, address, city, country, channelBuffer, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		after := map[string]any{}
+		if name != nil {
+			after["name"] = *name
+		}
+		if channelBuffer != nil {
+			after["channel_buffer"] = *channelBuffer
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "inventory",
+			EntityType: "location",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"name": loc.Name},
+			After:      after,
+		})
 	})
-	return loc, nil
+	return updated, err
 }
 
 // ArchiveLocation archives a location (NFK-09).
 func (s *Service) ArchiveLocation(ctx context.Context, id uuid.UUID, version int) (Location, error) {
-	loc, err := s.store.ArchiveLocation(ctx, id, version)
-	if err != nil {
-		return loc, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "inventory",
-		EntityType: "location",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"name": loc.Name},
-		Reason:     actor.ID.String(),
+	var updated Location
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		loc, err := s.store.GetLocation(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveLocation(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "inventory",
+			EntityType: "location",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"name": loc.Name},
+		})
 	})
-	return loc, nil
+	return updated, err
 }
 
 // ─── Stock Movements ──────────────────────────────────────────────────────────
@@ -134,8 +152,7 @@ func (s *Service) CreateStockMovement(ctx context.Context, productID, locationID
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "inventory",
 			EntityType: "stockmovement",
 			EntityID:   movement.ID,
@@ -147,9 +164,7 @@ func (s *Service) CreateStockMovement(ctx context.Context, productID, locationID
 				"quantity":      quantity,
 				"reason":        reason,
 			},
-			Reason: actor.ID.String(),
 		})
-		return nil
 	})
 	return movement, err
 }
@@ -214,7 +229,6 @@ func (s *Service) GetInventoryValue(ctx context.Context) ([]InventoryValue, erro
 func (s *Service) ReserveStock(ctx context.Context, productID uuid.UUID, locationID uuid.UUID, quantity int, referenceType string, referenceID uuid.UUID) error {
 	return db.InTx(ctx, s.pool, func(tx *db.Tx) error {
 		movementID := uuid.New()
-		actor, _ := audit.ActorFrom(ctx)
 		refID := referenceID.String()
 
 		if _, err := tx.Queries().CreateStockMovement(ctx, dbgen.CreateStockMovementParams{
@@ -230,7 +244,7 @@ func (s *Service) ReserveStock(ctx context.Context, productID uuid.UUID, locatio
 			return err
 		}
 
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "inventory",
 			EntityType: "reservation",
 			EntityID:   movementID,
@@ -240,9 +254,7 @@ func (s *Service) ReserveStock(ctx context.Context, productID uuid.UUID, locatio
 				"quantity":   quantity,
 				"reference":  refID,
 			},
-			Reason: actor.ID.String(),
 		})
-		return nil
 	})
 }
 
@@ -250,7 +262,6 @@ func (s *Service) ReserveStock(ctx context.Context, productID uuid.UUID, locatio
 func (s *Service) ReleaseStock(ctx context.Context, productID uuid.UUID, locationID uuid.UUID, quantity int, referenceType string, referenceID uuid.UUID) error {
 	return db.InTx(ctx, s.pool, func(tx *db.Tx) error {
 		movementID := uuid.New()
-		actor, _ := audit.ActorFrom(ctx)
 		refID := referenceID.String()
 
 		if _, err := tx.Queries().CreateStockMovement(ctx, dbgen.CreateStockMovementParams{
@@ -266,7 +277,7 @@ func (s *Service) ReleaseStock(ctx context.Context, productID uuid.UUID, locatio
 			return err
 		}
 
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "inventory",
 			EntityType: "release",
 			EntityID:   movementID,
@@ -276,9 +287,7 @@ func (s *Service) ReleaseStock(ctx context.Context, productID uuid.UUID, locatio
 				"quantity":   quantity,
 				"reference":  refID,
 			},
-			Reason: actor.ID.String(),
 		})
-		return nil
 	})
 }
 
@@ -301,7 +310,6 @@ func (s *Service) WithdrawStock(ctx context.Context, productID uuid.UUID, locati
 			}
 
 			movementID := uuid.New()
-			actor, _ := audit.ActorFrom(ctx)
 			refID := referenceID.String()
 
 			if _, err := tx.Queries().CreateStockMovement(ctx, dbgen.CreateStockMovementParams{
@@ -318,7 +326,7 @@ func (s *Service) WithdrawStock(ctx context.Context, productID uuid.UUID, locati
 				return err
 			}
 
-			_ = s.rec.Record(ctx, tx, audit.Entry{
+			if err := s.rec.Record(ctx, tx, audit.Entry{
 				Module:     "inventory",
 				EntityType: "sale",
 				EntityID:   movementID,
@@ -329,8 +337,9 @@ func (s *Service) WithdrawStock(ctx context.Context, productID uuid.UUID, locati
 					"batch":      batch.BatchNumber,
 					"reference":  refID,
 				},
-				Reason: actor.ID.String(),
-			})
+			}); err != nil {
+				return err
+			}
 
 			remaining -= take
 		}
