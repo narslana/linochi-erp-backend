@@ -92,9 +92,9 @@ type ShipmentOnTheirWay struct {
 
 // InventoryStats holds inventory statistics (STA-02).
 type InventoryStats struct {
-	Items         *[]InventoryStatsItem `json:"items,omitempty"`
-	LowStockCount int                   `json:"low_stock_count"`
-	TotalValue    int64                 `json:"total_value"`
+	Items         []InventoryStatsItem `json:"items"`
+	LowStockCount int                  `json:"low_stock_count"`
+	TotalValue    int64                `json:"total_value"`
 }
 
 // InventoryStatsItem represents a product's inventory in the stats.

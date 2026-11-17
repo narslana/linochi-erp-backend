@@ -284,7 +284,7 @@ func (s *Service) GetInventoryStats(ctx context.Context) (InventoryStats, error)
 		return InventoryStats{}, err
 	}
 
-	var itemSlice []InventoryStatsItem
+	itemSlice := make([]InventoryStatsItem, 0, len(items))
 	for _, it := range items {
 		itemSlice = append(itemSlice, InventoryStatsItem{
 			ProductID:   it.ProductID,
@@ -297,7 +297,7 @@ func (s *Service) GetInventoryStats(ctx context.Context) (InventoryStats, error)
 	return InventoryStats{
 		TotalValue:    keyFiguresInt64(total),
 		LowStockCount: int(lowStock),
-		Items:         &itemSlice,
+		Items:         itemSlice,
 	}, nil
 }
 

@@ -271,13 +271,17 @@ func dbRowToPlaylist(r dbgen.KioskPlaylist) Playlist {
 }
 
 func dbRowToPlaylistView(r dbgen.KioskPlaylistView) PlaylistView {
+	settings := r.Settings
+	if settings == nil {
+		settings = json.RawMessage("{}")
+	}
 	v := PlaylistView{
 		ID:          r.ID,
 		PlaylistID:  r.PlaylistID,
 		ViewType:    r.ViewType,
 		SortOrder:   r.SortOrder,
 		DurationSec: r.DurationSec,
-		Settings:    r.Settings,
+		Settings:    settings,
 		Version:     int(r.Version),
 		CreatedAt:   r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   r.UpdatedAt.Format(time.RFC3339),
