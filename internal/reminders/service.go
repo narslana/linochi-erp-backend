@@ -37,16 +37,13 @@ func (s *Service) CreateReminder(ctx context.Context, idsEntryID, externalRefID 
 			return err
 		}
 
-		actor, _ := audit.ActorFrom(ctx)
-		_ = s.rec.Record(ctx, tx, audit.Entry{
+		return s.rec.Record(ctx, tx, audit.Entry{
 			Module:     "reminders",
 			EntityType: "reminder",
 			EntityID:   reminder.ID,
 			Action:     "Create",
 			After:      map[string]any{"title": title, "due_date": dueDate},
-			Reason:     actor.ID.String(),
 		})
-		return nil
 	})
 	return reminder, err
 }
@@ -62,55 +59,76 @@ func (s *Service) GetReminder(ctx context.Context, id uuid.UUID) (Reminder, erro
 
 // UpdateReminder updates a reminder (REG-05).
 func (s *Service) UpdateReminder(ctx context.Context, title, titleEn, description *string, dueDate *string, id uuid.UUID, version int) (Reminder, error) {
-	reminder, err := s.store.UpdateReminder(ctx, title, titleEn, description, dueDate, id, version)
-	if err != nil {
-		return reminder, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "reminders",
-		EntityType: "reminder",
-		EntityID:   id,
-		Action:     "Update",
-		After:      map[string]any{"title": title},
-		Reason:     actor.ID.String(),
+	var updated Reminder
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		reminder, err := s.store.GetReminder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.UpdateReminder(ctx, title, titleEn, description, dueDate, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "reminders",
+			EntityType: "reminder",
+			EntityID:   id,
+			Action:     "Update",
+			Before:     map[string]any{"title": reminder.Title, "due_date": reminder.DueDate},
+			After:      map[string]any{"title": title, "due_date": dueDate},
+		})
 	})
-	return reminder, nil
+	return updated, err
 }
 
 // ArchiveReminder archives a reminder (NFK-09).
 func (s *Service) ArchiveReminder(ctx context.Context, id uuid.UUID, version int) (Reminder, error) {
-	reminder, err := s.store.ArchiveReminder(ctx, id, version)
-	if err != nil {
-		return reminder, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "reminders",
-		EntityType: "reminder",
-		EntityID:   id,
-		Action:     "Archive",
-		Before:     map[string]any{"title": reminder.Title},
-		Reason:     actor.ID.String(),
+	var updated Reminder
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		reminder, err := s.store.GetReminder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.ArchiveReminder(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "reminders",
+			EntityType: "reminder",
+			EntityID:   id,
+			Action:     "Archive",
+			Before:     map[string]any{"title": reminder.Title},
+		})
 	})
-	return reminder, nil
+	return updated, err
 }
 
 // MarkReminderNotified marks a reminder as notified (REG-05).
 func (s *Service) MarkReminderNotified(ctx context.Context, id uuid.UUID, version int) (Reminder, error) {
-	reminder, err := s.store.MarkReminderNotified(ctx, id, version)
-	if err != nil {
-		return reminder, ProblemError(err)
-	}
-	actor, _ := audit.ActorFrom(ctx)
-	_ = s.rec.Record(ctx, nil, audit.Entry{
-		Module:     "reminders",
-		EntityType: "reminder",
-		EntityID:   id,
-		Action:     "MarkNotified",
-		Reason:     actor.ID.String(),
+	var updated Reminder
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		reminder, err := s.store.GetReminder(ctx, id)
+		if err != nil {
+			return ProblemError(err)
+		}
+		updated, err = s.store.MarkReminderNotified(ctx, id, version)
+		if err != nil {
+			return ProblemError(err)
+		}
+
+		return s.rec.Record(ctx, tx, audit.Entry{
+			Module:     "reminders",
+			EntityType: "reminder",
+			EntityID:   id,
+			Action:     "MarkNotified",
+			Before:     map[string]any{"notified": reminder.Notified},
+			After:      map[string]any{"notified": true},
+		})
 	})
-	return reminder, nil
+	return updated, err
 }
 
 // ExpiredReminders returns reminders that have passed their due date (REG-05).
