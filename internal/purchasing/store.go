@@ -138,6 +138,14 @@ func (s *Store) ListPurchaseOrderLines(ctx context.Context, poID uuid.UUID) ([]P
 	return out, nil
 }
 
+func (s *Store) GetPurchaseOrderLine(ctx context.Context, id uuid.UUID) (PurchaseOrderLine, error) {
+	row, err := s.q.GetPurchaseOrderLine(ctx, id)
+	if err != nil {
+		return PurchaseOrderLine{}, err
+	}
+	return dbRowToPurchaseOrderLine(row), nil
+}
+
 func (s *Store) CreatePurchaseOrderLine(ctx context.Context, id, poID, productID uuid.UUID, quantity int, unitPrice, lineTotal int64, unitCurrency string) (PurchaseOrderLine, error) {
 	row, err := s.q.CreatePurchaseOrderLine(ctx, dbgen.CreatePurchaseOrderLineParams{
 		ID:              id,
