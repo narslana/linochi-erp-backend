@@ -424,6 +424,29 @@ func (q *Queries) CustomerStats(ctx context.Context, customerID uuid.UUID) (Cust
 	return i, err
 }
 
+const getContact = `-- name: GetContact :one
+SELECT id, customer_id, first_name, last_name, email, phone, archived, archived_at, version, created_at, updated_at FROM contacts WHERE id = $1
+`
+
+func (q *Queries) GetContact(ctx context.Context, id uuid.UUID) (Contact, error) {
+	row := q.db.QueryRow(ctx, getContact, id)
+	var i Contact
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getCustomer = `-- name: GetCustomer :one
 SELECT id, name, type_code, address, city, country, eori, epr, currency, notes, archived, archived_at, version, created_at, updated_at FROM customers WHERE id = $1 AND archived = false
 `

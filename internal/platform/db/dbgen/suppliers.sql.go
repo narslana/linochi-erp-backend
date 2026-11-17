@@ -591,6 +591,30 @@ func (q *Queries) GetPurchaseOrder(ctx context.Context, id uuid.UUID) (PurchaseO
 	return i, err
 }
 
+const getPurchaseOrderLine = `-- name: GetPurchaseOrderLine :one
+SELECT id, purchase_order_id, product_id, quantity, unit_price, unit_currency, line_total, archived, archived_at, version, created_at, updated_at FROM purchase_order_lines WHERE id = $1
+`
+
+func (q *Queries) GetPurchaseOrderLine(ctx context.Context, id uuid.UUID) (PurchaseOrderLine, error) {
+	row := q.db.QueryRow(ctx, getPurchaseOrderLine, id)
+	var i PurchaseOrderLine
+	err := row.Scan(
+		&i.ID,
+		&i.PurchaseOrderID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.UnitPrice,
+		&i.UnitCurrency,
+		&i.LineTotal,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getShipment = `-- name: GetShipment :one
 SELECT id, purchase_order_id, from_location, to_location, carrier, tracking_number, shipped_at, estimated_arrival, actual_arrival, batch_number, status, documents, archived, archived_at, version, created_at, updated_at FROM shipments WHERE id = $1 AND archived = false
 `
@@ -671,6 +695,28 @@ func (q *Queries) GetSupplierContact(ctx context.Context, id uuid.UUID) (Supplie
 		&i.Email,
 		&i.Phone,
 		&i.Role,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSupplierProduct = `-- name: GetSupplierProduct :one
+SELECT id, supplier_id, product_id, purchase_price, purchase_currency, archived, archived_at, version, created_at, updated_at FROM supplier_products WHERE id = $1
+`
+
+func (q *Queries) GetSupplierProduct(ctx context.Context, id uuid.UUID) (SupplierProduct, error) {
+	row := q.db.QueryRow(ctx, getSupplierProduct, id)
+	var i SupplierProduct
+	err := row.Scan(
+		&i.ID,
+		&i.SupplierID,
+		&i.ProductID,
+		&i.PurchasePrice,
+		&i.PurchaseCurrency,
 		&i.Archived,
 		&i.ArchivedAt,
 		&i.Version,

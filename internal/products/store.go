@@ -149,6 +149,14 @@ func (s *Store) ListProductTypeFields(ctx context.Context, productTypeID uuid.UU
 	return out, nil
 }
 
+func (s *Store) GetProductTypeField(ctx context.Context, id uuid.UUID) (ProductTypeField, error) {
+	row, err := s.q.GetProductTypeField(ctx, id)
+	if err != nil {
+		return ProductTypeField{}, err
+	}
+	return dbRowToProductTypeField(row), nil
+}
+
 func (s *Store) AssignFieldToProductType(ctx context.Context, id, productTypeID, fieldDefinitionID uuid.UUID, sortOrder int32, mandatoryOverride *bool) (ProductTypeField, error) {
 	row, err := s.q.AssignFieldToProductType(ctx, dbgen.AssignFieldToProductTypeParams{
 		ID:                id,
@@ -302,6 +310,14 @@ func (s *Store) ListProductImages(ctx context.Context, productID uuid.UUID) ([]P
 	return out, nil
 }
 
+func (s *Store) GetProductImage(ctx context.Context, id uuid.UUID) (ProductImage, error) {
+	row, err := s.q.GetProductImage(ctx, id)
+	if err != nil {
+		return ProductImage{}, err
+	}
+	return dbRowToProductImage(row), nil
+}
+
 func (s *Store) CreateProductImage(ctx context.Context, id, productID uuid.UUID, url string, sortOrder int32, isMain bool) (ProductImage, error) {
 	row, err := s.q.CreateProductImage(ctx, dbgen.CreateProductImageParams{ID: id, ProductID: productID, Url: url, SortOrder: sortOrder, IsMain: isMain})
 	if err != nil {
@@ -338,6 +354,14 @@ func (s *Store) ListProductDocuments(ctx context.Context, productID uuid.UUID) (
 		out = append(out, dbRowToProductDocument(r))
 	}
 	return out, nil
+}
+
+func (s *Store) GetProductDocument(ctx context.Context, id uuid.UUID) (ProductDocument, error) {
+	row, err := s.q.GetProductDocument(ctx, id)
+	if err != nil {
+		return ProductDocument{}, err
+	}
+	return dbRowToProductDocument(row), nil
 }
 
 func (s *Store) CreateProductDocument(ctx context.Context, id, productID uuid.UUID, title, titleEn, documentType, url string, expiresAt *time.Time) (ProductDocument, error) {

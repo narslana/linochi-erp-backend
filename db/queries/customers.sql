@@ -50,6 +50,9 @@ RETURNING *;
 -- name: ListContacts :many
 SELECT * FROM contacts WHERE customer_id = $1 AND archived = false ORDER BY last_name, first_name;
 
+-- name: GetContact :one
+SELECT * FROM contacts WHERE id = $1;
+
 -- name: CreateContact :one
 INSERT INTO contacts (
     id, customer_id, first_name, last_name, email, phone

@@ -76,6 +76,11 @@ JOIN field_definitions fd ON fd.id = ptf.field_definition_id
 WHERE ptf.product_type_id = $1 AND ptf.archived = false
 ORDER BY ptf.sort_order;
 
+-- name: GetProductTypeField :one
+SELECT id, product_type_id, field_definition_id, sort_order, mandatory_override, archived, archived_at, version, created_at, updated_at
+FROM product_type_fields
+WHERE id = $1;
+
 -- name: AssignFieldToProductType :one
 INSERT INTO product_type_fields (id, product_type_id, field_definition_id, sort_order, mandatory_override)
 VALUES ($1, $2, $3, $4, $5)
@@ -158,6 +163,11 @@ SET sku_locked = true, updated_at = now(), version = version + 1
 WHERE id = $1 AND version = $2
 RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at;
 
+-- name: GetProductImage :one
+SELECT id, product_id, url, sort_order, is_main, archived, archived_at, version, created_at, updated_at
+FROM product_images
+WHERE id = $1;
+
 -- name: ListProductImages :many
 SELECT id, product_id, url, sort_order, is_main, archived, archived_at, version, created_at, updated_at
 FROM product_images
@@ -184,6 +194,11 @@ UPDATE product_images
 SET archived = true, archived_at = now(), updated_at = now(), version = version + 1
 WHERE id = $1 AND version = $2
 RETURNING id, product_id, url, sort_order, is_main, archived, archived_at, version, created_at, updated_at;
+
+-- name: GetProductDocument :one
+SELECT id, product_id, title, title_en, document_type, url, expires_at, archived, archived_at, version, created_at, updated_at
+FROM product_documents
+WHERE id = $1;
 
 -- name: ListProductDocuments :many
 SELECT id, product_id, title, title_en, document_type, url, expires_at, archived, archived_at, version, created_at, updated_at

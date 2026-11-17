@@ -686,6 +686,56 @@ func (q *Queries) GetProductBySKU(ctx context.Context, sku string) (Product, err
 	return i, err
 }
 
+const getProductDocument = `-- name: GetProductDocument :one
+SELECT id, product_id, title, title_en, document_type, url, expires_at, archived, archived_at, version, created_at, updated_at
+FROM product_documents
+WHERE id = $1
+`
+
+func (q *Queries) GetProductDocument(ctx context.Context, id uuid.UUID) (ProductDocument, error) {
+	row := q.db.QueryRow(ctx, getProductDocument, id)
+	var i ProductDocument
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Title,
+		&i.TitleEn,
+		&i.DocumentType,
+		&i.Url,
+		&i.ExpiresAt,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProductImage = `-- name: GetProductImage :one
+SELECT id, product_id, url, sort_order, is_main, archived, archived_at, version, created_at, updated_at
+FROM product_images
+WHERE id = $1
+`
+
+func (q *Queries) GetProductImage(ctx context.Context, id uuid.UUID) (ProductImage, error) {
+	row := q.db.QueryRow(ctx, getProductImage, id)
+	var i ProductImage
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Url,
+		&i.SortOrder,
+		&i.IsMain,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProductType = `-- name: GetProductType :one
 SELECT id, name, name_en, type_code, archived, archived_at, version, created_at, updated_at
 FROM product_types
@@ -700,6 +750,30 @@ func (q *Queries) GetProductType(ctx context.Context, id uuid.UUID) (ProductType
 		&i.Name,
 		&i.NameEn,
 		&i.TypeCode,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProductTypeField = `-- name: GetProductTypeField :one
+SELECT id, product_type_id, field_definition_id, sort_order, mandatory_override, archived, archived_at, version, created_at, updated_at
+FROM product_type_fields
+WHERE id = $1
+`
+
+func (q *Queries) GetProductTypeField(ctx context.Context, id uuid.UUID) (ProductTypeField, error) {
+	row := q.db.QueryRow(ctx, getProductTypeField, id)
+	var i ProductTypeField
+	err := row.Scan(
+		&i.ID,
+		&i.ProductTypeID,
+		&i.FieldDefinitionID,
+		&i.SortOrder,
+		&i.MandatoryOverride,
 		&i.Archived,
 		&i.ArchivedAt,
 		&i.Version,

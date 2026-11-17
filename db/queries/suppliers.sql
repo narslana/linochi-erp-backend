@@ -83,6 +83,9 @@ RETURNING *;
 -- name: ListSupplierProducts :many
 SELECT * FROM supplier_products WHERE supplier_id = $1 AND archived = false ORDER BY id;
 
+-- name: GetSupplierProduct :one
+SELECT * FROM supplier_products WHERE id = $1;
+
 -- name: CreateSupplierProduct :one
 INSERT INTO supplier_products (
     id, supplier_id, product_id, purchase_price, purchase_currency
@@ -137,6 +140,9 @@ RETURNING *;
 
 -- name: ListPurchaseOrderLines :many
 SELECT * FROM purchase_order_lines WHERE purchase_order_id = $1 AND archived = false ORDER BY id;
+
+-- name: GetPurchaseOrderLine :one
+SELECT * FROM purchase_order_lines WHERE id = $1;
 
 -- name: CreatePurchaseOrderLine :one
 INSERT INTO purchase_order_lines (
