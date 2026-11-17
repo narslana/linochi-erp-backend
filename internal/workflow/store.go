@@ -178,6 +178,14 @@ func (s *Store) ListWorkflowConditions(ctx context.Context, transitionID uuid.UU
 	return out, nil
 }
 
+func (s *Store) GetWorkflowCondition(ctx context.Context, id uuid.UUID) (Condition, error) {
+	row, err := s.q.GetWorkflowCondition(ctx, id)
+	if err != nil {
+		return Condition{}, err
+	}
+	return dbRowToCondition(row), nil
+}
+
 func (s *Store) CreateWorkflowCondition(ctx context.Context, id, transitionID uuid.UUID, kind string, config json.RawMessage) (Condition, error) {
 	row, err := s.q.CreateWorkflowCondition(ctx, dbgen.CreateWorkflowConditionParams{
 		ID:           id,
@@ -211,6 +219,14 @@ func (s *Store) ListWorkflowEffects(ctx context.Context, transitionID uuid.UUID)
 		out = append(out, dbRowToEffect(r))
 	}
 	return out, nil
+}
+
+func (s *Store) GetWorkflowEffect(ctx context.Context, id uuid.UUID) (Effect, error) {
+	row, err := s.q.GetWorkflowEffect(ctx, id)
+	if err != nil {
+		return Effect{}, err
+	}
+	return dbRowToEffect(row), nil
 }
 
 func (s *Store) CreateWorkflowEffect(ctx context.Context, id, transitionID uuid.UUID, kind string, config json.RawMessage) (Effect, error) {

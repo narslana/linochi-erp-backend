@@ -312,6 +312,48 @@ func (q *Queries) CreateWorkflowTransition(ctx context.Context, arg CreateWorkfl
 	return i, err
 }
 
+const getWorkflowCondition = `-- name: GetWorkflowCondition :one
+SELECT id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at FROM workflow_conditions WHERE id = $1 AND archived = false
+`
+
+func (q *Queries) GetWorkflowCondition(ctx context.Context, id uuid.UUID) (WorkflowCondition, error) {
+	row := q.db.QueryRow(ctx, getWorkflowCondition, id)
+	var i WorkflowCondition
+	err := row.Scan(
+		&i.ID,
+		&i.TransitionID,
+		&i.Kind,
+		&i.Config,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getWorkflowEffect = `-- name: GetWorkflowEffect :one
+SELECT id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at FROM workflow_effects WHERE id = $1 AND archived = false
+`
+
+func (q *Queries) GetWorkflowEffect(ctx context.Context, id uuid.UUID) (WorkflowEffect, error) {
+	row := q.db.QueryRow(ctx, getWorkflowEffect, id)
+	var i WorkflowEffect
+	err := row.Scan(
+		&i.ID,
+		&i.TransitionID,
+		&i.Kind,
+		&i.Config,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getWorkflowStep = `-- name: GetWorkflowStep :one
 SELECT id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at FROM workflow_steps WHERE id = $1 AND archived = false
 `

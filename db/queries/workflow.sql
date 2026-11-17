@@ -72,6 +72,9 @@ RETURNING *;
 -- name: ListWorkflowConditions :many
 SELECT * FROM workflow_conditions WHERE transition_id = $1 AND archived = false;
 
+-- name: GetWorkflowCondition :one
+SELECT * FROM workflow_conditions WHERE id = $1 AND archived = false;
+
 -- name: CreateWorkflowCondition :one
 INSERT INTO workflow_conditions (
     id, transition_id, kind, config
@@ -90,6 +93,9 @@ RETURNING *;
 
 -- name: ListWorkflowEffects :many
 SELECT * FROM workflow_effects WHERE transition_id = $1 AND archived = false;
+
+-- name: GetWorkflowEffect :one
+SELECT * FROM workflow_effects WHERE id = $1 AND archived = false;
 
 -- name: CreateWorkflowEffect :one
 INSERT INTO workflow_effects (
