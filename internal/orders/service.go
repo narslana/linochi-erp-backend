@@ -3,12 +3,14 @@ package orders
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/workflow"
 )
 
 // Service holds the business logic for orders (ORD-01 to ORD-08).
@@ -16,10 +18,11 @@ type Service struct {
 	store *Store
 	rec   *audit.Recorder
 	pool  *pgxpool.Pool
+	wf    *workflow.Service
 }
 
-func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool) *Service {
-	return &Service{store: store, rec: rec, pool: pool}
+func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool, wf *workflow.Service) *Service {
+	return &Service{store: store, rec: rec, pool: pool, wf: wf}
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
@@ -30,13 +33,13 @@ func (s *Service) ListOrders(ctx context.Context, status *string, customerID *uu
 }
 
 // CreateOrder creates a new order (ORD-01).
-func (s *Service) CreateOrder(ctx context.Context, customerID uuid.UUID, externalID, channel, status, currency string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek int64, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, notes string) (Order, error) {
+func (s *Service) CreateOrder(ctx context.Context, customerID uuid.UUID, externalID, channel, currency string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek int64, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, notes string) (Order, error) {
 	var order Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
 		st := s.store.WithTx(tx)
 		id := uuid.New()
 		var err error
-		order, err = st.CreateOrder(ctx, id, customerID, externalID, channel, status, currency, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, nil, nil, notes)
+		order, err = st.CreateOrder(ctx, id, customerID, externalID, channel, currency, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl, nil, nil, notes)
 		if err != nil {
 			return err
 		}
@@ -46,7 +49,7 @@ func (s *Service) CreateOrder(ctx context.Context, customerID uuid.UUID, externa
 			EntityType: "order",
 			EntityID:   order.ID,
 			Action:     "Create",
-			After:      map[string]any{"channel": channel, "status": status},
+			After:      map[string]any{"channel": channel},
 		})
 	})
 	return order, err
@@ -80,7 +83,7 @@ func (s *Service) GetOrderByExternalID(ctx context.Context, externalID string) (
 }
 
 // UpdateOrder updates an order (ORD-01).
-func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes *string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek *int64, customerID *uuid.UUID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry *string, id uuid.UUID, version int) (Order, error) {
+func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, currency, trackingNumber, carrier, shippingLabelUrl, notes *string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek *int64, customerID *uuid.UUID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry *string, id uuid.UUID, version int) (Order, error) {
 	var updated Order
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
 		st := s.store.WithTx(tx)
@@ -88,15 +91,12 @@ func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, status, 
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = st.UpdateOrder(ctx, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, customerID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, nil, nil, id, version)
+		updated, err = st.UpdateOrder(ctx, externalID, channel, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, customerID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, nil, nil, id, version)
 		if err != nil {
 			return ProblemError(err)
 		}
 
 		after := map[string]any{}
-		if status != nil {
-			after["status"] = *status
-		}
 		if notes != nil {
 			after["notes"] = *notes
 		}
@@ -106,7 +106,7 @@ func (s *Service) UpdateOrder(ctx context.Context, externalID, channel, status, 
 			EntityType: "order",
 			EntityID:   id,
 			Action:     "Update",
-			Before:     map[string]any{"status": order.Status, "notes": order.Notes},
+			Before:     map[string]any{"notes": order.Notes},
 			After:      after,
 		})
 	})
@@ -138,30 +138,68 @@ func (s *Service) ArchiveOrder(ctx context.Context, id uuid.UUID, version int) (
 	return updated, err
 }
 
-// UpdateOrderStatus changes the order status and runs workflow effects (WF-06).
-func (s *Service) UpdateOrderStatus(ctx context.Context, status string, shippedAt, deliveredAt *string, trackingNumber, carrier *string, id uuid.UUID, version int) (Order, error) {
-	var updated Order
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		order, err := st.GetOrder(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.UpdateOrderStatus(ctx, status, shippedAt, deliveredAt, trackingNumber, carrier, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
+// ─── Status (WF-02, WF-05): everything goes through the workflow engine ──────
 
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "orders",
-			EntityType: "order",
-			EntityID:   id,
-			Action:     "UpdateStatus",
-			Before:     map[string]any{"status": order.Status},
-			After:      map[string]any{"status": status},
-		})
+// ChangeOrderStatus moves an order to a step of its workflow. The check, the
+// stock effects, the history and the audit row commit together (WF-03). The
+// order's real version is used for the optimistic lock (ORD-04).
+func (s *Service) ChangeOrderStatus(ctx context.Context, id uuid.UUID, toKey string, actor workflow.Actor, reason string, override bool) (Order, workflow.Result, error) {
+	var out Order
+	var res workflow.Result
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
+		var err error
+		res, err = s.wf.Transition(ctx, tx, id, toKey, actor, reason, override)
+		if err != nil {
+			return err
+		}
+		out, err = s.store.WithTx(tx).GetOrder(ctx, id)
+		return err
 	})
-	return updated, err
+	if err != nil {
+		return Order{}, workflow.Result{}, ProblemError(err)
+	}
+	return out, res, nil
+}
+
+// The three order actions below are fixed targets of their endpoints, not
+// status tests: which moves are allowed is decided by the order's flow.
+const (
+	targetAccept = "accepted"  // ORD-04
+	targetShip   = "posted"    // ORD-06
+	targetCancel = "cancelled" // ORD-07
+)
+
+// AcceptOrder accepts an order: reserves stock and moves it to accepted (ORD-04).
+func (s *Service) AcceptOrder(ctx context.Context, id uuid.UUID, actor workflow.Actor) (Order, workflow.Result, error) {
+	return s.ChangeOrderStatus(ctx, id, targetAccept, actor, "", false)
+}
+
+// ShipOrder withdraws the stock and moves the order to posted (ORD-06).
+func (s *Service) ShipOrder(ctx context.Context, id uuid.UUID, actor workflow.Actor) (Order, workflow.Result, error) {
+	return s.ChangeOrderStatus(ctx, id, targetShip, actor, "", false)
+}
+
+// CancelOrder cancels an order and releases its reservation (ORD-07).
+func (s *Service) CancelOrder(ctx context.Context, id uuid.UUID, actor workflow.Actor) (Order, workflow.Result, error) {
+	return s.ChangeOrderStatus(ctx, id, targetCancel, actor, "", false)
+}
+
+// PreviewTransition returns the effects a move would have (WF-05).
+func (s *Service) PreviewTransition(ctx context.Context, id uuid.UUID, toKey string, override bool) ([]workflow.PlannedEffect, error) {
+	return s.wf.Preview(ctx, id, toKey, override)
+}
+
+// History returns the status history and the time spent in each step (WF-10).
+func (s *Service) History(ctx context.Context, id uuid.UUID, now time.Time) ([]workflow.HistoryEntry, []workflow.StepTime, error) {
+	if _, err := s.store.GetOrder(ctx, id); err != nil {
+		return nil, nil, ProblemError(err)
+	}
+	entries, err := s.wf.History(ctx, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	times, err := s.wf.TimeInSteps(ctx, id, now)
+	return entries, times, err
 }
 
 // ─── Order Lines ──────────────────────────────────────────────────────────────
@@ -248,82 +286,6 @@ func (s *Service) ArchiveOrderLine(ctx context.Context, id uuid.UUID, version in
 			EntityID:   id,
 			Action:     "Archive",
 			Before:     map[string]any{"product_id": line.ProductID, "quantity": line.Quantity},
-		})
-	})
-	return updated, err
-}
-
-// AcceptOrder accepts an order with preview and optional override (ORD-04, WF-05).
-func (s *Service) AcceptOrder(ctx context.Context, status string, reason *string, id uuid.UUID) (Order, error) {
-	var updated Order
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		order, err := st.GetOrder(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, order.Version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "orders",
-			EntityType: "order",
-			EntityID:   id,
-			Action:     "Accept",
-			Before:     map[string]any{"status": order.Status},
-			Reason:     reasonString(reason),
-		})
-	})
-	return updated, err
-}
-
-// ShipOrder ships an order (ORD-06).
-func (s *Service) ShipOrder(ctx context.Context, status string, id uuid.UUID) (Order, error) {
-	var updated Order
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		order, err := st.GetOrder(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, order.Version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "orders",
-			EntityType: "order",
-			EntityID:   id,
-			Action:     "Ship",
-			Before:     map[string]any{"status": order.Status},
-		})
-	})
-	return updated, err
-}
-
-// CancelOrder cancels an order (ORD-07).
-func (s *Service) CancelOrder(ctx context.Context, status string, id uuid.UUID) (Order, error) {
-	var updated Order
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		order, err := st.GetOrder(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.UpdateOrderStatus(ctx, status, nil, nil, nil, nil, id, order.Version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "orders",
-			EntityType: "order",
-			EntityID:   id,
-			Action:     "Cancel",
-			Before:     map[string]any{"status": order.Status},
 		})
 	})
 	return updated, err

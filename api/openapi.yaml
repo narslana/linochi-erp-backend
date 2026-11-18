@@ -4357,449 +4357,92 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
-  /api/v1/workflow/steps:
+  /api/v1/workflow/versions:
     get:
-      operationId: listWorkflowSteps
+      operationId: listWorkflowVersions
       tags: [workflow]
-      summary: List workflow steps (WF-01)
+      summary: List the versions of the order workflow, newest first (WF-07)
       security:
         - session: []
       responses:
         "200":
-          description: All workflow steps.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
+          description: All versions with their steps and transitions.
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/WorkflowStep"
+                items: { $ref: "#/components/schemas/WorkflowVersion" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
     post:
-      operationId: createWorkflowStep
+      operationId: publishWorkflowVersion
       tags: [workflow]
-      summary: Create a workflow step (WF-01)
+      summary: Validate and publish a new version of the order workflow (WF-01, WF-06, WF-07)
+      description: >-
+        The flow is checked before it is saved: exactly one start step, no
+        transition into it, every non-final step reaches a locked final step, and
+        each effect matches the stock phases of its two steps. An invalid flow is
+        refused with 422 and nothing is saved. Orders in progress keep their version.
       security:
         - session: []
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/CreateWorkflowStep"
+            schema: { $ref: "#/components/schemas/PublishWorkflowVersion" }
       responses:
         "201":
-          description: The new step.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
+          description: The new, active version.
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowStep"
+              schema: { $ref: "#/components/schemas/WorkflowVersion" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "422":
+          $ref: "#/components/responses/InvalidWorkflow"
         "400":
           $ref: "#/components/responses/BadRequest"
 
-  /api/v1/workflow/steps/{id}:
+  /api/v1/workflow/versions/active:
     get:
-      operationId: getWorkflowStep
+      operationId: getActiveWorkflowVersion
       tags: [workflow]
-      summary: Get a workflow step (WF-01)
+      summary: The version new orders start in (WF-07)
       security:
         - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       responses:
         "200":
-          description: The step.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
+          description: The active version.
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowStep"
+              schema: { $ref: "#/components/schemas/WorkflowVersion" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
           $ref: "#/components/responses/NotFound"
-    put:
-      operationId: updateWorkflowStep
-      tags: [workflow]
-      summary: Update a workflow step (WF-01)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateWorkflowStep"
-      responses:
-        "200":
-          description: The updated step.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowStep"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/VersionConflict"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-    delete:
-      operationId: archiveWorkflowStep
-      tags: [workflow]
-      summary: Archive a workflow step (WF-01)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: The archived workflow step.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WorkflowStep" }
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/VersionConflict"
 
-  /api/v1/workflow/transitions:
+  /api/v1/workflow/versions/{id}:
     get:
-      operationId: listWorkflowTransitions
+      operationId: getWorkflowVersion
       tags: [workflow]
-      summary: List workflow transitions (WF-02)
+      summary: Get one version of the order workflow (WF-07)
       security:
         - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       responses:
         "200":
-          description: All workflow transitions.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
+          description: The version.
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/WorkflowTransition"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-    post:
-      operationId: createWorkflowTransition
-      tags: [workflow]
-      summary: Create a workflow transition (WF-02)
-      security:
-        - session: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateWorkflowTransition"
-      responses:
-        "201":
-          description: The new transition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowTransition"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
-  /api/v1/workflow/transitions/{id}:
-    get:
-      operationId: getWorkflowTransition
-      tags: [workflow]
-      summary: Get a workflow transition (WF-02)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: The transition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowTransition"
+              schema: { $ref: "#/components/schemas/WorkflowVersion" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
           $ref: "#/components/responses/NotFound"
-    put:
-      operationId: updateWorkflowTransition
-      tags: [workflow]
-      summary: Update a workflow transition (WF-02)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateWorkflowTransition"
-      responses:
-        "200":
-          description: The updated transition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowTransition"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/VersionConflict"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-    delete:
-      operationId: archiveWorkflowTransition
-      tags: [workflow]
-      summary: Archive a workflow transition (WF-02)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: The archived workflow transition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/WorkflowTransition" }
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/VersionConflict"
-
-  /api/v1/workflow/transitions/{id}/conditions:
-    get:
-      operationId: listWorkflowTransitionConditions
-      tags: [workflow]
-      summary: List conditions for a transition (WF-03)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Conditions for the transition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/WorkflowCondition"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    post:
-      operationId: createWorkflowTransitionCondition
-      tags: [workflow]
-      summary: Add a condition to a transition (WF-03)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateWorkflowCondition"
-      responses:
-        "201":
-          description: The new condition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowCondition"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
-  /api/v1/workflow/transitions/{id}/effects:
-    get:
-      operationId: listWorkflowTransitionEffects
-      tags: [workflow]
-      summary: List effects for a transition (WF-04)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Effects for the transition.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/WorkflowEffect"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    post:
-      operationId: createWorkflowTransitionEffect
-      tags: [workflow]
-      summary: Add an effect to a transition (WF-04)
-      security:
-        - session: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateWorkflowEffect"
-      responses:
-        "201":
-          description: The new effect.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                const: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowEffect"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
 
   /api/v1/orders:
     get:
@@ -5149,13 +4792,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/OrderStatusChange"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
           $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/OverrideForbidden"
         "409":
-          $ref: "#/components/responses/VersionConflict"
+          $ref: "#/components/responses/TransitionConflict"
+        "422":
+          $ref: "#/components/responses/InvalidWorkflow"
         "400":
           $ref: "#/components/responses/BadRequest"
 
@@ -5190,13 +4837,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/OrderStatusChange"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
           $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/OverrideForbidden"
         "409":
-          $ref: "#/components/responses/VersionConflict"
+          $ref: "#/components/responses/TransitionConflict"
+        "422":
+          $ref: "#/components/responses/InvalidWorkflow"
         "400":
           $ref: "#/components/responses/BadRequest"
 
@@ -5231,13 +4882,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/OrderStatusChange"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
           $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/OverrideForbidden"
         "409":
-          $ref: "#/components/responses/VersionConflict"
+          $ref: "#/components/responses/TransitionConflict"
+        "422":
+          $ref: "#/components/responses/InvalidWorkflow"
         "400":
           $ref: "#/components/responses/BadRequest"
 
@@ -5272,15 +4927,77 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Order"
+                $ref: "#/components/schemas/OrderStatusChange"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/OverrideForbidden"
+        "409":
+          $ref: "#/components/responses/TransitionConflict"
+        "422":
+          $ref: "#/components/responses/InvalidWorkflow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/orders/{id}/transitions/{to_key}/preview:
+    get:
+      operationId: previewOrderTransition
+      tags: [orders]
+      summary: Which effects a status change would have, without running them (WF-05)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: to_key
+          in: path
+          required: true
+          schema: { type: string }
+        - name: override
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: The effects that would run.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PlannedEffect" }
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
-          $ref: "#/components/responses/VersionConflict"
-        "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "#/components/responses/TransitionConflict"
+
+  /api/v1/orders/{id}/history:
+    get:
+      operationId: getOrderHistory
+      tags: [orders]
+      summary: Status history and time in each step (WF-10)
+      security:
+        - session: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Every status change, oldest first, and the time spent in each step.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderHistory" }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /api/v1/orders/{id}/export:
     get:
@@ -5753,6 +5470,25 @@ components:
       description: >-
         The movement is wrong: zero or negative quantity, a movement type that
         has its own endpoint, or a manual adjustment without a reason (LAG-04).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    OverrideForbidden:
+      description: A manual override needs the admin role (WF-05).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    TransitionConflict:
+      description: >-
+        The move is not in the order's workflow, the order is in a final state, or
+        the stock effect was refused (WF-02, WF-05, LAG-02). Nothing was changed.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    InvalidWorkflow:
+      description: >-
+        A manual override without a reason (WF-05), or a workflow that breaks the
+        rules of WF-06.
       content:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Problem" }
@@ -6546,125 +6282,107 @@ components:
         end_code: { type: string }
         description: { type: string, maxLength: 500 }
 
-    WorkflowStep:
+    WorkflowStepDef:
       type: object
-      required: [id, key, name, sort_order, version, created_at, updated_at]
+      required: [key, sort_order, is_start, is_final, is_locked, stock_phase]
       properties:
-        id: { type: string, format: uuid }
-        key: { type: string }
-        name: { type: string }
-        name_en: { type: string }
+        key: { type: string, pattern: "^[a-z][a-z0-9_]*$" }
         sort_order: { type: integer }
         is_start: { type: boolean }
-        is_end: { type: boolean }
-        archived_at: { type: string, format: date-time }
+        is_final: { type: boolean }
+        is_locked: { type: boolean }
+        stock_phase: { type: string, enum: [none, reserved, shipped] }
+
+    WorkflowTransitionDef:
+      type: object
+      required: [from, to]
+      properties:
+        from: { type: string }
+        to: { type: string }
+        effect: { type: string, enum: [reserve, release, ship] }
+
+    PublishWorkflowVersion:
+      type: object
+      required: [steps, transitions]
+      properties:
+        steps:
+          type: array
+          items: { $ref: "#/components/schemas/WorkflowStepDef" }
+        transitions:
+          type: array
+          items: { $ref: "#/components/schemas/WorkflowTransitionDef" }
+
+    WorkflowVersion:
+      type: object
+      required: [id, workflow_id, version, published_at, is_active, steps, transitions]
+      properties:
+        id: { type: string, format: uuid }
+        workflow_id: { type: string, format: uuid }
         version: { type: integer }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time }
+        is_active: { type: boolean }
+        steps:
+          type: array
+          items: { $ref: "#/components/schemas/WorkflowStepDef" }
+        transitions:
+          type: array
+          items: { $ref: "#/components/schemas/WorkflowTransitionDef" }
 
-    CreateWorkflowStep:
+    PlannedEffect:
       type: object
-      required: [key, name]
+      required: [kind, order_line_id, product_id, quantity]
       properties:
-        key: { type: string, minLength: 1, maxLength: 64 }
-        name: { type: string, minLength: 1, maxLength: 128 }
-        name_en: { type: string, maxLength: 128 }
-        sort_order: { type: integer }
-        is_start: { type: boolean }
-        is_end: { type: boolean }
+        kind: { type: string, enum: [reserve, release, ship, return] }
+        order_line_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        quantity: { type: integer }
 
-    UpdateWorkflowStep:
+    OrderStatusChange:
       type: object
-      required: [id, version]
+      required: [order, effects, warnings]
+      properties:
+        order: { $ref: "#/components/schemas/Order" }
+        effects:
+          type: array
+          items: { $ref: "#/components/schemas/PlannedEffect" }
+        warnings:
+          type: array
+          description: >-
+            "stock_not_available": an admin reopened a cancelled or rejected order
+            and its stock could not be reserved; the order is in the start step without
+            a reservation.
+          items: { type: string }
+
+    OrderStatusHistoryEntry:
+      type: object
+      required: [id, order_id, from_key, to_key, actor_id, reason, is_override, created_at]
       properties:
         id: { type: string, format: uuid }
-        version: { type: integer }
-        name: { type: string, maxLength: 128 }
-        name_en: { type: string, maxLength: 128 }
-        sort_order: { type: integer }
-        is_start: { type: boolean }
-        is_end: { type: boolean }
-
-    WorkflowTransition:
-      type: object
-      required: [id, step_key, from_key, to_key, label, sort_order, version, created_at, updated_at]
-      properties:
-        id: { type: string, format: uuid }
-        step_key: { type: string }
+        order_id: { type: string, format: uuid }
         from_key: { type: string }
         to_key: { type: string }
-        label: { type: string }
-        label_en: { type: string }
-        sort_order: { type: integer }
-        archived_at: { type: string, format: date-time }
-        version: { type: integer }
+        actor_id: { type: string, format: uuid }
+        reason: { type: string }
+        is_override: { type: boolean }
         created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
 
-    CreateWorkflowTransition:
+    StepTime:
       type: object
-      required: [step_key, from_key, to_key, label]
+      required: [key, seconds]
       properties:
-        step_key: { type: string, maxLength: 64 }
-        from_key: { type: string, maxLength: 64 }
-        to_key: { type: string, maxLength: 64 }
-        label: { type: string, maxLength: 128 }
-        label_en: { type: string, maxLength: 128 }
-        sort_order: { type: integer }
+        key: { type: string }
+        seconds: { type: number }
 
-    UpdateWorkflowTransition:
+    OrderHistory:
       type: object
-      required: [id, version]
+      required: [entries, time_in_steps]
       properties:
-        id: { type: string, format: uuid }
-        version: { type: integer }
-        from_key: { type: string, maxLength: 64 }
-        to_key: { type: string, maxLength: 64 }
-        label: { type: string, maxLength: 128 }
-        label_en: { type: string, maxLength: 128 }
-        sort_order: { type: integer }
-
-    WorkflowCondition:
-      type: object
-      required: [id, transition_id, kind, config, version, created_at, updated_at]
-      properties:
-        id: { type: string, format: uuid }
-        transition_id: { type: string, format: uuid }
-        kind: { type: string }
-        config: { type: object, additionalProperties: true }
-        archived_at: { type: string, format: date-time }
-        version: { type: integer }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
-    CreateWorkflowCondition:
-      type: object
-      required: [transition_id, kind, config]
-      properties:
-        transition_id: { type: string, format: uuid }
-        kind: { type: string, maxLength: 64 }
-        config: { type: object, additionalProperties: true }
-
-    WorkflowEffect:
-      type: object
-      required: [id, transition_id, kind, config, version, created_at, updated_at]
-      properties:
-        id: { type: string, format: uuid }
-        transition_id: { type: string, format: uuid }
-        kind: { type: string }
-        config: { type: object, additionalProperties: true }
-        archived_at: { type: string, format: date-time }
-        version: { type: integer }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
-    CreateWorkflowEffect:
-      type: object
-      required: [transition_id, kind, config]
-      properties:
-        transition_id: { type: string, format: uuid }
-        kind: { type: string, maxLength: 64 }
-        config: { type: object, additionalProperties: true }
+        entries:
+          type: array
+          items: { $ref: "#/components/schemas/OrderStatusHistoryEntry" }
+        time_in_steps:
+          type: array
+          items: { $ref: "#/components/schemas/StepTime" }
 
     Order:
       type: object
@@ -6673,7 +6391,8 @@ components:
         id: { type: string, format: uuid }
         external_id: { type: [ string, "null" ] }
         channel: { type: string }
-        status: { type: string }
+        status: { type: string, description: "A step key of the order's workflow version (WF-01). Changes only through the status endpoints." }
+        workflow_version_id: { type: string, format: uuid }
         currency: { type: string }
         exchange_rate_sek: { type: number }
         subtotal_sek: { type: integer }
@@ -6813,27 +6532,30 @@ components:
       type: object
       required: [status]
       properties:
-        status: { type: string }
+        status: { type: string, description: "The step key to move to." }
+        reason: { type: string, maxLength: 2000 }
+        override:
+          type: boolean
+          default: false
+          description: "Manual override (WF-05): admin only, reason required, forwards or backwards."
 
     AcceptOrder:
       type: object
-      required: [status]
       properties:
-        status: { type: string, enum: [accepted] }
-        reason: { type: [ string, "null" ], maxLength: 2000 }
+        reason: { type: string, maxLength: 2000 }
+        override: { type: boolean, default: false }
 
     ShipOrder:
       type: object
-      required: [status]
       properties:
-        status: { type: string, enum: [shipped] }
+        reason: { type: string, maxLength: 2000 }
+        override: { type: boolean, default: false }
 
     CancelOrder:
       type: object
-      required: [status, reason]
       properties:
-        status: { type: string, enum: [cancelled] }
         reason: { type: string, maxLength: 2000 }
+        override: { type: boolean, default: false }
 
     KeyFigures:
       type: object

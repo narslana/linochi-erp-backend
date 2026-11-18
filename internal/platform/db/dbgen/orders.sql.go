@@ -20,7 +20,7 @@ UPDATE orders SET
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2
-RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at
+RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id
 `
 
 type ArchiveOrderParams struct {
@@ -65,6 +65,7 @@ func (q *Queries) ArchiveOrder(ctx context.Context, arg ArchiveOrderParams) (Ord
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }
@@ -117,7 +118,7 @@ INSERT INTO orders (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
     $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
-) RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at
+) RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id
 `
 
 type CreateOrderParams struct {
@@ -215,6 +216,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }
@@ -273,7 +275,7 @@ func (q *Queries) CreateOrderLine(ctx context.Context, arg CreateOrderLineParams
 }
 
 const getOrder = `-- name: GetOrder :one
-SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at FROM orders WHERE id = $1 AND archived = false
+SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id FROM orders WHERE id = $1 AND archived = false
 `
 
 func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
@@ -313,12 +315,13 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }
 
 const getOrderByExternalId = `-- name: GetOrderByExternalId :one
-SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at FROM orders WHERE external_id = $1 AND external_id != '' AND archived = false
+SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id FROM orders WHERE external_id = $1 AND external_id != '' AND archived = false
 `
 
 func (q *Queries) GetOrderByExternalId(ctx context.Context, externalID string) (Order, error) {
@@ -358,6 +361,7 @@ func (q *Queries) GetOrderByExternalId(ctx context.Context, externalID string) (
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }
@@ -428,7 +432,7 @@ func (q *Queries) ListOrderLines(ctx context.Context, orderID uuid.UUID) ([]Orde
 }
 
 const listOrders = `-- name: ListOrders :many
-SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at FROM orders WHERE archived = false
+SELECT id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id FROM orders WHERE archived = false
   AND ($1::text IS NULL OR status = $1)
   AND ($2::uuid IS NULL OR customer_id = $2)
   AND ($3::date IS NULL OR created_at >= $3::date)
@@ -491,6 +495,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.WorkflowVersionID,
 		); err != nil {
 			return nil, err
 		}
@@ -532,7 +537,7 @@ UPDATE orders SET
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
-RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at
+RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id
 `
 
 type UpdateOrderParams struct {
@@ -630,6 +635,7 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }
@@ -700,7 +706,7 @@ UPDATE orders SET
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $3 AND archived = false
-RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at
+RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id
 `
 
 type UpdateOrderStatusParams struct {
@@ -758,6 +764,7 @@ func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusPa
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }

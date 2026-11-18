@@ -7,103 +7,31 @@ package dbgen
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/google/uuid"
 )
 
-const archiveWorkflowCondition = `-- name: ArchiveWorkflowCondition :one
-UPDATE workflow_conditions SET
-    archived = true,
-    archived_at = now(),
-    version = version + 1,
-    updated_at = now()
-WHERE id = $1 AND version = $2
-RETURNING id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at
+const deactivateWorkflowVersions = `-- name: DeactivateWorkflowVersions :exec
+UPDATE workflow_versions SET is_active = false, updated_at = now() WHERE workflow_id = $1 AND is_active
 `
 
-type ArchiveWorkflowConditionParams struct {
-	ID      uuid.UUID `json:"id"`
-	Version int32     `json:"version"`
+func (q *Queries) DeactivateWorkflowVersions(ctx context.Context, workflowID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deactivateWorkflowVersions, workflowID)
+	return err
 }
 
-func (q *Queries) ArchiveWorkflowCondition(ctx context.Context, arg ArchiveWorkflowConditionParams) (WorkflowCondition, error) {
-	row := q.db.QueryRow(ctx, archiveWorkflowCondition, arg.ID, arg.Version)
-	var i WorkflowCondition
-	err := row.Scan(
-		&i.ID,
-		&i.TransitionID,
-		&i.Kind,
-		&i.Config,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const archiveWorkflowEffect = `-- name: ArchiveWorkflowEffect :one
-UPDATE workflow_effects SET
-    archived = true,
-    archived_at = now(),
-    version = version + 1,
-    updated_at = now()
-WHERE id = $1 AND version = $2
-RETURNING id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at
+const defaultWorkflowForUpdate = `-- name: DefaultWorkflowForUpdate :one
+SELECT id, name, channel, version, created_at, updated_at FROM workflows WHERE channel IS NULL FOR UPDATE
 `
 
-type ArchiveWorkflowEffectParams struct {
-	ID      uuid.UUID `json:"id"`
-	Version int32     `json:"version"`
-}
-
-func (q *Queries) ArchiveWorkflowEffect(ctx context.Context, arg ArchiveWorkflowEffectParams) (WorkflowEffect, error) {
-	row := q.db.QueryRow(ctx, archiveWorkflowEffect, arg.ID, arg.Version)
-	var i WorkflowEffect
+// WF-07: locks the default flow so that two publishes cannot take the same version number.
+func (q *Queries) DefaultWorkflowForUpdate(ctx context.Context) (Workflow, error) {
+	row := q.db.QueryRow(ctx, defaultWorkflowForUpdate)
+	var i Workflow
 	err := row.Scan(
 		&i.ID,
-		&i.TransitionID,
-		&i.Kind,
-		&i.Config,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const archiveWorkflowStep = `-- name: ArchiveWorkflowStep :one
-UPDATE workflow_steps SET
-    archived = true,
-    archived_at = now(),
-    version = version + 1,
-    updated_at = now()
-WHERE id = $1 AND version = $2
-RETURNING id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at
-`
-
-type ArchiveWorkflowStepParams struct {
-	ID      uuid.UUID `json:"id"`
-	Version int32     `json:"version"`
-}
-
-func (q *Queries) ArchiveWorkflowStep(ctx context.Context, arg ArchiveWorkflowStepParams) (WorkflowStep, error) {
-	row := q.db.QueryRow(ctx, archiveWorkflowStep, arg.ID, arg.Version)
-	var i WorkflowStep
-	err := row.Scan(
-		&i.ID,
-		&i.Key,
 		&i.Name,
-		&i.NameEn,
-		&i.SortOrder,
-		&i.IsStart,
-		&i.IsEnd,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.Channel,
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -111,266 +39,131 @@ func (q *Queries) ArchiveWorkflowStep(ctx context.Context, arg ArchiveWorkflowSt
 	return i, err
 }
 
-const archiveWorkflowTransition = `-- name: ArchiveWorkflowTransition :one
-UPDATE workflow_transitions SET
-    archived = true,
-    archived_at = now(),
-    version = version + 1,
-    updated_at = now()
-WHERE id = $1 AND version = $2
-RETURNING id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at
+const getActiveWorkflowVersion = `-- name: GetActiveWorkflowVersion :one
+SELECT v.id, v.workflow_id, v.version, v.published_at, v.is_active, v.created_at, v.updated_at FROM workflow_versions v JOIN workflows w ON w.id = v.workflow_id
+WHERE w.channel IS NULL AND v.is_active
 `
 
-type ArchiveWorkflowTransitionParams struct {
-	ID      uuid.UUID `json:"id"`
-	Version int32     `json:"version"`
-}
-
-func (q *Queries) ArchiveWorkflowTransition(ctx context.Context, arg ArchiveWorkflowTransitionParams) (WorkflowTransition, error) {
-	row := q.db.QueryRow(ctx, archiveWorkflowTransition, arg.ID, arg.Version)
-	var i WorkflowTransition
+// WF-07: the version new orders start in.
+func (q *Queries) GetActiveWorkflowVersion(ctx context.Context) (WorkflowVersion, error) {
+	row := q.db.QueryRow(ctx, getActiveWorkflowVersion)
+	var i WorkflowVersion
 	err := row.Scan(
 		&i.ID,
-		&i.StepKey,
-		&i.FromKey,
-		&i.ToKey,
-		&i.Label,
-		&i.LabelEn,
-		&i.SortOrder,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.WorkflowID,
 		&i.Version,
+		&i.PublishedAt,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const createWorkflowCondition = `-- name: CreateWorkflowCondition :one
-INSERT INTO workflow_conditions (
-    id, transition_id, kind, config
-) VALUES (
-    $1, $2, $3, $4
-) RETURNING id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at
+const getOrderForTransition = `-- name: GetOrderForTransition :one
+SELECT id, status, version, workflow_version_id FROM orders WHERE id = $1 AND archived = false
 `
 
-type CreateWorkflowConditionParams struct {
-	ID           uuid.UUID       `json:"id"`
-	TransitionID uuid.UUID       `json:"transition_id"`
-	Kind         string          `json:"kind"`
-	Config       json.RawMessage `json:"config"`
+type GetOrderForTransitionRow struct {
+	ID                uuid.UUID `json:"id"`
+	Status            string    `json:"status"`
+	Version           int32     `json:"version"`
+	WorkflowVersionID uuid.UUID `json:"workflow_version_id"`
 }
 
-func (q *Queries) CreateWorkflowCondition(ctx context.Context, arg CreateWorkflowConditionParams) (WorkflowCondition, error) {
-	row := q.db.QueryRow(ctx, createWorkflowCondition,
-		arg.ID,
-		arg.TransitionID,
-		arg.Kind,
-		arg.Config,
-	)
-	var i WorkflowCondition
+// WF-05 preview: the same as LockOrderForTransition, without the lock.
+func (q *Queries) GetOrderForTransition(ctx context.Context, id uuid.UUID) (GetOrderForTransitionRow, error) {
+	row := q.db.QueryRow(ctx, getOrderForTransition, id)
+	var i GetOrderForTransitionRow
 	err := row.Scan(
 		&i.ID,
-		&i.TransitionID,
-		&i.Kind,
-		&i.Config,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.Status,
 		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
 }
 
-const createWorkflowEffect = `-- name: CreateWorkflowEffect :one
-INSERT INTO workflow_effects (
-    id, transition_id, kind, config
-) VALUES (
-    $1, $2, $3, $4
-) RETURNING id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at
+const getWorkflowVersion = `-- name: GetWorkflowVersion :one
+SELECT id, workflow_id, version, published_at, is_active, created_at, updated_at FROM workflow_versions WHERE id = $1
 `
 
-type CreateWorkflowEffectParams struct {
-	ID           uuid.UUID       `json:"id"`
-	TransitionID uuid.UUID       `json:"transition_id"`
-	Kind         string          `json:"kind"`
-	Config       json.RawMessage `json:"config"`
-}
-
-func (q *Queries) CreateWorkflowEffect(ctx context.Context, arg CreateWorkflowEffectParams) (WorkflowEffect, error) {
-	row := q.db.QueryRow(ctx, createWorkflowEffect,
-		arg.ID,
-		arg.TransitionID,
-		arg.Kind,
-		arg.Config,
-	)
-	var i WorkflowEffect
+func (q *Queries) GetWorkflowVersion(ctx context.Context, id uuid.UUID) (WorkflowVersion, error) {
+	row := q.db.QueryRow(ctx, getWorkflowVersion, id)
+	var i WorkflowVersion
 	err := row.Scan(
 		&i.ID,
-		&i.TransitionID,
-		&i.Kind,
-		&i.Config,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.WorkflowID,
 		&i.Version,
+		&i.PublishedAt,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const createWorkflowStep = `-- name: CreateWorkflowStep :one
-INSERT INTO workflow_steps (
-    id, key, name, name_en, sort_order, is_start, is_end
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at
+const insertOrderStatusHistory = `-- name: InsertOrderStatusHistory :exec
+INSERT INTO order_status_history (order_id, from_key, to_key, actor_id, reason, is_override)
+VALUES ($1, $2, $3, $4, $5, $6)
 `
 
-type CreateWorkflowStepParams struct {
-	ID        uuid.UUID `json:"id"`
-	Key       string    `json:"key"`
-	Name      string    `json:"name"`
-	NameEn    string    `json:"name_en"`
-	SortOrder int32     `json:"sort_order"`
-	IsStart   bool      `json:"is_start"`
-	IsEnd     bool      `json:"is_end"`
+type InsertOrderStatusHistoryParams struct {
+	OrderID    uuid.UUID `json:"order_id"`
+	FromKey    string    `json:"from_key"`
+	ToKey      string    `json:"to_key"`
+	ActorID    uuid.UUID `json:"actor_id"`
+	Reason     string    `json:"reason"`
+	IsOverride bool      `json:"is_override"`
 }
 
-func (q *Queries) CreateWorkflowStep(ctx context.Context, arg CreateWorkflowStepParams) (WorkflowStep, error) {
-	row := q.db.QueryRow(ctx, createWorkflowStep,
-		arg.ID,
-		arg.Key,
-		arg.Name,
-		arg.NameEn,
-		arg.SortOrder,
-		arg.IsStart,
-		arg.IsEnd,
-	)
-	var i WorkflowStep
-	err := row.Scan(
-		&i.ID,
-		&i.Key,
-		&i.Name,
-		&i.NameEn,
-		&i.SortOrder,
-		&i.IsStart,
-		&i.IsEnd,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createWorkflowTransition = `-- name: CreateWorkflowTransition :one
-INSERT INTO workflow_transitions (
-    id, step_key, from_key, to_key, label, label_en, sort_order
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at
-`
-
-type CreateWorkflowTransitionParams struct {
-	ID        uuid.UUID `json:"id"`
-	StepKey   string    `json:"step_key"`
-	FromKey   string    `json:"from_key"`
-	ToKey     string    `json:"to_key"`
-	Label     string    `json:"label"`
-	LabelEn   string    `json:"label_en"`
-	SortOrder int32     `json:"sort_order"`
-}
-
-func (q *Queries) CreateWorkflowTransition(ctx context.Context, arg CreateWorkflowTransitionParams) (WorkflowTransition, error) {
-	row := q.db.QueryRow(ctx, createWorkflowTransition,
-		arg.ID,
-		arg.StepKey,
+func (q *Queries) InsertOrderStatusHistory(ctx context.Context, arg InsertOrderStatusHistoryParams) error {
+	_, err := q.db.Exec(ctx, insertOrderStatusHistory,
+		arg.OrderID,
 		arg.FromKey,
 		arg.ToKey,
-		arg.Label,
-		arg.LabelEn,
+		arg.ActorID,
+		arg.Reason,
+		arg.IsOverride,
+	)
+	return err
+}
+
+const insertWorkflowStep = `-- name: InsertWorkflowStep :one
+INSERT INTO workflow_steps (version_id, key, sort_order, is_start, is_final, is_locked, stock_phase)
+VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, version_id, key, sort_order, is_start, is_final, is_locked, stock_phase, version, created_at, updated_at
+`
+
+type InsertWorkflowStepParams struct {
+	VersionID  uuid.UUID `json:"version_id"`
+	Key        string    `json:"key"`
+	SortOrder  int32     `json:"sort_order"`
+	IsStart    bool      `json:"is_start"`
+	IsFinal    bool      `json:"is_final"`
+	IsLocked   bool      `json:"is_locked"`
+	StockPhase string    `json:"stock_phase"`
+}
+
+func (q *Queries) InsertWorkflowStep(ctx context.Context, arg InsertWorkflowStepParams) (WorkflowStep, error) {
+	row := q.db.QueryRow(ctx, insertWorkflowStep,
+		arg.VersionID,
+		arg.Key,
 		arg.SortOrder,
+		arg.IsStart,
+		arg.IsFinal,
+		arg.IsLocked,
+		arg.StockPhase,
 	)
-	var i WorkflowTransition
-	err := row.Scan(
-		&i.ID,
-		&i.StepKey,
-		&i.FromKey,
-		&i.ToKey,
-		&i.Label,
-		&i.LabelEn,
-		&i.SortOrder,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getWorkflowCondition = `-- name: GetWorkflowCondition :one
-SELECT id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at FROM workflow_conditions WHERE id = $1 AND archived = false
-`
-
-func (q *Queries) GetWorkflowCondition(ctx context.Context, id uuid.UUID) (WorkflowCondition, error) {
-	row := q.db.QueryRow(ctx, getWorkflowCondition, id)
-	var i WorkflowCondition
-	err := row.Scan(
-		&i.ID,
-		&i.TransitionID,
-		&i.Kind,
-		&i.Config,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getWorkflowEffect = `-- name: GetWorkflowEffect :one
-SELECT id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at FROM workflow_effects WHERE id = $1 AND archived = false
-`
-
-func (q *Queries) GetWorkflowEffect(ctx context.Context, id uuid.UUID) (WorkflowEffect, error) {
-	row := q.db.QueryRow(ctx, getWorkflowEffect, id)
-	var i WorkflowEffect
-	err := row.Scan(
-		&i.ID,
-		&i.TransitionID,
-		&i.Kind,
-		&i.Config,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getWorkflowStep = `-- name: GetWorkflowStep :one
-SELECT id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at FROM workflow_steps WHERE id = $1 AND archived = false
-`
-
-func (q *Queries) GetWorkflowStep(ctx context.Context, id uuid.UUID) (WorkflowStep, error) {
-	row := q.db.QueryRow(ctx, getWorkflowStep, id)
 	var i WorkflowStep
 	err := row.Scan(
 		&i.ID,
+		&i.VersionID,
 		&i.Key,
-		&i.Name,
-		&i.NameEn,
 		&i.SortOrder,
 		&i.IsStart,
-		&i.IsEnd,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.IsFinal,
+		&i.IsLocked,
+		&i.StockPhase,
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -378,54 +171,71 @@ func (q *Queries) GetWorkflowStep(ctx context.Context, id uuid.UUID) (WorkflowSt
 	return i, err
 }
 
-const getWorkflowTransition = `-- name: GetWorkflowTransition :one
-SELECT id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at FROM workflow_transitions WHERE id = $1 AND archived = false
+const insertWorkflowTransition = `-- name: InsertWorkflowTransition :exec
+INSERT INTO workflow_transitions (version_id, from_step_id, to_step_id, effect) VALUES ($1, $2, $3, $4)
 `
 
-func (q *Queries) GetWorkflowTransition(ctx context.Context, id uuid.UUID) (WorkflowTransition, error) {
-	row := q.db.QueryRow(ctx, getWorkflowTransition, id)
-	var i WorkflowTransition
+type InsertWorkflowTransitionParams struct {
+	VersionID  uuid.UUID `json:"version_id"`
+	FromStepID uuid.UUID `json:"from_step_id"`
+	ToStepID   uuid.UUID `json:"to_step_id"`
+	Effect     *string   `json:"effect"`
+}
+
+func (q *Queries) InsertWorkflowTransition(ctx context.Context, arg InsertWorkflowTransitionParams) error {
+	_, err := q.db.Exec(ctx, insertWorkflowTransition,
+		arg.VersionID,
+		arg.FromStepID,
+		arg.ToStepID,
+		arg.Effect,
+	)
+	return err
+}
+
+const insertWorkflowVersion = `-- name: InsertWorkflowVersion :one
+INSERT INTO workflow_versions (workflow_id, version, is_active) VALUES ($1, $2, true) RETURNING id, workflow_id, version, published_at, is_active, created_at, updated_at
+`
+
+type InsertWorkflowVersionParams struct {
+	WorkflowID uuid.UUID `json:"workflow_id"`
+	Version    int32     `json:"version"`
+}
+
+func (q *Queries) InsertWorkflowVersion(ctx context.Context, arg InsertWorkflowVersionParams) (WorkflowVersion, error) {
+	row := q.db.QueryRow(ctx, insertWorkflowVersion, arg.WorkflowID, arg.Version)
+	var i WorkflowVersion
 	err := row.Scan(
 		&i.ID,
-		&i.StepKey,
-		&i.FromKey,
-		&i.ToKey,
-		&i.Label,
-		&i.LabelEn,
-		&i.SortOrder,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.WorkflowID,
 		&i.Version,
+		&i.PublishedAt,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const listWorkflowConditions = `-- name: ListWorkflowConditions :many
-SELECT id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at FROM workflow_conditions WHERE transition_id = $1 AND archived = false
+const listOrderLinesForEngine = `-- name: ListOrderLinesForEngine :many
+SELECT id, product_id, quantity FROM order_lines WHERE order_id = $1 AND archived = false ORDER BY id
 `
 
-func (q *Queries) ListWorkflowConditions(ctx context.Context, transitionID uuid.UUID) ([]WorkflowCondition, error) {
-	rows, err := q.db.Query(ctx, listWorkflowConditions, transitionID)
+type ListOrderLinesForEngineRow struct {
+	ID        uuid.UUID `json:"id"`
+	ProductID uuid.UUID `json:"product_id"`
+	Quantity  int32     `json:"quantity"`
+}
+
+func (q *Queries) ListOrderLinesForEngine(ctx context.Context, orderID uuid.UUID) ([]ListOrderLinesForEngineRow, error) {
+	rows, err := q.db.Query(ctx, listOrderLinesForEngine, orderID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []WorkflowCondition
+	var items []ListOrderLinesForEngineRow
 	for rows.Next() {
-		var i WorkflowCondition
-		if err := rows.Scan(
-			&i.ID,
-			&i.TransitionID,
-			&i.Kind,
-			&i.Config,
-			&i.Archived,
-			&i.ArchivedAt,
-			&i.Version,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
+		var i ListOrderLinesForEngineRow
+		if err := rows.Scan(&i.ID, &i.ProductID, &i.Quantity); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -436,26 +246,27 @@ func (q *Queries) ListWorkflowConditions(ctx context.Context, transitionID uuid.
 	return items, nil
 }
 
-const listWorkflowEffects = `-- name: ListWorkflowEffects :many
-SELECT id, transition_id, kind, config, archived, archived_at, version, created_at, updated_at FROM workflow_effects WHERE transition_id = $1 AND archived = false
+const listOrderStatusHistory = `-- name: ListOrderStatusHistory :many
+SELECT id, order_id, from_key, to_key, actor_id, reason, is_override, version, created_at, updated_at FROM order_status_history WHERE order_id = $1 ORDER BY created_at, id
 `
 
-func (q *Queries) ListWorkflowEffects(ctx context.Context, transitionID uuid.UUID) ([]WorkflowEffect, error) {
-	rows, err := q.db.Query(ctx, listWorkflowEffects, transitionID)
+func (q *Queries) ListOrderStatusHistory(ctx context.Context, orderID uuid.UUID) ([]OrderStatusHistory, error) {
+	rows, err := q.db.Query(ctx, listOrderStatusHistory, orderID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []WorkflowEffect
+	var items []OrderStatusHistory
 	for rows.Next() {
-		var i WorkflowEffect
+		var i OrderStatusHistory
 		if err := rows.Scan(
 			&i.ID,
-			&i.TransitionID,
-			&i.Kind,
-			&i.Config,
-			&i.Archived,
-			&i.ArchivedAt,
+			&i.OrderID,
+			&i.FromKey,
+			&i.ToKey,
+			&i.ActorID,
+			&i.Reason,
+			&i.IsOverride,
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -471,11 +282,11 @@ func (q *Queries) ListWorkflowEffects(ctx context.Context, transitionID uuid.UUI
 }
 
 const listWorkflowSteps = `-- name: ListWorkflowSteps :many
-SELECT id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at FROM workflow_steps WHERE archived = false ORDER BY sort_order, key
+SELECT id, version_id, key, sort_order, is_start, is_final, is_locked, stock_phase, version, created_at, updated_at FROM workflow_steps WHERE version_id = $1 ORDER BY sort_order, key
 `
 
-func (q *Queries) ListWorkflowSteps(ctx context.Context) ([]WorkflowStep, error) {
-	rows, err := q.db.Query(ctx, listWorkflowSteps)
+func (q *Queries) ListWorkflowSteps(ctx context.Context, versionID uuid.UUID) ([]WorkflowStep, error) {
+	rows, err := q.db.Query(ctx, listWorkflowSteps, versionID)
 	if err != nil {
 		return nil, err
 	}
@@ -485,14 +296,13 @@ func (q *Queries) ListWorkflowSteps(ctx context.Context) ([]WorkflowStep, error)
 		var i WorkflowStep
 		if err := rows.Scan(
 			&i.ID,
+			&i.VersionID,
 			&i.Key,
-			&i.Name,
-			&i.NameEn,
 			&i.SortOrder,
 			&i.IsStart,
-			&i.IsEnd,
-			&i.Archived,
-			&i.ArchivedAt,
+			&i.IsFinal,
+			&i.IsLocked,
+			&i.StockPhase,
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -508,177 +318,183 @@ func (q *Queries) ListWorkflowSteps(ctx context.Context) ([]WorkflowStep, error)
 }
 
 const listWorkflowTransitions = `-- name: ListWorkflowTransitions :many
-SELECT id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at FROM workflow_transitions WHERE archived = false ORDER BY sort_order
+SELECT t.id, t.version_id, f.key AS from_key, n.key AS to_key, t.effect
+FROM workflow_transitions t
+JOIN workflow_steps f ON f.id = t.from_step_id
+JOIN workflow_steps n ON n.id = t.to_step_id
+WHERE t.version_id = $1
+ORDER BY f.sort_order, n.sort_order
 `
 
-func (q *Queries) ListWorkflowTransitions(ctx context.Context) ([]WorkflowTransition, error) {
-	rows, err := q.db.Query(ctx, listWorkflowTransitions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []WorkflowTransition
-	for rows.Next() {
-		var i WorkflowTransition
-		if err := rows.Scan(
-			&i.ID,
-			&i.StepKey,
-			&i.FromKey,
-			&i.ToKey,
-			&i.Label,
-			&i.LabelEn,
-			&i.SortOrder,
-			&i.Archived,
-			&i.ArchivedAt,
-			&i.Version,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listWorkflowTransitionsByStep = `-- name: ListWorkflowTransitionsByStep :many
-SELECT id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at FROM workflow_transitions WHERE step_key = $1 AND archived = false ORDER BY sort_order
-`
-
-func (q *Queries) ListWorkflowTransitionsByStep(ctx context.Context, stepKey string) ([]WorkflowTransition, error) {
-	rows, err := q.db.Query(ctx, listWorkflowTransitionsByStep, stepKey)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []WorkflowTransition
-	for rows.Next() {
-		var i WorkflowTransition
-		if err := rows.Scan(
-			&i.ID,
-			&i.StepKey,
-			&i.FromKey,
-			&i.ToKey,
-			&i.Label,
-			&i.LabelEn,
-			&i.SortOrder,
-			&i.Archived,
-			&i.ArchivedAt,
-			&i.Version,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateWorkflowStep = `-- name: UpdateWorkflowStep :one
-UPDATE workflow_steps SET
-    name = COALESCE($3, name),
-    name_en = COALESCE($4, name_en),
-    sort_order = COALESCE($5, sort_order),
-    is_start = COALESCE($6, is_start),
-    is_end = COALESCE($7, is_end),
-    version = version + 1,
-    updated_at = now()
-WHERE id = $1 AND version = $2 AND archived = false
-RETURNING id, key, name, name_en, sort_order, is_start, is_end, archived, archived_at, version, created_at, updated_at
-`
-
-type UpdateWorkflowStepParams struct {
+type ListWorkflowTransitionsRow struct {
 	ID        uuid.UUID `json:"id"`
-	Version   int32     `json:"version"`
-	Name      string    `json:"name"`
-	NameEn    string    `json:"name_en"`
-	SortOrder int32     `json:"sort_order"`
-	IsStart   bool      `json:"is_start"`
-	IsEnd     bool      `json:"is_end"`
-}
-
-func (q *Queries) UpdateWorkflowStep(ctx context.Context, arg UpdateWorkflowStepParams) (WorkflowStep, error) {
-	row := q.db.QueryRow(ctx, updateWorkflowStep,
-		arg.ID,
-		arg.Version,
-		arg.Name,
-		arg.NameEn,
-		arg.SortOrder,
-		arg.IsStart,
-		arg.IsEnd,
-	)
-	var i WorkflowStep
-	err := row.Scan(
-		&i.ID,
-		&i.Key,
-		&i.Name,
-		&i.NameEn,
-		&i.SortOrder,
-		&i.IsStart,
-		&i.IsEnd,
-		&i.Archived,
-		&i.ArchivedAt,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateWorkflowTransition = `-- name: UpdateWorkflowTransition :one
-UPDATE workflow_transitions SET
-    from_key = COALESCE($3, from_key),
-    to_key = COALESCE($4, to_key),
-    label = COALESCE($5, label),
-    label_en = COALESCE($6, label_en),
-    sort_order = COALESCE($7, sort_order),
-    version = version + 1,
-    updated_at = now()
-WHERE id = $1 AND version = $2 AND archived = false
-RETURNING id, step_key, from_key, to_key, label, label_en, sort_order, archived, archived_at, version, created_at, updated_at
-`
-
-type UpdateWorkflowTransitionParams struct {
-	ID        uuid.UUID `json:"id"`
-	Version   int32     `json:"version"`
+	VersionID uuid.UUID `json:"version_id"`
 	FromKey   string    `json:"from_key"`
 	ToKey     string    `json:"to_key"`
-	Label     string    `json:"label"`
-	LabelEn   string    `json:"label_en"`
-	SortOrder int32     `json:"sort_order"`
+	Effect    *string   `json:"effect"`
 }
 
-func (q *Queries) UpdateWorkflowTransition(ctx context.Context, arg UpdateWorkflowTransitionParams) (WorkflowTransition, error) {
-	row := q.db.QueryRow(ctx, updateWorkflowTransition,
-		arg.ID,
-		arg.Version,
-		arg.FromKey,
-		arg.ToKey,
-		arg.Label,
-		arg.LabelEn,
-		arg.SortOrder,
-	)
-	var i WorkflowTransition
+func (q *Queries) ListWorkflowTransitions(ctx context.Context, versionID uuid.UUID) ([]ListWorkflowTransitionsRow, error) {
+	rows, err := q.db.Query(ctx, listWorkflowTransitions, versionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListWorkflowTransitionsRow
+	for rows.Next() {
+		var i ListWorkflowTransitionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.VersionID,
+			&i.FromKey,
+			&i.ToKey,
+			&i.Effect,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWorkflowVersions = `-- name: ListWorkflowVersions :many
+SELECT id, workflow_id, version, published_at, is_active, created_at, updated_at FROM workflow_versions ORDER BY version DESC
+`
+
+func (q *Queries) ListWorkflowVersions(ctx context.Context) ([]WorkflowVersion, error) {
+	rows, err := q.db.Query(ctx, listWorkflowVersions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WorkflowVersion
+	for rows.Next() {
+		var i WorkflowVersion
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkflowID,
+			&i.Version,
+			&i.PublishedAt,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockOrderForTransition = `-- name: LockOrderForTransition :one
+SELECT id, status, version, workflow_version_id FROM orders WHERE id = $1 AND archived = false FOR UPDATE
+`
+
+type LockOrderForTransitionRow struct {
+	ID                uuid.UUID `json:"id"`
+	Status            string    `json:"status"`
+	Version           int32     `json:"version"`
+	WorkflowVersionID uuid.UUID `json:"workflow_version_id"`
+}
+
+// WF-05: the order row is locked for the transaction, and its real version is
+// what the optimistic lock checks (ORD-04: never version 0).
+func (q *Queries) LockOrderForTransition(ctx context.Context, id uuid.UUID) (LockOrderForTransitionRow, error) {
+	row := q.db.QueryRow(ctx, lockOrderForTransition, id)
+	var i LockOrderForTransitionRow
 	err := row.Scan(
 		&i.ID,
-		&i.StepKey,
-		&i.FromKey,
-		&i.ToKey,
-		&i.Label,
-		&i.LabelEn,
-		&i.SortOrder,
-		&i.Archived,
-		&i.ArchivedAt,
+		&i.Status,
 		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.WorkflowVersionID,
 	)
 	return i, err
+}
+
+const nextWorkflowVersionNumber = `-- name: NextWorkflowVersionNumber :one
+SELECT (COALESCE(MAX(version), 0) + 1)::int AS next FROM workflow_versions WHERE workflow_id = $1
+`
+
+func (q *Queries) NextWorkflowVersionNumber(ctx context.Context, workflowID uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, nextWorkflowVersionNumber, workflowID)
+	var next int32
+	err := row.Scan(&next)
+	return next, err
+}
+
+const reservedByLocationForLine = `-- name: ReservedByLocationForLine :many
+SELECT location_id, (-SUM(quantity))::bigint AS reserved
+FROM stockmovements
+WHERE reference_type = 'order_line' AND reference_id = $1 AND movement_type IN ('reservation', 'release')
+GROUP BY location_id
+HAVING -SUM(quantity) > 0
+ORDER BY location_id
+`
+
+type ReservedByLocationForLineRow struct {
+	LocationID uuid.UUID `json:"location_id"`
+	Reserved   int64     `json:"reserved"`
+}
+
+// WF-03: where an order line still holds a reservation.
+func (q *Queries) ReservedByLocationForLine(ctx context.Context, referenceID *uuid.UUID) ([]ReservedByLocationForLineRow, error) {
+	rows, err := q.db.Query(ctx, reservedByLocationForLine, referenceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ReservedByLocationForLineRow
+	for rows.Next() {
+		var i ReservedByLocationForLineRow
+		if err := rows.Scan(&i.LocationID, &i.Reserved); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const soldByBatchForLine = `-- name: SoldByBatchForLine :many
+SELECT location_id, batch_number, (-SUM(quantity))::bigint AS sold
+FROM stockmovements
+WHERE reference_type = 'order_line' AND reference_id = $1 AND movement_type IN ('sale', 'return')
+GROUP BY location_id, batch_number
+HAVING -SUM(quantity) > 0
+ORDER BY location_id, batch_number
+`
+
+type SoldByBatchForLineRow struct {
+	LocationID  uuid.UUID `json:"location_id"`
+	BatchNumber string    `json:"batch_number"`
+	Sold        int64     `json:"sold"`
+}
+
+// WF-05: what an order line has taken out of stock and not had returned.
+func (q *Queries) SoldByBatchForLine(ctx context.Context, referenceID *uuid.UUID) ([]SoldByBatchForLineRow, error) {
+	rows, err := q.db.Query(ctx, soldByBatchForLine, referenceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SoldByBatchForLineRow
+	for rows.Next() {
+		var i SoldByBatchForLineRow
+		if err := rows.Scan(&i.LocationID, &i.BatchNumber, &i.Sold); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -327,6 +327,7 @@ type Order struct {
 	Version            int32          `json:"version"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
+	WorkflowVersionID  uuid.UUID      `json:"workflow_version_id"`
 }
 
 type OrderLine struct {
@@ -355,6 +356,19 @@ type OrderLineBatch struct {
 	Version     int32     `json:"version"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type OrderStatusHistory struct {
+	ID         uuid.UUID `json:"id"`
+	OrderID    uuid.UUID `json:"order_id"`
+	FromKey    string    `json:"from_key"`
+	ToKey      string    `json:"to_key"`
+	ActorID    uuid.UUID `json:"actor_id"`
+	Reason     string    `json:"reason"`
+	IsOverride bool      `json:"is_override"`
+	Version    int32     `json:"version"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type Product struct {
@@ -602,56 +616,46 @@ type User struct {
 	ArchivedAt  *time.Time `json:"archived_at"`
 }
 
-type WorkflowCondition struct {
-	ID           uuid.UUID       `json:"id"`
-	TransitionID uuid.UUID       `json:"transition_id"`
-	Kind         string          `json:"kind"`
-	Config       json.RawMessage `json:"config"`
-	Archived     bool            `json:"archived"`
-	ArchivedAt   *time.Time      `json:"archived_at"`
-	Version      int32           `json:"version"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
-}
-
-type WorkflowEffect struct {
-	ID           uuid.UUID       `json:"id"`
-	TransitionID uuid.UUID       `json:"transition_id"`
-	Kind         string          `json:"kind"`
-	Config       json.RawMessage `json:"config"`
-	Archived     bool            `json:"archived"`
-	ArchivedAt   *time.Time      `json:"archived_at"`
-	Version      int32           `json:"version"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
+type Workflow struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Channel   *string   `json:"channel"`
+	Version   int32     `json:"version"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type WorkflowStep struct {
-	ID         uuid.UUID  `json:"id"`
-	Key        string     `json:"key"`
-	Name       string     `json:"name"`
-	NameEn     string     `json:"name_en"`
-	SortOrder  int32      `json:"sort_order"`
-	IsStart    bool       `json:"is_start"`
-	IsEnd      bool       `json:"is_end"`
-	Archived   bool       `json:"archived"`
-	ArchivedAt *time.Time `json:"archived_at"`
-	Version    int32      `json:"version"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	VersionID  uuid.UUID `json:"version_id"`
+	Key        string    `json:"key"`
+	SortOrder  int32     `json:"sort_order"`
+	IsStart    bool      `json:"is_start"`
+	IsFinal    bool      `json:"is_final"`
+	IsLocked   bool      `json:"is_locked"`
+	StockPhase string    `json:"stock_phase"`
+	Version    int32     `json:"version"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type WorkflowTransition struct {
-	ID         uuid.UUID  `json:"id"`
-	StepKey    string     `json:"step_key"`
-	FromKey    string     `json:"from_key"`
-	ToKey      string     `json:"to_key"`
-	Label      string     `json:"label"`
-	LabelEn    string     `json:"label_en"`
-	SortOrder  int32      `json:"sort_order"`
-	Archived   bool       `json:"archived"`
-	ArchivedAt *time.Time `json:"archived_at"`
-	Version    int32      `json:"version"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
+	ID         uuid.UUID `json:"id"`
+	VersionID  uuid.UUID `json:"version_id"`
+	FromStepID uuid.UUID `json:"from_step_id"`
+	ToStepID   uuid.UUID `json:"to_step_id"`
+	Effect     *string   `json:"effect"`
+	Version    int32     `json:"version"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type WorkflowVersion struct {
+	ID          uuid.UUID `json:"id"`
+	WorkflowID  uuid.UUID `json:"workflow_id"`
+	Version     int32     `json:"version"`
+	PublishedAt time.Time `json:"published_at"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

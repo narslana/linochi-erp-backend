@@ -46,6 +46,7 @@ type Order struct {
 	ExternalID         *string   `json:"external_id"`
 	Channel            string    `json:"channel"`
 	Status             string    `json:"status"`
+	WorkflowVersionID  uuid.UUID `json:"workflow_version_id"`
 	Currency           string    `json:"currency"`
 	ExchangeRateSek    int64     `json:"exchange_rate_sek"`
 	SubtotalSek        int64     `json:"subtotal_sek"`

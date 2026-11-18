@@ -74,7 +74,7 @@ func (s *Store) GetOrderByExternalId(ctx context.Context, externalID string) (Or
 	return dbRowToOrder(row), nil
 }
 
-func (s *Store) CreateOrder(ctx context.Context, id, customerID uuid.UUID, externalID, channel, status, currency string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek int64, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl string, shippedAt, deliveredAt *string, notes string) (Order, error) {
+func (s *Store) CreateOrder(ctx context.Context, id, customerID uuid.UUID, externalID, channel, currency string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek int64, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, trackingNumber, carrier, shippingLabelUrl string, shippedAt, deliveredAt *string, notes string) (Order, error) {
 	var deliveredAtTime *time.Time
 	if deliveredAt != nil {
 		t, _ := time.Parse(time.RFC3339, *deliveredAt)
@@ -89,7 +89,6 @@ func (s *Store) CreateOrder(ctx context.Context, id, customerID uuid.UUID, exter
 		ID:                 id,
 		ExternalID:         externalID,
 		Channel:            channel,
-		Status:             status,
 		Currency:           currency,
 		ExchangeRateSek:    exchangeRate,
 		SubtotalSek:        subtotalSek,
@@ -120,7 +119,7 @@ func (s *Store) CreateOrder(ctx context.Context, id, customerID uuid.UUID, exter
 	return dbRowToOrder(row), nil
 }
 
-func (s *Store) UpdateOrder(ctx context.Context, externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes *string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek *int64, customerID *uuid.UUID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry *string, shippedAt, deliveredAt *string, id uuid.UUID, version int) (Order, error) {
+func (s *Store) UpdateOrder(ctx context.Context, externalID, channel, currency, trackingNumber, carrier, shippingLabelUrl, notes *string, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek *int64, customerID *uuid.UUID, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry *string, shippedAt, deliveredAt *string, id uuid.UUID, version int) (Order, error) {
 	var params dbgen.UpdateOrderParams
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
@@ -129,9 +128,6 @@ func (s *Store) UpdateOrder(ctx context.Context, externalID, channel, status, cu
 	}
 	if channel != nil {
 		params.Channel = channel
-	}
-	if status != nil {
-		params.Status = status
 	}
 	if currency != nil {
 		params.Currency = currency
@@ -212,32 +208,6 @@ func (s *Store) UpdateOrder(ctx context.Context, externalID, channel, status, cu
 
 func (s *Store) ArchiveOrder(ctx context.Context, id uuid.UUID, version int) (Order, error) {
 	row, err := s.q.ArchiveOrder(ctx, dbgen.ArchiveOrderParams{ID: id, Version: int32(version)}) //nolint:gosec // version is bounded by optimistic locking
-	if err != nil {
-		return Order{}, err
-	}
-	return dbRowToOrder(row), nil
-}
-
-func (s *Store) UpdateOrderStatus(ctx context.Context, status string, shippedAt, deliveredAt *string, trackingNumber, carrier *string, id uuid.UUID, version int) (Order, error) {
-	var sp, dp *time.Time
-	if shippedAt != nil {
-		t, _ := time.Parse(time.RFC3339, *shippedAt)
-		sp = &t
-	}
-	if deliveredAt != nil {
-		t, _ := time.Parse(time.RFC3339, *deliveredAt)
-		dp = &t
-	}
-
-	row, err := s.q.UpdateOrderStatus(ctx, dbgen.UpdateOrderStatusParams{
-		ID:             id,
-		Status:         status,
-		Version:        int32(version), //nolint:gosec // version is bounded by optimistic locking
-		ShippedAt:      sp,
-		DeliveredAt:    dp,
-		TrackingNumber: trackingNumber,
-		Carrier:        carrier,
-	})
 	if err != nil {
 		return Order{}, err
 	}
@@ -341,6 +311,7 @@ func dbRowToOrder(r dbgen.Order) Order {
 		ID:                 r.ID,
 		Channel:            r.Channel,
 		Status:             r.Status,
+		WorkflowVersionID:  r.WorkflowVersionID,
 		Currency:           r.Currency,
 		ExchangeRateSek:    exchangeRateSek,
 		SubtotalSek:        r.SubtotalSek,

@@ -2,346 +2,286 @@ package workflow
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/inventory"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db/dbgen"
 )
 
-// Service holds the business logic for the workflow engine (WF-01 to WF-07).
+// orderLineRef is the reference type stock movements of an order line carry.
+const orderLineRef = "order_line"
+
+// Service is the workflow engine. Every status change of an order goes through
+// Transition (WF-02, WF-05); stock effects run in the same transaction (WF-03).
 type Service struct {
 	store *Store
 	rec   *audit.Recorder
 	pool  *pgxpool.Pool
+	inv   *inventory.Service
 }
 
-func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool) *Service {
-	return &Service{store: store, rec: rec, pool: pool}
+func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool, inv *inventory.Service) *Service {
+	return &Service{store: store, rec: rec, pool: pool, inv: inv}
 }
 
-// ─── Steps ────────────────────────────────────────────────────────────────────
+// ─── Versions (WF-01, WF-06, WF-07) ──────────────────────────────────────────
 
-// ListWorkflowSteps returns all active workflow steps (WF-01).
-func (s *Service) ListWorkflowSteps(ctx context.Context) ([]Step, error) {
-	return s.store.ListWorkflowSteps(ctx)
-}
-
-// CreateWorkflowStep creates a new workflow step (WF-01).
-func (s *Service) CreateWorkflowStep(ctx context.Context, key, name, nameEn string, sortOrder int, isStart, isEnd bool) (Step, error) {
-	var step Step
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		id := uuid.New()
-		var err error
-		step, err = st.CreateWorkflowStep(ctx, id, key, name, nameEn, sortOrder, isStart, isEnd)
-		if err != nil {
-			return err
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "step",
-			EntityID:   step.ID,
-			Action:     "Create",
-			After:      map[string]any{"key": key, "name": name},
-		})
-	})
-	return step, err
-}
-
-// GetWorkflowStep returns a workflow step by ID.
-func (s *Service) GetWorkflowStep(ctx context.Context, id uuid.UUID) (Step, error) {
-	step, err := s.store.GetWorkflowStep(ctx, id)
+// ActiveVersion is the version new orders start in.
+func (s *Service) ActiveVersion(ctx context.Context) (Version, error) {
+	row, err := s.store.q.GetActiveWorkflowVersion(ctx)
 	if err != nil {
-		return step, ProblemError(err)
+		return Version{}, notFoundOr(err, "workflow version")
 	}
-	return step, nil
+	return s.loadVersion(ctx, s.store.q, row)
 }
 
-// UpdateWorkflowStep updates a workflow step (WF-01).
-func (s *Service) UpdateWorkflowStep(ctx context.Context, name, nameEn *string, sortOrder *int, isStart, isEnd *bool, id uuid.UUID, version int) (Step, error) {
-	var updated Step
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		step, err := st.GetWorkflowStep(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.UpdateWorkflowStep(ctx, name, nameEn, sortOrder, isStart, isEnd, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		after := map[string]any{}
-		if name != nil {
-			after["name"] = *name
-		}
-		if nameEn != nil {
-			after["name_en"] = *nameEn
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "step",
-			EntityID:   id,
-			Action:     "Update",
-			Before:     map[string]any{"name": step.Name, "name_en": step.NameEn},
-			After:      after,
-		})
-	})
-	return updated, err
-}
-
-// ArchiveWorkflowStep archives a workflow step (NFK-09).
-func (s *Service) ArchiveWorkflowStep(ctx context.Context, id uuid.UUID, version int) (Step, error) {
-	var updated Step
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		step, err := st.GetWorkflowStep(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.ArchiveWorkflowStep(ctx, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "step",
-			EntityID:   id,
-			Action:     "Archive",
-			Before:     map[string]any{"name": step.Name},
-		})
-	})
-	return updated, err
-}
-
-// ─── Transitions ──────────────────────────────────────────────────────────────
-
-// ListWorkflowTransitions returns all workflow transitions (WF-02).
-func (s *Service) ListWorkflowTransitions(ctx context.Context) ([]Transition, error) {
-	return s.store.ListWorkflowTransitions(ctx)
-}
-
-// GetWorkflowTransition returns a transition by ID.
-func (s *Service) GetWorkflowTransition(ctx context.Context, id uuid.UUID) (Transition, error) {
-	transition, err := s.store.GetWorkflowTransition(ctx, id)
+// GetVersion returns one version with its steps and transitions.
+func (s *Service) GetVersion(ctx context.Context, id uuid.UUID) (Version, error) {
+	row, err := s.store.q.GetWorkflowVersion(ctx, id)
 	if err != nil {
-		return transition, ProblemError(err)
+		return Version{}, notFoundOr(err, "workflow version")
 	}
-	return transition, nil
+	return s.loadVersion(ctx, s.store.q, row)
 }
 
-// CreateWorkflowTransition creates a new transition (WF-01).
-func (s *Service) CreateWorkflowTransition(ctx context.Context, stepKey, fromKey, toKey uuid.UUID, label, labelEn string, sortOrder int) (Transition, error) {
-	var transition Transition
+// ListVersions returns all versions, newest first.
+func (s *Service) ListVersions(ctx context.Context) ([]Version, error) {
+	rows, err := s.store.q.ListWorkflowVersions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list workflow versions: %w", err)
+	}
+	out := make([]Version, 0, len(rows))
+	for _, r := range rows {
+		v, err := s.loadVersion(ctx, s.store.q, r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, nil
+}
+
+func (s *Service) loadVersion(ctx context.Context, q *dbgen.Queries, row dbgen.WorkflowVersion) (Version, error) {
+	steps, err := q.ListWorkflowSteps(ctx, row.ID)
+	if err != nil {
+		return Version{}, fmt.Errorf("list workflow steps: %w", err)
+	}
+	trs, err := q.ListWorkflowTransitions(ctx, row.ID)
+	if err != nil {
+		return Version{}, fmt.Errorf("list workflow transitions: %w", err)
+	}
+	v := Version{ID: row.ID, WorkflowID: row.WorkflowID, Version: int(row.Version), PublishedAt: row.PublishedAt, IsActive: row.IsActive}
+	for _, st := range steps {
+		v.Steps = append(v.Steps, stepDef(st))
+	}
+	for _, tr := range trs {
+		d := TransitionDef{From: tr.FromKey, To: tr.ToKey}
+		if tr.Effect != nil {
+			d.Effect = *tr.Effect
+		}
+		v.Transitions = append(v.Transitions, d)
+	}
+	return v, nil
+}
+
+func stepDef(st dbgen.WorkflowStep) StepDef {
+	return StepDef{Key: st.Key, SortOrder: int(st.SortOrder), IsStart: st.IsStart, IsFinal: st.IsFinal, IsLocked: st.IsLocked, StockPhase: st.StockPhase}
+}
+
+// PublishVersion validates a flow (WF-06) and publishes it as the next version
+// of the default flow, active from now on (WF-07). Orders in progress keep the
+// version they started in. A flow that breaks a rule is refused with 422 and
+// nothing is saved.
+func (s *Service) PublishVersion(ctx context.Context, def VersionDefinition) (Version, error) {
+	if problems := Validate(def); len(problems) > 0 {
+		return Version{}, &InvalidFlowError{Problems: problems}
+	}
+	var out Version
 	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		id := uuid.New()
-		var err error
-		transition, err = st.CreateWorkflowTransition(ctx, id, stepKey, fromKey, toKey, label, labelEn, sortOrder)
+		q := tx.Queries()
+		wf, err := q.DefaultWorkflowForUpdate(ctx)
+		if err != nil {
+			return fmt.Errorf("lock default workflow: %w", err)
+		}
+		next, err := q.NextWorkflowVersionNumber(ctx, wf.ID)
+		if err != nil {
+			return fmt.Errorf("next version number: %w", err)
+		}
+		if err := q.DeactivateWorkflowVersions(ctx, wf.ID); err != nil {
+			return fmt.Errorf("deactivate versions: %w", err)
+		}
+		ver, err := q.InsertWorkflowVersion(ctx, dbgen.InsertWorkflowVersionParams{WorkflowID: wf.ID, Version: next})
+		if err != nil {
+			return fmt.Errorf("insert version: %w", err)
+		}
+		ids := map[string]uuid.UUID{}
+		for _, st := range def.Steps {
+			row, err := q.InsertWorkflowStep(ctx, dbgen.InsertWorkflowStepParams{
+				VersionID: ver.ID, Key: st.Key, SortOrder: int32(st.SortOrder), //nolint:gosec // small flow definition
+				IsStart: st.IsStart, IsFinal: st.IsFinal, IsLocked: st.IsLocked, StockPhase: string(phaseOf(st)),
+			})
+			if err != nil {
+				return fmt.Errorf("insert step %q: %w", st.Key, err)
+			}
+			ids[st.Key] = row.ID
+		}
+		for _, tr := range def.Transitions {
+			var eff *string
+			if tr.Effect != "" {
+				eff = &tr.Effect
+			}
+			if err := q.InsertWorkflowTransition(ctx, dbgen.InsertWorkflowTransitionParams{
+				VersionID: ver.ID, FromStepID: ids[tr.From], ToStepID: ids[tr.To], Effect: eff,
+			}); err != nil {
+				return fmt.Errorf("insert transition %q to %q: %w", tr.From, tr.To, err)
+			}
+		}
+		out, err = s.loadVersion(ctx, q, ver)
 		if err != nil {
 			return err
 		}
-
 		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "transition",
-			EntityID:   transition.ID,
-			Action:     "Create",
-			After:      map[string]any{"from_key": fromKey.String(), "to_key": toKey.String()},
+			Module: "workflow", EntityType: "workflow_version", EntityID: ver.ID, Action: audit.Create,
+			After: map[string]any{"version": next, "steps": len(def.Steps), "transitions": len(def.Transitions)},
 		})
 	})
-	return transition, err
+	return out, err
 }
 
-// UpdateWorkflowTransition updates a transition (WF-01).
-func (s *Service) UpdateWorkflowTransition(ctx context.Context, fromKey, toKey *string, label, labelEn *string, sortOrder *int, id uuid.UUID, version int) (Transition, error) {
-	var updated Transition
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		transition, err := st.GetWorkflowTransition(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.UpdateWorkflowTransition(ctx, fromKey, toKey, label, labelEn, sortOrder, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
+// ─── History (WF-10) ─────────────────────────────────────────────────────────
 
-		after := map[string]any{}
-		if label != nil {
-			after["label"] = *label
-		}
-		if labelEn != nil {
-			after["label_en"] = *labelEn
-		}
+// History returns the status changes of an order, oldest first.
+func (s *Service) History(ctx context.Context, orderID uuid.UUID) ([]HistoryEntry, error) {
+	rows, err := s.store.q.ListOrderStatusHistory(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("list status history: %w", err)
+	}
+	out := make([]HistoryEntry, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, HistoryEntry{ID: r.ID, OrderID: r.OrderID, FromKey: r.FromKey, ToKey: r.ToKey,
+			ActorID: r.ActorID, Reason: r.Reason, IsOverride: r.IsOverride, CreatedAt: r.CreatedAt})
+	}
+	return out, nil
+}
 
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "transition",
-			EntityID:   id,
-			Action:     "Update",
-			Before:     map[string]any{"label": transition.Label, "label_en": transition.LabelEn},
-			After:      after,
-		})
+// TimeInSteps works out how long an order was in each step from its history
+// (WF-10). The step it is in now counts until now. The first interval runs from
+// the creation of the order to its first change. Intervals come in order, one
+// per visit.
+func (s *Service) TimeInSteps(ctx context.Context, orderID uuid.UUID, now time.Time) ([]StepTime, error) {
+	hist, err := s.History(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	o, err := s.store.q.GetOrder(ctx, orderID)
+	if err != nil {
+		return nil, notFoundOr(err, "order")
+	}
+	var out []StepTime
+	key, since := o.Status, o.CreatedAt
+	if len(hist) > 0 {
+		key = hist[0].FromKey
+	}
+	for _, h := range hist {
+		out = append(out, StepTime{Key: key, Duration: max(0, h.CreatedAt.Sub(since))})
+		key, since = h.ToKey, h.CreatedAt
+	}
+	return append(out, StepTime{Key: key, Duration: max(0, now.Sub(since))}), nil
+}
+
+// ─── The engine (WF-02, WF-03, WF-05) ────────────────────────────────────────
+
+// ChangeStatus is Transition in a transaction of its own.
+func (s *Service) ChangeStatus(ctx context.Context, orderID uuid.UUID, toKey string, actor Actor, reason string, override bool) (Result, error) {
+	var res Result
+	err := db.InTx(ctx, s.pool, func(tx *db.Tx) (err error) {
+		res, err = s.Transition(ctx, tx, orderID, toKey, actor, reason, override)
+		return err
 	})
-	return updated, err
+	return res, err
 }
 
-// ArchiveWorkflowTransition archives a transition (NFK-09).
-func (s *Service) ArchiveWorkflowTransition(ctx context.Context, id uuid.UUID, version int) (Transition, error) {
-	var updated Transition
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		transition, err := st.GetWorkflowTransition(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.ArchiveWorkflowTransition(ctx, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "transition",
-			EntityID:   id,
-			Action:     "Archive",
-			Before:     map[string]any{"label": transition.Label},
-		})
-	})
-	return updated, err
+// Preview returns the effects a status change would have, without running them
+// (WF-05). It checks the move like ChangeStatus does; who may do it is checked
+// when it is done, not here.
+func (s *Service) Preview(ctx context.Context, orderID uuid.UUID, toKey string, override bool) ([]PlannedEffect, error) {
+	o, err := s.store.q.GetOrderForTransition(ctx, orderID)
+	if err != nil {
+		return nil, notFoundOr(err, "order")
+	}
+	p, err := s.plan(ctx, s.store.q, o.Status, o.WorkflowVersionID, orderID, toKey, override)
+	if err != nil {
+		return nil, err
+	}
+	return p.effects, nil
 }
 
-// ─── Conditions ───────────────────────────────────────────────────────────────
-
-// ListWorkflowConditions returns all active conditions for a transition (WF-03).
-func (s *Service) ListWorkflowConditions(ctx context.Context, transitionID uuid.UUID) ([]Condition, error) {
-	return s.store.ListWorkflowConditions(ctx, transitionID)
-}
-
-// CreateWorkflowCondition creates a new condition (WF-03).
-func (s *Service) CreateWorkflowCondition(ctx context.Context, transitionID uuid.UUID, kind string, config json.RawMessage) (Condition, error) {
-	var condition Condition
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		id := uuid.New()
-		var err error
-		condition, err = st.CreateWorkflowCondition(ctx, id, transitionID, kind, config)
-		if err != nil {
-			return err
+// Transition changes the status of an order inside the caller's transaction: it
+// checks the move, runs the stock effects, saves the new status with the order's
+// real version, and writes the history and audit rows. If anything fails the
+// caller's rollback undoes all of it (WF-03).
+func (s *Service) Transition(ctx context.Context, tx *db.Tx, orderID uuid.UUID, toKey string, actor Actor, reason string, override bool) (Result, error) {
+	if override {
+		if !actor.Admin {
+			return Result{}, &ForbiddenError{}
 		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "condition",
-			EntityID:   condition.ID,
-			Action:     "Create",
-			After:      map[string]any{"kind": kind},
-		})
-	})
-	return condition, err
-}
-
-// ArchiveWorkflowCondition archives a condition (NFK-09).
-func (s *Service) ArchiveWorkflowCondition(ctx context.Context, id uuid.UUID, version int) (Condition, error) {
-	var updated Condition
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		condition, err := st.GetWorkflowCondition(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.ArchiveWorkflowCondition(ctx, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "condition",
-			EntityID:   id,
-			Action:     "Archive",
-			Before:     map[string]any{"kind": condition.Kind},
-		})
-	})
-	return updated, err
-}
-
-// ─── Effects ──────────────────────────────────────────────────────────────────
-
-// ListWorkflowEffects returns all active effects for a transition (WF-04).
-func (s *Service) ListWorkflowEffects(ctx context.Context, transitionID uuid.UUID) ([]Effect, error) {
-	return s.store.ListWorkflowEffects(ctx, transitionID)
-}
-
-// CreateWorkflowEffect creates a new effect (WF-04).
-func (s *Service) CreateWorkflowEffect(ctx context.Context, transitionID uuid.UUID, kind string, config json.RawMessage) (Effect, error) {
-	var effect Effect
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		id := uuid.New()
-		var err error
-		effect, err = st.CreateWorkflowEffect(ctx, id, transitionID, kind, config)
-		if err != nil {
-			return err
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "effect",
-			EntityID:   effect.ID,
-			Action:     "Create",
-			After:      map[string]any{"kind": kind},
-		})
-	})
-	return effect, err
-}
-
-// ArchiveWorkflowEffect archives an effect (NFK-09).
-func (s *Service) ArchiveWorkflowEffect(ctx context.Context, id uuid.UUID, version int) (Effect, error) {
-	var updated Effect
-	err := db.InTx(ctx, s.pool, func(tx *db.Tx) error {
-		st := s.store.WithTx(tx)
-		effect, err := st.GetWorkflowEffect(ctx, id)
-		if err != nil {
-			return ProblemError(err)
-		}
-		updated, err = st.ArchiveWorkflowEffect(ctx, id, version)
-		if err != nil {
-			return ProblemError(err)
-		}
-
-		return s.rec.Record(ctx, tx, audit.Entry{
-			Module:     "workflow",
-			EntityType: "effect",
-			EntityID:   id,
-			Action:     "Archive",
-			Before:     map[string]any{"kind": effect.Kind},
-		})
-	})
-	return updated, err
-}
-
-// ExecuteTransition runs all effects for a transition (WF-06).
-func (s *Service) ExecuteTransition(ctx context.Context, transitionID, orderID uuid.UUID, effects []Effect) error {
-	for _, eff := range effects {
-		switch eff.Kind {
-		case "reserve_stock":
-			// Will be implemented in orders module
-		case "release_stock":
-			// Will be implemented in orders module
-		case "withdraw_stock":
-			// Will be implemented in orders module
-		default:
-			return fmt.Errorf("unknown effect kind: %s", eff.Kind)
+		if strings.TrimSpace(reason) == "" {
+			return Result{}, &ReasonRequiredError{}
 		}
 	}
-	return nil
+	q := tx.Queries()
+	o, err := q.LockOrderForTransition(ctx, orderID)
+	if err != nil {
+		return Result{}, notFoundOr(err, "order")
+	}
+	p, err := s.plan(ctx, q, o.Status, o.WorkflowVersionID, orderID, toKey, override)
+	if err != nil {
+		return Result{}, err
+	}
+	res := Result{OrderID: orderID, FromKey: p.from.Key, ToKey: p.to.Key, Effects: p.effects, Warnings: []string{}}
+
+	if err := s.runEffects(ctx, tx, p, &res); err != nil {
+		return Result{}, err
+	}
+
+	if _, err := q.UpdateOrderStatus(ctx, dbgen.UpdateOrderStatusParams{ID: orderID, Status: p.to.Key, Version: o.Version}); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Result{}, db.ErrStaleVersion
+		}
+		return Result{}, fmt.Errorf("update order status: %w", err)
+	}
+	if err := q.InsertOrderStatusHistory(ctx, dbgen.InsertOrderStatusHistoryParams{
+		OrderID: orderID, FromKey: p.from.Key, ToKey: p.to.Key, ActorID: actor.UserID,
+		Reason: strings.TrimSpace(reason), IsOverride: override,
+	}); err != nil {
+		return Result{}, fmt.Errorf("insert status history: %w", err)
+	}
+	action := "status_change"
+	if override {
+		action = "status_override"
+	}
+	if err := s.rec.Record(ctx, tx, audit.Entry{
+		Module: "orders", EntityType: "order", EntityID: orderID, Action: action,
+		Before: map[string]any{"status": p.from.Key}, After: map[string]any{"status": p.to.Key},
+		Reason: strings.TrimSpace(reason),
+	}); err != nil {
+		return Result{}, err
+	}
+	return res, nil
+}
+
+func notFoundOr(err error, what string) error {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("%w: %s", db.ErrNotFound, what)
+	}
+	return fmt.Errorf("%s: %w", what, err)
 }

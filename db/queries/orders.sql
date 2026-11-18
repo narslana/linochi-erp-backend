@@ -14,7 +14,7 @@ SELECT * FROM orders WHERE external_id = $1 AND external_id != '' AND archived =
 
 -- name: CreateOrder :one
 INSERT INTO orders (
-    id, external_id, channel, status, currency, exchange_rate_sek,
+    id, external_id, channel, currency, exchange_rate_sek,
     subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek,
     customer_id, shipping_name, shipping_address, shipping_city,
     shipping_postal_code, shipping_country, billing_name, billing_address,
@@ -22,14 +22,13 @@ INSERT INTO orders (
     tracking_number, carrier, shipping_label_url, delivered_at, notes
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-    $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+    $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
 ) RETURNING *;
 
 -- name: UpdateOrder :one
 UPDATE orders SET
     external_id = COALESCE(sqlc.narg(external_id), external_id),
     channel = COALESCE(sqlc.narg(channel), channel),
-    status = COALESCE(sqlc.narg(status), status),
     currency = COALESCE(sqlc.narg(currency), currency),
     exchange_rate_sek = COALESCE(sqlc.narg(exchange_rate_sek), exchange_rate_sek),
     subtotal_sek = COALESCE(sqlc.narg(subtotal_sek), subtotal_sek),

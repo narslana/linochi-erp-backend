@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -14,6 +16,7 @@ import (
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/api"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/auth"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/httpx"
+	"gitea.lab.internal/linochi/linochi-erp-backend/internal/workflow"
 )
 
 // Handler provides the HTTP handlers for orders (ORD-01 to ORD-08).
@@ -115,7 +118,7 @@ func (h *Handler) createOrder(w http.ResponseWriter, r *http.Request) {
 		notes = *body.Notes
 	}
 
-	order, err := h.svc.CreateOrder(r.Context(), body.CustomerId, externalID, body.Channel, body.Status, body.Currency,
+	order, err := h.svc.CreateOrder(r.Context(), body.CustomerId, externalID, body.Channel, body.Currency,
 		int64(body.ExchangeRateSek), int64(body.SubtotalSek), int64(body.TaxSek), int64(body.FreightSek),
 		int64(body.CommissionSek), int64(body.TotalSek),
 		shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry,
@@ -164,12 +167,9 @@ func (h *Handler) updateOrder(w http.ResponseWriter, r *http.Request, orderId op
 		return
 	}
 
-	var channel, status, currency, notes *string
+	var channel, currency, notes *string
 	if body.Channel != "" {
 		channel = &body.Channel
-	}
-	if body.Status != "" {
-		status = &body.Status
 	}
 	if body.Currency != "" {
 		currency = &body.Currency
@@ -252,7 +252,7 @@ func (h *Handler) updateOrder(w http.ResponseWriter, r *http.Request, orderId op
 		billingCountry = body.BillingCountry
 	}
 
-	order, err := h.svc.UpdateOrder(r.Context(), externalID, channel, status, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, nil, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, uuid.UUID(orderId), int(body.Version))
+	order, err := h.svc.UpdateOrder(r.Context(), externalID, channel, currency, trackingNumber, carrier, shippingLabelUrl, notes, exchangeRateSek, subtotalSek, taxSek, freightSek, commissionSek, totalSek, nil, shippingName, shippingAddress, shippingCity, shippingPostalCode, shippingCountry, billingName, billingAddress, billingCity, billingPostalCode, billingCountry, uuid.UUID(orderId), int(body.Version))
 	if err != nil {
 		if errors.Is(err, newNotFound("order")) {
 			httpx.Error(w, r, err)
@@ -304,39 +304,80 @@ func (h *Handler) archiveOrder(w http.ResponseWriter, r *http.Request, orderId o
 	writeJSON(w, http.StatusOK, order)
 }
 
-// UpdateOrderStatus changes the order status (ORD-01).
+// UpdateOrderStatus moves an order to another step of its workflow, optionally
+// as a manual override by an admin (ORD-03, WF-02, WF-05).
 func (h *Handler) UpdateOrderStatus(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.updateOrderStatus(w, r, orderId)
-	})).ServeHTTP(w, r)
-}
-
-func (h *Handler) updateOrderStatus(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
-	var body struct {
-		Status string `json:"status"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httpx.Error(w, r, err)
-		return
-	}
-
-	order, err := h.svc.GetOrder(r.Context(), uuid.UUID(orderId))
-	if err != nil {
-		httpx.Error(w, r, err)
-		return
-	}
-
-	order, err = h.svc.UpdateOrderStatus(r.Context(), body.Status, nil, nil, nil, nil, uuid.UUID(orderId), order.Version)
-	if err != nil {
-		if errors.Is(err, newNotFound("order")) {
+		var body api.UpdateOrderStatus
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			httpx.Error(w, r, err)
 			return
 		}
-		h.logger.ErrorContext(r.Context(), "UpdateOrderStatus failed", "error", err)
+		h.change(w, r, uuid.UUID(orderId), body.Status, body.Reason, body.Override)
+	})).ServeHTTP(w, r)
+}
+
+// statusChange is the answer of every status endpoint (OrderStatusChange in the OpenAPI).
+type statusChange struct {
+	Order    Order                    `json:"order"`
+	Effects  []workflow.PlannedEffect `json:"effects"`
+	Warnings []string                 `json:"warnings"`
+}
+
+// change runs one status change for a handler and writes the result.
+func (h *Handler) change(w http.ResponseWriter, r *http.Request, id uuid.UUID, toKey string, reason *string, override *bool) {
+	actor, ok := workflow.ActorFromRequest(r)
+	if !ok {
+		httpx.Error(w, r, auth.ErrUnauthenticated)
+		return
+	}
+	order, res, err := h.svc.ChangeOrderStatus(r.Context(), id, toKey, actor, reasonString(reason), override != nil && *override)
+	if err != nil {
 		httpx.Error(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, order)
+	if res.Effects == nil {
+		res.Effects = []workflow.PlannedEffect{}
+	}
+	writeJSON(w, http.StatusOK, statusChange{Order: order, Effects: res.Effects, Warnings: res.Warnings})
+}
+
+// PreviewOrderTransition shows the effects of a move without running them (WF-05).
+func (h *Handler) PreviewOrderTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, toKey string, params api.PreviewOrderTransitionParams) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		effects, err := h.svc.PreviewTransition(r.Context(), uuid.UUID(id), toKey, params.Override != nil && *params.Override)
+		if err != nil {
+			httpx.Error(w, r, ProblemError(err))
+			return
+		}
+		if effects == nil {
+			effects = []workflow.PlannedEffect{}
+		}
+		writeJSON(w, http.StatusOK, effects)
+	})).ServeHTTP(w, r)
+}
+
+// GetOrderHistory returns the status history and the time in each step (WF-10).
+func (h *Handler) GetOrderHistory(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		entries, times, err := h.svc.History(r.Context(), uuid.UUID(id), time.Now())
+		if err != nil {
+			httpx.Error(w, r, err)
+			return
+		}
+		type stepTime struct {
+			Key     string  `json:"key"`
+			Seconds float64 `json:"seconds"`
+		}
+		tis := make([]stepTime, 0, len(times))
+		for _, t := range times {
+			tis = append(tis, stepTime{Key: t.Key, Seconds: t.Duration.Seconds()})
+		}
+		if entries == nil {
+			entries = []workflow.HistoryEntry{}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"entries": entries, "time_in_steps": tis})
+	})).ServeHTTP(w, r)
 }
 
 // ─── Order Lines ──────────────────────────────────────────────────────────────
@@ -455,93 +496,46 @@ func (h *Handler) archiveOrderLine(w http.ResponseWriter, r *http.Request, order
 	writeJSON(w, http.StatusOK, line)
 }
 
-// AcceptOrder accepts an order with preview and optional override (ORD-04, WF-05).
+// AcceptOrder accepts an order: reserves its stock (ORD-04, WF-05).
 func (h *Handler) AcceptOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.acceptOrder(w, r, orderId)
+		var body api.AcceptOrder
+		if !decodeOptional(w, r, &body) {
+			return
+		}
+		h.change(w, r, uuid.UUID(orderId), targetAccept, body.Reason, body.Override)
 	})).ServeHTTP(w, r)
 }
 
-func (h *Handler) acceptOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
-	var body api.AcceptOrder
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httpx.Error(w, r, err)
-		return
-	}
-
-	var reason *string
-	if body.Reason != nil {
-		reason = body.Reason
-	}
-
-	order, err := h.svc.AcceptOrder(r.Context(), string(body.Status), reason, uuid.UUID(orderId))
-	if err != nil {
-		if errors.Is(err, newNotFound("order")) {
-			httpx.Error(w, r, err)
-			return
-		}
-		h.logger.ErrorContext(r.Context(), "AcceptOrder failed", "error", err)
-		httpx.Error(w, r, err)
-		return
-	}
-	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, order)
-}
-
-// ShipOrder ships an order (ORD-06).
+// ShipOrder ships an order: withdraws its stock (ORD-06).
 func (h *Handler) ShipOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.shipOrder(w, r, orderId)
+		var body api.ShipOrder
+		if !decodeOptional(w, r, &body) {
+			return
+		}
+		h.change(w, r, uuid.UUID(orderId), targetShip, body.Reason, body.Override)
 	})).ServeHTTP(w, r)
 }
 
-func (h *Handler) shipOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
-	var body api.ShipOrder
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httpx.Error(w, r, err)
-		return
-	}
-
-	order, err := h.svc.ShipOrder(r.Context(), string(body.Status), uuid.UUID(orderId))
-	if err != nil {
-		if errors.Is(err, newNotFound("order")) {
-			httpx.Error(w, r, err)
-			return
-		}
-		h.logger.ErrorContext(r.Context(), "ShipOrder failed", "error", err)
-		httpx.Error(w, r, err)
-		return
-	}
-	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, order)
-}
-
-// CancelOrder cancels an order (ORD-07).
+// CancelOrder cancels an order and releases its reservation (ORD-07).
 func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
 	h.mw.Require(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.cancelOrder(w, r, orderId)
+		var body api.CancelOrder
+		if !decodeOptional(w, r, &body) {
+			return
+		}
+		h.change(w, r, uuid.UUID(orderId), targetCancel, body.Reason, body.Override)
 	})).ServeHTTP(w, r)
 }
 
-func (h *Handler) cancelOrder(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID) {
-	var body api.CancelOrder
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+// decodeOptional reads a JSON body that may be empty.
+func decodeOptional(w http.ResponseWriter, r *http.Request, v any) bool {
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil && !errors.Is(err, io.EOF) {
 		httpx.Error(w, r, err)
-		return
+		return false
 	}
-
-	order, err := h.svc.CancelOrder(r.Context(), string(body.Status), uuid.UUID(orderId))
-	if err != nil {
-		if errors.Is(err, newNotFound("order")) {
-			httpx.Error(w, r, err)
-			return
-		}
-		h.logger.ErrorContext(r.Context(), "CancelOrder failed", "error", err)
-		httpx.Error(w, r, err)
-		return
-	}
-	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, order)
+	return true
 }
 
 // DeleteOrderLine deletes an order line (NFK-09).

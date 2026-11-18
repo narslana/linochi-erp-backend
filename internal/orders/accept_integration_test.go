@@ -124,6 +124,9 @@ func (e *env) balance(t *testing.T, product uuid.UUID) (inStock, reserved int) {
 func TestORD04_AcceptOrderSucceeds(t *testing.T) {
 	e := newEnv(t)
 	id, product := e.order(t, 10, 3)
+	if _, _, err := e.svc.ChangeOrderStatus(e.ctx, id, "in_review", admin, "", false); err != nil {
+		t.Fatal(err)
+	}
 	before, err := e.svc.GetOrder(e.ctx, id)
 	if err != nil {
 		t.Fatal(err)
@@ -147,14 +150,17 @@ func TestORD04_AcceptOrderSucceeds(t *testing.T) {
 func TestORD04_AcceptWithoutStockIsRefused(t *testing.T) {
 	e := newEnv(t)
 	id, product := e.order(t, 2, 3)
+	if _, _, err := e.svc.ChangeOrderStatus(e.ctx, id, "in_review", admin, "", false); err != nil {
+		t.Fatal(err)
+	}
 
 	_, _, err := e.svc.AcceptOrder(e.ctx, id, admin)
 	var pe httpx.ProblemError
 	if !errors.As(err, &pe) || pe.Problem().Status != http.StatusConflict {
 		t.Fatalf("err = %v, want a 409 problem", err)
 	}
-	if o, _ := e.svc.GetOrder(e.ctx, id); o.Status != "new" {
-		t.Fatalf("status = %q, want new", o.Status)
+	if o, _ := e.svc.GetOrder(e.ctx, id); o.Status != "in_review" {
+		t.Fatalf("status = %q, want in_review", o.Status)
 	}
 	if _, res := e.balance(t, product); res != 0 {
 		t.Fatalf("reserved = %d, want 0", res)
@@ -164,7 +170,7 @@ func TestORD04_AcceptWithoutStockIsRefused(t *testing.T) {
 func TestORD06_ShipOrderWithdrawsStock(t *testing.T) {
 	e := newEnv(t)
 	id, product := e.order(t, 10, 3)
-	for _, to := range []string{"accepted", "picking", "packing", "label_printed", "ready_to_ship"} {
+	for _, to := range []string{"in_review", "accepted", "picking", "packing", "label_printed", "ready_to_ship"} {
 		if _, _, err := e.svc.ChangeOrderStatus(e.ctx, id, to, admin, "", false); err != nil {
 			t.Fatalf("-> %s: %v", to, err)
 		}
@@ -184,6 +190,9 @@ func TestORD06_ShipOrderWithdrawsStock(t *testing.T) {
 func TestORD07_CancelOrderReleasesReservation(t *testing.T) {
 	e := newEnv(t)
 	id, product := e.order(t, 10, 3)
+	if _, _, err := e.svc.ChangeOrderStatus(e.ctx, id, "in_review", admin, "", false); err != nil {
+		t.Fatal(err)
+	}
 	if _, _, err := e.svc.AcceptOrder(e.ctx, id, admin); err != nil {
 		t.Fatal(err)
 	}

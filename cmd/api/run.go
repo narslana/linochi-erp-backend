@@ -229,14 +229,11 @@ func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health
 		logger,
 	)
 
-	workflowHandler := workflow.NewHandler(
-		workflow.NewService(workflow.NewStore(pool), rec, pool),
-		mw,
-		logger,
-	)
+	workflowSvc := workflow.NewService(workflow.NewStore(pool), rec, pool, inventorySvc)
+	workflowHandler := workflow.NewHandler(workflowSvc, mw, logger)
 
 	ordersHandler := orders.NewHandler(
-		orders.NewService(orders.NewStore(pool), rec, pool),
+		orders.NewService(orders.NewStore(pool), rec, pool, workflowSvc),
 		mw,
 		logger,
 	)

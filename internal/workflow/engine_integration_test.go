@@ -245,29 +245,32 @@ func TestWF03_EffectsRunInSameTransaction(t *testing.T) {
 	noStock := e.stocked(t, 0)
 	// Two lines: the first can be reserved, the second cannot.
 	order := e.newOrder(t, 2, withStock, noStock)
+	e.move(t, order, "in_review")
 	movementsBefore := e.count(t, `SELECT count(*) FROM stockmovements`)
+	historyBefore := e.count(t, `SELECT count(*) FROM order_status_history WHERE order_id = $1`, order)
+	auditBefore := e.count(t, `SELECT count(*) FROM audit_log WHERE entity_id = $1`, order)
 
 	_, err := e.svc.ChangeStatus(e.ctx, order, "accepted", admin, "", false)
 	wantStatus(t, err, http.StatusConflict) // insufficient stock
 
-	if got := e.status(t, order); got != "new" {
-		t.Fatalf("status = %q, want new", got)
+	if got := e.status(t, order); got != "in_review" {
+		t.Fatalf("status = %q, want in_review", got)
 	}
-	if n := e.count(t, `SELECT count(*) FROM order_status_history WHERE order_id = $1`, order); n != 0 {
-		t.Fatalf("%d history rows, want 0", n)
+	if n := e.count(t, `SELECT count(*) FROM order_status_history WHERE order_id = $1`, order); n != historyBefore {
+		t.Fatalf("%d history rows, want %d", n, historyBefore)
 	}
 	if n := e.count(t, `SELECT count(*) FROM stockmovements`); n != movementsBefore {
 		t.Fatalf("%d movements, want %d: the first line's reservation was not rolled back", n, movementsBefore)
 	}
-	if n := e.count(t, `SELECT count(*) FROM audit_log WHERE entity_id = $1`, order); n != 0 {
-		t.Fatalf("%d audit rows for the failed change, want 0", n)
+	if n := e.count(t, `SELECT count(*) FROM audit_log WHERE entity_id = $1`, order); n != auditBefore {
+		t.Fatalf("%d audit rows after the failed change, want %d", n, auditBefore)
 	}
 }
 
 func TestWF05_OverrideRequiresAdminAndReason(t *testing.T) {
 	e := newEnv(t)
 	order := e.newOrder(t, 1, e.stocked(t, 5))
-	e.walk(t, order, "accepted", "picking")
+	e.walk(t, order, "in_review", "accepted", "picking")
 
 	_, err := e.svc.ChangeStatus(e.ctx, order, "new", nonAdm, "customer asked", true)
 	wantStatus(t, err, http.StatusForbidden)
@@ -292,7 +295,7 @@ func TestWF05_OverrideBackwardsRestoresStock(t *testing.T) {
 	product := e.stocked(t, 10)
 	order := e.newOrder(t, 3, product)
 
-	e.walk(t, order, "accepted", "picking", "packing", "label_printed", "ready_to_ship", "posted")
+	e.walk(t, order, "in_review", "accepted", "picking", "packing", "label_printed", "ready_to_ship", "posted")
 	if in, res := e.balance(t, product); in != 7 || res != 0 {
 		t.Fatalf("after posted in_stock/reserved = %d/%d, want 7/0", in, res)
 	}
@@ -346,6 +349,8 @@ func TestWF05_PreviewShowsEffectsWithoutRunningThem(t *testing.T) {
 	e := newEnv(t)
 	product := e.stocked(t, 10)
 	order := e.newOrder(t, 4, product)
+	e.move(t, order, "in_review")
+	historyBefore := e.count(t, `SELECT count(*) FROM order_status_history WHERE order_id = $1`, order)
 
 	effects, err := e.svc.Preview(e.ctx, order, "accepted", false)
 	if err != nil {
@@ -354,14 +359,14 @@ func TestWF05_PreviewShowsEffectsWithoutRunningThem(t *testing.T) {
 	if len(effects) != 1 || effects[0].Kind != "reserve" || effects[0].ProductID != product || effects[0].Quantity != 4 {
 		t.Fatalf("preview = %+v, want one reserve of 4", effects)
 	}
-	if got := e.status(t, order); got != "new" {
+	if got := e.status(t, order); got != "in_review" {
 		t.Fatalf("preview changed the status to %q", got)
 	}
 	if in, res := e.balance(t, product); in != 10 || res != 0 {
 		t.Fatalf("preview changed stock: %d/%d", in, res)
 	}
-	if n := e.count(t, `SELECT count(*) FROM order_status_history WHERE order_id = $1`, order); n != 0 {
-		t.Fatalf("preview wrote %d history rows", n)
+	if n := e.count(t, `SELECT count(*) FROM order_status_history WHERE order_id = $1`, order); n != historyBefore {
+		t.Fatalf("preview wrote %d history rows", n-historyBefore)
 	}
 
 	_, err = e.svc.Preview(e.ctx, order, "packing", false) // not in the flow
@@ -372,7 +377,7 @@ func TestWF05_DeliveredIsFinal(t *testing.T) {
 	e := newEnv(t)
 	product := e.stocked(t, 10)
 	order := e.newOrder(t, 1, product)
-	e.walk(t, order, "accepted", "picking", "packing", "label_printed", "ready_to_ship", "posted", "in_transit", "delivered")
+	e.walk(t, order, "in_review", "accepted", "picking", "packing", "label_printed", "ready_to_ship", "posted", "in_transit", "delivered")
 
 	for _, to := range []string{"packing", "new", "cancelled", "in_transit"} {
 		_, err := e.svc.ChangeStatus(e.ctx, order, to, admin, "try to leave delivered", true)
@@ -394,7 +399,7 @@ func TestWF05_ReopenCancelledReservesAgain(t *testing.T) {
 		e := newEnv(t)
 		product := e.stocked(t, 10)
 		order := e.newOrder(t, 3, product)
-		e.walk(t, order, "accepted", "cancelled")
+		e.walk(t, order, "in_review", "accepted", "cancelled")
 		if in, res := e.balance(t, product); in != 10 || res != 0 {
 			t.Fatalf("after cancel in_stock/reserved = %d/%d, want 10/0", in, res)
 		}
@@ -418,7 +423,7 @@ func TestWF05_ReopenCancelledReservesAgain(t *testing.T) {
 			t.Fatalf("after reopen in_stock/reserved = %d/%d, want 10/3", in, reserved)
 		}
 		// Accepting again must not reserve a second time.
-		e.move(t, order, "accepted")
+		e.walk(t, order, "in_review", "accepted")
 		if _, reserved := e.balance(t, product); reserved != 3 {
 			t.Fatalf("reserved = %d after accepting a reopened order, want 3", reserved)
 		}
@@ -428,9 +433,9 @@ func TestWF05_ReopenCancelledReservesAgain(t *testing.T) {
 		e := newEnv(t)
 		product := e.stocked(t, 5)
 		first := e.newOrder(t, 5, product)
-		e.walk(t, first, "accepted", "cancelled")
+		e.walk(t, first, "in_review", "accepted", "cancelled")
 		other := e.newOrder(t, 5, product)
-		e.move(t, other, "accepted") // takes all the stock
+		e.walk(t, other, "in_review", "accepted") // takes all the stock
 
 		res, err := e.svc.ChangeStatus(e.ctx, first, "new", admin, "reopen", true)
 		if err != nil {
@@ -523,7 +528,7 @@ func TestWF07_OrderKeepsItsWorkflowVersion(t *testing.T) {
 	e := newEnv(t)
 	product := e.stocked(t, 20)
 	oldOrder := e.newOrder(t, 1, product)
-	e.walk(t, oldOrder, "accepted", "picking", "packing")
+	e.walk(t, oldOrder, "in_review", "accepted", "picking", "packing")
 	v1, err := e.svc.ActiveVersion(e.ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -572,7 +577,7 @@ func TestWF07_OrderKeepsItsWorkflowVersion(t *testing.T) {
 	if newVersion != v2.ID {
 		t.Fatalf("new order has version %s, want %s", newVersion, v2.ID)
 	}
-	e.walk(t, newOrder, "accepted", "picking", "packing")
+	e.walk(t, newOrder, "in_review", "accepted", "picking", "packing")
 	_, err = e.svc.ChangeStatus(e.ctx, newOrder, "label_printed", admin, "", false)
 	wantStatus(t, err, http.StatusConflict)
 	e.walk(t, newOrder, "quality_check", "label_printed")
@@ -583,7 +588,7 @@ func TestWF10_HistoryRecordsEveryChange(t *testing.T) {
 	product := e.stocked(t, 10)
 	order := e.newOrder(t, 1, product)
 
-	e.walk(t, order, "accepted", "picking")
+	e.walk(t, order, "in_review", "accepted", "picking")
 	if _, err := e.svc.ChangeStatus(e.ctx, order, "new", admin, "mistake", true); err != nil {
 		t.Fatal(err)
 	}
@@ -597,7 +602,7 @@ func TestWF10_HistoryRecordsEveryChange(t *testing.T) {
 		from, to string
 		override bool
 	}
-	want := []step{{"new", "accepted", false}, {"accepted", "picking", false}, {"picking", "new", true}, {"new", "in_review", false}}
+	want := []step{{"new", "in_review", false}, {"in_review", "accepted", false}, {"accepted", "picking", false}, {"picking", "new", true}, {"new", "in_review", false}}
 	if len(hist) != len(want) {
 		t.Fatalf("%d history rows, want %d: %+v", len(hist), len(want), hist)
 	}
@@ -607,7 +612,7 @@ func TestWF10_HistoryRecordsEveryChange(t *testing.T) {
 			t.Fatalf("history[%d] = %+v, want %+v by %s", i, h, w, userID)
 		}
 	}
-	if hist[2].Reason != "mistake" {
+	if hist[3].Reason != "mistake" {
 		t.Fatalf("override reason = %q", hist[2].Reason)
 	}
 
@@ -656,12 +661,16 @@ func TestNFK27_StockNeverNegativeUnderRandomTransitions(t *testing.T) {
 					t.Fatalf("after op %d (%s): in_stock/reserved = %d/%d", step, op, in, res)
 				}
 			}
+			accepted := 0
+			defer func() { t.Logf("%d of 60 random moves were accepted", accepted) }()
 			for step := range 60 {
 				order := orders[rng.Intn(len(orders))]
 				to := keys[rng.Intn(len(keys))]
 				override := rng.Intn(3) == 0
 				_, err := e.svc.ChangeStatus(e.ctx, order, to, admin, "random", override)
-				if err != nil {
+				if err == nil {
+					accepted++
+				} else {
 					var pe httpx.ProblemError
 					if !errors.As(err, &pe) {
 						t.Fatalf("op %d: unexpected non-problem error: %v", step, err)

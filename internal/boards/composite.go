@@ -547,65 +547,17 @@ func (c *Composite) NextFreeEanCode(w http.ResponseWriter, r *http.Request) {
 
 // ─── Workflow routes (delegated) ─────────────────────────────────────────────
 
-func (c *Composite) ListWorkflowSteps(w http.ResponseWriter, r *http.Request) {
-	c.workflow.ListWorkflowSteps(w, r)
+func (c *Composite) ListWorkflowVersions(w http.ResponseWriter, r *http.Request) {
+	c.workflow.ListWorkflowVersions(w, r)
 }
-func (c *Composite) CreateWorkflowStep(w http.ResponseWriter, r *http.Request) {
-	c.workflow.CreateWorkflowStep(w, r)
+func (c *Composite) PublishWorkflowVersion(w http.ResponseWriter, r *http.Request) {
+	c.workflow.PublishWorkflowVersion(w, r)
 }
-func (c *Composite) GetWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey openapi_types.UUID) {
-	c.workflow.GetWorkflowStep(w, r, stepKey)
+func (c *Composite) GetActiveWorkflowVersion(w http.ResponseWriter, r *http.Request) {
+	c.workflow.GetActiveWorkflowVersion(w, r)
 }
-func (c *Composite) UpdateWorkflowStep(w http.ResponseWriter, r *http.Request, stepKey openapi_types.UUID) {
-	c.workflow.UpdateWorkflowStep(w, r, stepKey)
-}
-func (c *Composite) ArchiveWorkflowStep(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	c.workflow.ArchiveWorkflowStep(w, r, id)
-}
-func (c *Composite) ListWorkflowTransitions(w http.ResponseWriter, r *http.Request) {
-	c.workflow.ListWorkflowTransitions(w, r)
-}
-func (c *Composite) GetWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
-	c.workflow.GetWorkflowTransition(w, r, transitionId)
-}
-func (c *Composite) CreateWorkflowTransition(w http.ResponseWriter, r *http.Request) {
-	c.workflow.CreateWorkflowTransition(w, r)
-}
-func (c *Composite) UpdateWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
-	c.workflow.UpdateWorkflowTransition(w, r, transitionId)
-}
-func (c *Composite) ArchiveWorkflowTransition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
-	c.workflow.ArchiveWorkflowTransition(w, r, transitionId)
-}
-func (c *Composite) ListWorkflowConditions(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
-	c.workflow.ListWorkflowConditions(w, r, transitionId)
-}
-func (c *Composite) CreateWorkflowCondition(w http.ResponseWriter, r *http.Request) {
-	c.workflow.CreateWorkflowCondition(w, r)
-}
-func (c *Composite) ArchiveWorkflowCondition(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID, conditionId openapi_types.UUID) {
-	c.workflow.ArchiveWorkflowCondition(w, r, transitionId, conditionId)
-}
-func (c *Composite) ListWorkflowTransitionConditions(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	c.workflow.ListWorkflowTransitionConditions(w, r, id)
-}
-func (c *Composite) CreateWorkflowTransitionCondition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	c.workflow.CreateWorkflowTransitionCondition(w, r, id)
-}
-func (c *Composite) ListWorkflowTransitionEffects(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	c.workflow.ListWorkflowTransitionEffects(w, r, id)
-}
-func (c *Composite) CreateWorkflowTransitionEffect(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	c.workflow.CreateWorkflowTransitionEffect(w, r, id)
-}
-func (c *Composite) ListWorkflowEffects(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID) {
-	c.workflow.ListWorkflowEffects(w, r, transitionId)
-}
-func (c *Composite) CreateWorkflowEffect(w http.ResponseWriter, r *http.Request) {
-	c.workflow.CreateWorkflowEffect(w, r)
-}
-func (c *Composite) ArchiveWorkflowEffect(w http.ResponseWriter, r *http.Request, transitionId openapi_types.UUID, effectId openapi_types.UUID) {
-	c.workflow.ArchiveWorkflowEffect(w, r, transitionId, effectId)
+func (c *Composite) GetWorkflowVersion(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.workflow.GetWorkflowVersion(w, r, id)
 }
 
 // ─── Orders routes (delegated) ───────────────────────────────────────────────
@@ -649,6 +601,14 @@ func (c *Composite) ShipOrder(w http.ResponseWriter, r *http.Request, id openapi
 func (c *Composite) CancelOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	c.orders.CancelOrder(w, r, id)
 }
+func (c *Composite) GetOrderHistory(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	c.orders.GetOrderHistory(w, r, id)
+}
+
+func (c *Composite) PreviewOrderTransition(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, toKey string, params api.PreviewOrderTransitionParams) {
+	c.orders.PreviewOrderTransition(w, r, id, toKey, params)
+}
+
 func (c *Composite) DeleteOrderLine(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID, orderLineId openapi_types.UUID) {
 	c.orders.DeleteOrderLine(w, r, orderId, orderLineId)
 }
