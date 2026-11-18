@@ -122,7 +122,7 @@ ORDER BY count DESC;
 SELECT o.id, o.channel, o.status, o.shipping_name, o.tracking_number, o.carrier
 FROM orders o
 WHERE o.archived = false
-  AND o.status IN ('shipped', 'in_transit')
+  AND o.status IN ('posted', 'in_transit')
 ORDER BY o.created_at DESC;
 
 -- name: CardsDue :many
@@ -227,7 +227,7 @@ FROM (
         NULL AS change
     FROM orders
     WHERE archived = false
-      AND status IN ('draft', 'confirmed', 'accepted')
+      AND status IN ('new', 'in_review', 'accepted')
 ) cards
 ORDER BY title;
 
