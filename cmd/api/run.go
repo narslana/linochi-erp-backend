@@ -230,6 +230,9 @@ func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health
 	)
 
 	workflowSvc := workflow.NewService(workflow.NewStore(pool), rec, pool, inventorySvc)
+	if err := workflowSvc.RegisterMetrics(metrics.Registry); err != nil {
+		panic(err)
+	}
 	workflowHandler := workflow.NewHandler(workflowSvc, mw, logger)
 
 	ordersHandler := orders.NewHandler(

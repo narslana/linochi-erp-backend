@@ -208,11 +208,11 @@ func newContractEnv(t *testing.T) *contractEnv {
 	customersH := customers.NewHandler(customersSvc, mw, logger)
 
 	workflowStore := workflow.NewStore(pool)
-	workflowSvc := workflow.NewService(workflowStore, rec, pool)
+	workflowSvc := workflow.NewService(workflowStore, rec, pool, inventorySvc)
 	workflowH := workflow.NewHandler(workflowSvc, mw, logger)
 
 	ordersStore := orders.NewStore(pool)
-	ordersSvc := orders.NewService(ordersStore, rec, pool)
+	ordersSvc := orders.NewService(ordersStore, rec, pool, workflowSvc)
 	ordersH := orders.NewHandler(ordersSvc, mw, logger)
 
 	statsStore := stats.NewStore(pool)
@@ -427,19 +427,6 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	var lead map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &lead)
 	leadID := lead["id"].(string)
-	// ---- dependencies: workflow steps ----
-	w = b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "draft", "name": "Draft", "name_en": "Draft", "is_start": true}, nil, &calls)
-	var stepDraft map[string]interface{}
-	_ = json.Unmarshal(w.Body.Bytes(), &stepDraft)
-	draftStepID := stepDraft["id"].(string)
-	b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "accepted", "name": "Accepted", "name_en": "Accepted"}, nil, &calls)
-	b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "shipped", "name": "Shipped", "name_en": "Shipped"}, nil, &calls)
-	b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "done", "name": "Done", "name_en": "Done", "is_end": true}, nil, &calls)
-	// ---- dependencies: workflow transitions ----
-	w = b.callJSON("POST", "/api/v1/workflow/transitions", map[string]interface{}{"step_key": "accepted", "from_key": "draft", "to_key": "accepted", "label": "Accept"}, nil, &calls)
-	var trans map[string]interface{}
-	_ = json.Unmarshal(w.Body.Bytes(), &trans)
-	transID := trans["id"].(string)
 	// ---- dependencies: ical-sources ----
 	w = b.callJSON("POST", "/api/v1/ical-sources", map[string]interface{}{"name": "Work", "ical_url": "https://example.com/calendar.ics"}, nil, &calls)
 	var ical map[string]interface{}
@@ -576,22 +563,29 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("PUT", "/api/v1/orders/"+ordID, map[string]interface{}{"id": ordID, "version": ordVer, "notes": "Updated order"}, nil, &calls)
 	b.callJSON("POST", "/api/v1/orders/"+ordID+"/lines", map[string]interface{}{"product_id": prodID, "quantity": 1, "unit_price_sek": 19900}, nil, &calls)
 	b.call("GET", "/api/v1/orders/"+ordID+"/export", nil, &calls)
-	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status", map[string]interface{}{"status": "accepted"}, nil, &calls)
-	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status/accept", map[string]interface{}{"status": "accepted", "reason": "Test accept"}, nil, &calls)
-	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status/ship", map[string]interface{}{"status": "shipped"}, nil, &calls)
-	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status/cancel", map[string]interface{}{"status": "cancelled", "reason": "Test cancel"}, nil, &calls)
+	// T2: status only changes through the workflow engine.
+	w = b.callJSON("POST", "/api/v1/orders/"+ordID+"/status", map[string]interface{}{"status": "in_review"}, nil, &calls)
+	mustOK(t, w, "POST /api/v1/orders/{id}/status")
+	b.call("GET", "/api/v1/orders/"+ordID+"/transitions/accepted/preview", nil, &calls)
+	b.call("GET", "/api/v1/orders/"+ordID+"/transitions/packing/preview", nil, &calls) // 409: not in the flow
+	b.call("GET", "/api/v1/orders/"+ordID+"/history", nil, &calls)
+	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status/accept", map[string]interface{}{"reason": "Test accept"}, nil, &calls)
+	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status/ship", map[string]interface{}{}, nil, &calls)
+	b.callJSON("POST", "/api/v1/orders/"+ordID+"/status/cancel", map[string]interface{}{"reason": "Test cancel"}, nil, &calls)
 	b.callJSON("POST", "/api/v1/orders/batch-export", map[string]interface{}{}, nil, &calls)
 	b.callJSON("DELETE", "/api/v1/orders/"+ordID, map[string]interface{}{}, nil, &calls)
-	// ---- workflow: CRUD ----
-	b.call("GET", "/api/v1/workflow/steps", nil, &calls)
-	b.callJSON("PUT", "/api/v1/workflow/steps/"+draftStepID, map[string]interface{}{"id": draftStepID, "version": 1, "name": "Updated Step"}, nil, &calls)
-	b.callJSON("DELETE", "/api/v1/workflow/steps/"+draftStepID, map[string]interface{}{}, nil, &calls)
-	b.call("GET", "/api/v1/workflow/transitions", nil, &calls)
-	b.call("GET", "/api/v1/workflow/transitions/"+transID, nil, &calls)
-	b.callJSON("PUT", "/api/v1/workflow/transitions/"+transID, map[string]interface{}{"id": transID, "version": 1, "label": "Updated"}, nil, &calls)
-	b.call("GET", "/api/v1/workflow/transitions/"+transID+"/conditions", nil, &calls)
-	b.call("GET", "/api/v1/workflow/transitions/"+transID+"/effects", nil, &calls)
-	b.callJSON("DELETE", "/api/v1/workflow/transitions/"+transID, map[string]interface{}{}, nil, &calls)
+	// ---- workflow: versions (WF-07) ----
+	b.call("GET", "/api/v1/workflow/versions", nil, &calls)
+	w = b.call("GET", "/api/v1/workflow/versions/active", nil, &calls)
+	mustOK(t, w, "GET /api/v1/workflow/versions/active")
+	var activeVersion map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &activeVersion)
+	b.call("GET", "/api/v1/workflow/versions/"+activeVersion["id"].(string), nil, &calls)
+	w = b.callJSON("POST", "/api/v1/workflow/versions", map[string]interface{}{
+		"steps": activeVersion["steps"], "transitions": activeVersion["transitions"],
+	}, nil, &calls)
+	mustOK(t, w, "POST /api/v1/workflow/versions")
+	b.callJSON("POST", "/api/v1/workflow/versions", map[string]interface{}{"steps": []interface{}{}, "transitions": []interface{}{}}, nil, &calls) // 422
 	// ---- reminders: CRUD ----
 	b.call("GET", "/api/v1/reminders", nil, &calls)
 	b.call("GET", "/api/v1/reminders/"+remID, nil, &calls)
@@ -679,9 +673,6 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	ordLineID := ordLine["id"].(string)
 	b.callJSON("PUT", "/api/v1/orders/"+ordID+"/lines/"+ordLineID, map[string]interface{}{"id": ordLineID, "order_id": ordID, "version": 1, "quantity": 5}, nil, &calls)
 	b.callJSON("DELETE", "/api/v1/orders/"+ordID+"/lines/"+ordLineID, map[string]interface{}{}, nil, &calls)
-	b.call("GET", "/api/v1/workflow/steps/"+draftStepID, nil, &calls)
-	b.callJSON("POST", "/api/v1/workflow/transitions/"+transID+"/conditions", map[string]interface{}{"key": "test-condition", "config": map[string]interface{}{}}, nil, &calls)
-	b.callJSON("POST", "/api/v1/workflow/transitions/"+transID+"/effects", map[string]interface{}{"key": "test-effect", "config": map[string]interface{}{}}, nil, &calls)
 	// ---- calendar events (synced from iCal) ----
 	b.call("GET", "/api/v1/calendar/events/"+poID, nil, &calls)
 

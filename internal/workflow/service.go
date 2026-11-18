@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/audit"
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/inventory"
@@ -27,6 +29,52 @@ type Service struct {
 	rec   *audit.Recorder
 	pool  *pgxpool.Pool
 	inv   *inventory.Service
+
+	// Metrics, nil until RegisterMetrics (the service works without them).
+	transitions *prometheus.CounterVec
+	refusals    *prometheus.CounterVec
+}
+
+// RegisterMetrics registers linochi_workflow_transitions_total and
+// linochi_workflow_refusals_total.
+func (s *Service) RegisterMetrics(reg prometheus.Registerer) error {
+	s.transitions = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "linochi_workflow_transitions_total",
+		Help: "Order status changes committed, by whether they were a manual override.",
+	}, []string{"override"})
+	s.refusals = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "linochi_workflow_refusals_total",
+		Help: "Status changes refused, by reason (forbidden, no_reason, not_allowed, final, effect).",
+	}, []string{"reason"})
+	for _, c := range []prometheus.Collector{s.transitions, s.refusals} {
+		if err := reg.Register(c); err != nil {
+			return fmt.Errorf("register workflow metric: %w", err)
+		}
+	}
+	return nil
+}
+
+func (s *Service) refuse(err error) error {
+	if s.refusals == nil || err == nil {
+		return err
+	}
+	reason := "effect"
+	var na *TransitionNotAllowedError
+	var fin *FinalStateError
+	var fb *ForbiddenError
+	var rr *ReasonRequiredError
+	switch {
+	case errors.As(err, &na):
+		reason = "not_allowed"
+	case errors.As(err, &fin):
+		reason = "final"
+	case errors.As(err, &fb):
+		reason = "forbidden"
+	case errors.As(err, &rr):
+		reason = "no_reason"
+	}
+	s.refusals.WithLabelValues(reason).Inc()
+	return err
 }
 
 func NewService(store *Store, rec *audit.Recorder, pool *pgxpool.Pool, inv *inventory.Service) *Service {
@@ -230,6 +278,20 @@ func (s *Service) Preview(ctx context.Context, orderID uuid.UUID, toKey string, 
 // real version, and writes the history and audit rows. If anything fails the
 // caller's rollback undoes all of it (WF-03).
 func (s *Service) Transition(ctx context.Context, tx *db.Tx, orderID uuid.UUID, toKey string, actor Actor, reason string, override bool) (Result, error) {
+	res, err := s.transition(ctx, tx, orderID, toKey, actor, reason, override)
+	if err != nil {
+		return Result{}, s.refuse(err)
+	}
+	if s.transitions != nil {
+		label := fmt.Sprint(override)
+		tx.AfterCommit(func() { s.transitions.WithLabelValues(label).Inc() })
+	}
+	slog.InfoContext(ctx, "order status changed", "order_id", orderID, "from", res.FromKey, "to", res.ToKey,
+		"override", override, "effects", len(res.Effects), "warnings", len(res.Warnings))
+	return res, nil
+}
+
+func (s *Service) transition(ctx context.Context, tx *db.Tx, orderID uuid.UUID, toKey string, actor Actor, reason string, override bool) (Result, error) {
 	if override {
 		if !actor.Admin {
 			return Result{}, &ForbiddenError{}

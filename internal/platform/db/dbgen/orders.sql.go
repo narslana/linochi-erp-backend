@@ -109,7 +109,7 @@ func (q *Queries) ArchiveOrderLine(ctx context.Context, arg ArchiveOrderLinePara
 
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (
-    id, external_id, channel, status, currency, exchange_rate_sek,
+    id, external_id, channel, currency, exchange_rate_sek,
     subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek,
     customer_id, shipping_name, shipping_address, shipping_city,
     shipping_postal_code, shipping_country, billing_name, billing_address,
@@ -117,7 +117,7 @@ INSERT INTO orders (
     tracking_number, carrier, shipping_label_url, delivered_at, notes
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-    $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+    $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
 ) RETURNING id, external_id, channel, status, currency, exchange_rate_sek, subtotal_sek, tax_sek, freight_sek, commission_sek, total_sek, customer_id, shipping_name, shipping_address, shipping_city, shipping_postal_code, shipping_country, billing_name, billing_address, billing_city, billing_postal_code, billing_country, tracking_number, carrier, shipping_label_url, delivered_at, shipped_at, notes, archived, archived_at, version, created_at, updated_at, workflow_version_id
 `
 
@@ -125,7 +125,6 @@ type CreateOrderParams struct {
 	ID                 uuid.UUID      `json:"id"`
 	ExternalID         string         `json:"external_id"`
 	Channel            string         `json:"channel"`
-	Status             string         `json:"status"`
 	Currency           string         `json:"currency"`
 	ExchangeRateSek    pgtype.Numeric `json:"exchange_rate_sek"`
 	SubtotalSek        int64          `json:"subtotal_sek"`
@@ -156,7 +155,6 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		arg.ID,
 		arg.ExternalID,
 		arg.Channel,
-		arg.Status,
 		arg.Currency,
 		arg.ExchangeRateSek,
 		arg.SubtotalSek,
@@ -511,29 +509,28 @@ const updateOrder = `-- name: UpdateOrder :one
 UPDATE orders SET
     external_id = COALESCE($3, external_id),
     channel = COALESCE($4, channel),
-    status = COALESCE($5, status),
-    currency = COALESCE($6, currency),
-    exchange_rate_sek = COALESCE($7, exchange_rate_sek),
-    subtotal_sek = COALESCE($8, subtotal_sek),
-    tax_sek = COALESCE($9, tax_sek),
-    freight_sek = COALESCE($10, freight_sek),
-    commission_sek = COALESCE($11, commission_sek),
-    total_sek = COALESCE($12, total_sek),
-    customer_id = COALESCE($13, customer_id),
-    shipping_name = COALESCE($14, shipping_name),
-    shipping_address = COALESCE($15, shipping_address),
-    shipping_city = COALESCE($16, shipping_city),
-    shipping_postal_code = COALESCE($17, shipping_postal_code),
-    shipping_country = COALESCE($18, shipping_country),
-    billing_name = COALESCE($19, billing_name),
-    billing_address = COALESCE($20, billing_address),
-    billing_city = COALESCE($21, billing_city),
-    billing_postal_code = COALESCE($22, billing_postal_code),
-    billing_country = COALESCE($23, billing_country),
-    tracking_number = COALESCE($24, tracking_number),
-    carrier = COALESCE($25, carrier),
-    shipping_label_url = COALESCE($26, shipping_label_url),
-    notes = COALESCE($27, notes),
+    currency = COALESCE($5, currency),
+    exchange_rate_sek = COALESCE($6, exchange_rate_sek),
+    subtotal_sek = COALESCE($7, subtotal_sek),
+    tax_sek = COALESCE($8, tax_sek),
+    freight_sek = COALESCE($9, freight_sek),
+    commission_sek = COALESCE($10, commission_sek),
+    total_sek = COALESCE($11, total_sek),
+    customer_id = COALESCE($12, customer_id),
+    shipping_name = COALESCE($13, shipping_name),
+    shipping_address = COALESCE($14, shipping_address),
+    shipping_city = COALESCE($15, shipping_city),
+    shipping_postal_code = COALESCE($16, shipping_postal_code),
+    shipping_country = COALESCE($17, shipping_country),
+    billing_name = COALESCE($18, billing_name),
+    billing_address = COALESCE($19, billing_address),
+    billing_city = COALESCE($20, billing_city),
+    billing_postal_code = COALESCE($21, billing_postal_code),
+    billing_country = COALESCE($22, billing_country),
+    tracking_number = COALESCE($23, tracking_number),
+    carrier = COALESCE($24, carrier),
+    shipping_label_url = COALESCE($25, shipping_label_url),
+    notes = COALESCE($26, notes),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
@@ -545,7 +542,6 @@ type UpdateOrderParams struct {
 	Version            int32          `json:"version"`
 	ExternalID         *string        `json:"external_id"`
 	Channel            *string        `json:"channel"`
-	Status             *string        `json:"status"`
 	Currency           *string        `json:"currency"`
 	ExchangeRateSek    pgtype.Numeric `json:"exchange_rate_sek"`
 	SubtotalSek        *int64         `json:"subtotal_sek"`
@@ -576,7 +572,6 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		arg.Version,
 		arg.ExternalID,
 		arg.Channel,
-		arg.Status,
 		arg.Currency,
 		arg.ExchangeRateSek,
 		arg.SubtotalSek,

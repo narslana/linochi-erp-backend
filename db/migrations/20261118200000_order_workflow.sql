@@ -28,7 +28,7 @@ CREATE UNIQUE INDEX idx_workflows_channel ON workflows (channel) WHERE channel I
 CREATE TABLE workflow_versions (
     id            uuid PRIMARY KEY DEFAULT uuidv7(),
     workflow_id   uuid NOT NULL REFERENCES workflows(id),
-    version       int NOT NULL CHECK (version > 0),
+    version       int NOT NULL DEFAULT 1 CHECK (version > 0),
     published_at  timestamptz NOT NULL DEFAULT now(),
     is_active     boolean NOT NULL DEFAULT false,
     created_at    timestamptz NOT NULL DEFAULT now(),

@@ -332,29 +332,19 @@ func TestINS05_WorkflowWriteAndAuditCommitTogether(t *testing.T) {
 	ctx := actorCtx()
 	e := newEnv(t)
 
-	store := workflow.NewStore(e.pool)
-	svc := workflow.NewService(store, e.rec, e.pool)
+	inv := inventory.NewService(inventory.NewStore(e.pool), e.rec, e.pool)
+	svc := workflow.NewService(workflow.NewStore(e.pool), e.rec, e.pool, inv)
 
-	// Create a step.
-	step, err := svc.CreateWorkflowStep(ctx, "Review", "Review the order", "review-group", 10, false, true)
+	// Publishing a version (T2: the old step/transition CRUD is gone) writes
+	// the version and its audit row together.
+	active, err := svc.ActiveVersion(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertAuditRow(t, ctx, e.pool, "workflow", "Create", userID.String(), "")
-
-	// Update the step.
-	_, err = svc.UpdateWorkflowStep(ctx, nil, nil, nil, nil, nil, step.ID, step.Version)
-	if err != nil {
+	if _, err := svc.PublishVersion(ctx, active.Definition()); err != nil {
 		t.Fatal(err)
 	}
-	assertAuditRow(t, ctx, e.pool, "workflow", "Update", userID.String(), "")
-
-	// Archive the step.
-	_, err = svc.ArchiveWorkflowStep(ctx, step.ID, step.Version+1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertAuditRow(t, ctx, e.pool, "workflow", "Archive", userID.String(), "")
+	assertAuditRow(t, ctx, e.pool, "workflow", "create", userID.String(), "")
 }
 
 // ─── calendar ───────────────────────────────────────────────────────────────
