@@ -552,7 +552,7 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("PATCH", "/api/v1/locations/"+loc2ID, map[string]interface{}{"version": 1, "name": "Warehouse B Updated"}, nil, &calls)
 	b.call("GET", "/api/v1/inventory/balance/"+prodID, nil, &calls)
 	b.call("GET", "/api/v1/inventory/value", nil, &calls)
-	b.callJSON("POST", "/api/v1/stockmovements", map[string]interface{}{"product_id": prodID, "location_id": locID, "movement_type": "purchase", "quantity": 100}, nil, &calls)
+	b.callJSON("POST", "/api/v1/stockmovements", map[string]interface{}{"product_id": prodID, "location_id": locID, "movement_type": "receipt", "quantity": 100}, nil, &calls)
 	b.call("GET", "/api/v1/stockmovements", nil, &calls)
 	b.callJSON("DELETE", "/api/v1/locations/"+locID, map[string]interface{}{}, nil, &calls)
 	b.callJSON("DELETE", "/api/v1/locations/"+loc2ID, map[string]interface{}{}, nil, &calls)

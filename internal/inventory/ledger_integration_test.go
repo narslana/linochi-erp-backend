@@ -557,7 +557,7 @@ func TestLAG05_ValueUsesManufacturingCost(t *testing.T) {
 	var s1, s2 uuid.UUID
 	for i, id := range []*uuid.UUID{&s1, &s2} {
 		if err := e.pool.QueryRow(e.ctx,
-			`INSERT INTO suppliers (name) VALUES ($1) RETURNING id`, "Supplier "+string(rune('A'+i))).Scan(id); err != nil {
+			`INSERT INTO suppliers (name, role) VALUES ($1, 'component') RETURNING id`, "Supplier "+string(rune('A'+i))).Scan(id); err != nil {
 			t.Fatalf("supplier: %v", err)
 		}
 		e.exec(t, `INSERT INTO supplier_products (supplier_id, product_id, purchase_price) VALUES ($1, $2, $3)`,

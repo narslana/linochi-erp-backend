@@ -68,7 +68,7 @@ func (h *Handler) createLocation(w http.ResponseWriter, r *http.Request) {
 		country = *body.Country
 	}
 
-	loc, err := h.svc.CreateLocation(r.Context(), body.Name, nameEn, address, city, country, body.ChannelBuffer)
+	loc, err := h.svc.CreateLocation(r.Context(), body.Name, nameEn, address, city, country)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "CreateLocation failed", "error", err)
 		httpx.Error(w, r, err)
@@ -113,7 +113,6 @@ func (h *Handler) updateLocation(w http.ResponseWriter, r *http.Request, locatio
 	}
 
 	var name, nameEn, address, city, country *string
-	var channelBuffer *int
 	if body.Name != "" {
 		name = &body.Name
 	}
@@ -129,11 +128,8 @@ func (h *Handler) updateLocation(w http.ResponseWriter, r *http.Request, locatio
 	if body.Country != nil {
 		country = body.Country
 	}
-	if body.ChannelBuffer != 0 {
-		channelBuffer = &body.ChannelBuffer
-	}
 
-	loc, err := h.svc.UpdateLocation(r.Context(), uuid.UUID(locationId), name, nameEn, address, city, country, channelBuffer, int(body.Version))
+	loc, err := h.svc.UpdateLocation(r.Context(), uuid.UUID(locationId), name, nameEn, address, city, country, int(body.Version))
 	if err != nil {
 		if errors.Is(err, newNotFound("location")) {
 			httpx.Error(w, r, err)
@@ -242,13 +238,13 @@ func (h *Handler) createStockMovement(w http.ResponseWriter, r *http.Request) {
 		referenceType = *body.ReferenceType
 	}
 
-	movement, err := h.svc.CreateStockMovement(r.Context(), uuid.UUID(body.ProductId), uuid.UUID(body.LocationId), batchNumber, manufacturingDate, bestBeforeDate, string(body.MovementType), body.Quantity, reason, referenceType, referenceID)
+	movement, err := h.svc.CreateStockMovement(r.Context(), MovementInput{
+		ProductID: uuid.UUID(body.ProductId), LocationID: uuid.UUID(body.LocationId),
+		BatchNumber: batchNumber, ManufacturingDate: manufacturingDate, BestBeforeDate: bestBeforeDate,
+		Type: string(body.MovementType), Quantity: body.Quantity, Reason: reason,
+		ReferenceType: referenceType, ReferenceID: referenceID,
+	})
 	if err != nil {
-		if errors.Is(err, ErrInvalidMovement) {
-			httpx.Error(w, r, err)
-			return
-		}
-		h.logger.ErrorContext(r.Context(), "CreateStockMovement failed", "error", err)
 		httpx.Error(w, r, err)
 		return
 	}
@@ -322,9 +318,8 @@ func (h *Handler) reserveStock(w http.ResponseWriter, r *http.Request) {
 		referenceType = *body.ReferenceType
 	}
 
-	err := h.svc.ReserveStock(r.Context(), uuid.UUID(body.ProductId), uuid.UUID(body.LocationId), body.Quantity, referenceType, uuid.UUID(body.ReferenceId))
+	err := h.svc.ReserveStock(r.Context(), StockRef{ProductID: uuid.UUID(body.ProductId), LocationID: uuid.UUID(body.LocationId), Quantity: body.Quantity, ReferenceType: referenceType, ReferenceID: uuid.UUID(body.ReferenceId)})
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "ReserveStock failed", "error", err)
 		httpx.Error(w, r, err)
 		return
 	}
@@ -348,9 +343,8 @@ func (h *Handler) releaseStock(w http.ResponseWriter, r *http.Request) {
 		referenceType = *body.ReferenceType
 	}
 
-	err := h.svc.ReleaseStock(r.Context(), uuid.UUID(body.ProductId), uuid.UUID(body.LocationId), body.Quantity, referenceType, uuid.UUID(body.ReferenceId))
+	err := h.svc.ReleaseStock(r.Context(), StockRef{ProductID: uuid.UUID(body.ProductId), LocationID: uuid.UUID(body.LocationId), Quantity: body.Quantity, ReferenceType: referenceType, ReferenceID: uuid.UUID(body.ReferenceId)})
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "ReleaseStock failed", "error", err)
 		httpx.Error(w, r, err)
 		return
 	}
@@ -374,13 +368,22 @@ func (h *Handler) withdrawStock(w http.ResponseWriter, r *http.Request) {
 		referenceType = *body.ReferenceType
 	}
 
-	err := h.svc.WithdrawStock(r.Context(), uuid.UUID(body.ProductId), uuid.UUID(body.LocationId), body.Quantity, referenceType, uuid.UUID(body.ReferenceId))
+	in := ShipInput{StockRef: StockRef{
+		ProductID: uuid.UUID(body.ProductId), LocationID: uuid.UUID(body.LocationId), Quantity: body.Quantity,
+		ReferenceType: referenceType, ReferenceID: uuid.UUID(body.ReferenceId),
+	}}
+	if body.OrderLineId != nil {
+		in.OrderLineID = uuid.UUID(*body.OrderLineId)
+	}
+	if body.BatchNumber != nil {
+		in.BatchNumber = *body.BatchNumber
+	}
+	batches, err := h.svc.WithdrawStock(r.Context(), in)
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "WithdrawStock failed", "error", err)
 		httpx.Error(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "withdrawn"})
+	writeJSON(w, http.StatusOK, map[string]any{"status": "withdrawn", "batches": batches})
 }
 
 // writeJSON encodes data as JSON and writes it to the response writer.

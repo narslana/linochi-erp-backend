@@ -2,9 +2,11 @@ package inventory
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -48,15 +50,14 @@ func (s *Store) GetLocation(ctx context.Context, id uuid.UUID) (Location, error)
 	return dbRowToLocation(row), nil
 }
 
-func (s *Store) CreateLocation(ctx context.Context, id uuid.UUID, name, nameEn, address, city, country string, channelBuffer int) (Location, error) {
+func (s *Store) CreateLocation(ctx context.Context, id uuid.UUID, name, nameEn, address, city, country string) (Location, error) {
 	row, err := s.q.CreateLocation(ctx, dbgen.CreateLocationParams{
-		ID:            id,
-		Name:          name,
-		NameEn:        nameEn,
-		Address:       address,
-		City:          city,
-		Country:       country,
-		ChannelBuffer: int32(channelBuffer), //nolint:gosec // channel buffer is bounded by business logic
+		ID:      id,
+		Name:    name,
+		NameEn:  nameEn,
+		Address: address,
+		City:    city,
+		Country: country,
 	})
 	if err != nil {
 		return Location{}, err
@@ -64,7 +65,7 @@ func (s *Store) CreateLocation(ctx context.Context, id uuid.UUID, name, nameEn, 
 	return dbRowToLocation(row), nil
 }
 
-func (s *Store) UpdateLocation(ctx context.Context, name, nameEn, address, city, country *string, channelBuffer *int, id uuid.UUID, version int) (Location, error) {
+func (s *Store) UpdateLocation(ctx context.Context, name, nameEn, address, city, country *string, id uuid.UUID, version int) (Location, error) {
 	var params dbgen.UpdateLocationParams
 	params.ID = id
 	params.Version = int32(version) //nolint:gosec // version is bounded by optimistic locking
@@ -82,9 +83,6 @@ func (s *Store) UpdateLocation(ctx context.Context, name, nameEn, address, city,
 	}
 	if country != nil {
 		params.Country = *country
-	}
-	if channelBuffer != nil {
-		params.ChannelBuffer = int32(*channelBuffer) //nolint:gosec // channel buffer is bounded by business logic
 	}
 	row, err := s.q.UpdateLocation(ctx, params)
 	if err != nil {
@@ -155,28 +153,38 @@ func (s *Store) BalanceByLocation(ctx context.Context, productID uuid.UUID) ([]d
 	return s.q.BalanceByLocation(ctx, productID)
 }
 
-func (s *Store) MovementsForFEFO(ctx context.Context, productID, locationID uuid.UUID) ([]dbgen.MovementsForFEFORow, error) {
-	return s.q.MovementsForFEFO(ctx, dbgen.MovementsForFEFOParams{ProductID: productID, LocationID: locationID})
+func (s *Store) BatchStock(ctx context.Context, productID, locationID uuid.UUID) ([]dbgen.BatchStockRow, error) {
+	return s.q.BatchStock(ctx, dbgen.BatchStockParams{ProductID: productID, LocationID: locationID})
 }
 
 func (s *Store) InventoryValueByLocation(ctx context.Context) ([]dbgen.InventoryValueByLocationRow, error) {
 	return s.q.InventoryValueByLocation(ctx)
 }
 
+func (s *Store) ProductChannelBuffer(ctx context.Context, productID uuid.UUID) (int, error) {
+	n, err := s.q.ProductChannelBuffer(ctx, productID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, newNotFound("product")
+		}
+		return 0, err
+	}
+	return int(n), nil
+}
+
 // ─── Row helpers ──────────────────────────────────────────────────────────────
 
 func dbRowToLocation(r dbgen.Location) Location {
 	l := Location{
-		ID:            r.ID,
-		Name:          r.Name,
-		NameEn:        r.NameEn,
-		Address:       r.Address,
-		City:          r.City,
-		Country:       r.Country,
-		ChannelBuffer: int(r.ChannelBuffer),
-		Version:       int(r.Version),
-		CreatedAt:     r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:     r.UpdatedAt.Format(time.RFC3339),
+		ID:        r.ID,
+		Name:      r.Name,
+		NameEn:    r.NameEn,
+		Address:   r.Address,
+		City:      r.City,
+		Country:   r.Country,
+		Version:   int(r.Version),
+		CreatedAt: r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
 	}
 	if r.ArchivedAt != nil {
 		l.Archived = true

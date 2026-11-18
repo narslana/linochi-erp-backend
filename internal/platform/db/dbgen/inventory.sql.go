@@ -12,6 +12,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addOrderLineShipped = `-- name: AddOrderLineShipped :exec
+UPDATE order_lines SET
+    quantity_shipped = quantity_shipped + $2,
+    version = version + 1,
+    updated_at = now()
+WHERE id = $1
+`
+
+type AddOrderLineShippedParams struct {
+	ID              uuid.UUID `json:"id"`
+	QuantityShipped int32     `json:"quantity_shipped"`
+}
+
+func (q *Queries) AddOrderLineShipped(ctx context.Context, arg AddOrderLineShippedParams) error {
+	_, err := q.db.Exec(ctx, addOrderLineShipped, arg.ID, arg.QuantityShipped)
+	return err
+}
+
 const archiveLocation = `-- name: ArchiveLocation :one
 UPDATE locations SET
     archived = true,
@@ -19,7 +37,7 @@ UPDATE locations SET
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2
-RETURNING id, name, name_en, address, city, country, channel_buffer, archived, archived_at, version, created_at, updated_at
+RETURNING id, name, name_en, address, city, country, archived, archived_at, version, created_at, updated_at
 `
 
 type ArchiveLocationParams struct {
@@ -37,7 +55,6 @@ func (q *Queries) ArchiveLocation(ctx context.Context, arg ArchiveLocationParams
 		&i.Address,
 		&i.City,
 		&i.Country,
-		&i.ChannelBuffer,
 		&i.Archived,
 		&i.ArchivedAt,
 		&i.Version,
@@ -47,62 +64,25 @@ func (q *Queries) ArchiveLocation(ctx context.Context, arg ArchiveLocationParams
 	return i, err
 }
 
-const availableBalance = `-- name: AvailableBalance :many
-SELECT product_id, location_id,
-       COALESCE(SUM(CASE WHEN movement_type = 'reservation' THEN quantity ELSE 0 END), 0) AS reserved,
-       COALESCE(SUM(CASE WHEN movement_type NOT IN ('reservation') THEN quantity ELSE 0 END), 0) AS available
-FROM stockmovements
-WHERE product_id = $1
-GROUP BY product_id, location_id
-`
-
-type AvailableBalanceRow struct {
-	ProductID  uuid.UUID   `json:"product_id"`
-	LocationID uuid.UUID   `json:"location_id"`
-	Reserved   interface{} `json:"reserved"`
-	Available  interface{} `json:"available"`
-}
-
-// LAG-02: in_stock - reserved = available
-func (q *Queries) AvailableBalance(ctx context.Context, productID uuid.UUID) ([]AvailableBalanceRow, error) {
-	rows, err := q.db.Query(ctx, availableBalance, productID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []AvailableBalanceRow
-	for rows.Next() {
-		var i AvailableBalanceRow
-		if err := rows.Scan(
-			&i.ProductID,
-			&i.LocationID,
-			&i.Reserved,
-			&i.Available,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const balanceByLocation = `-- name: BalanceByLocation :many
 SELECT location_id,
-       COALESCE(SUM(quantity), 0) AS in_stock
+       COALESCE(SUM(quantity) FILTER (WHERE movement_type NOT IN ('reservation', 'release')), 0)::bigint AS in_stock,
+       (-COALESCE(SUM(quantity) FILTER (WHERE movement_type IN ('reservation', 'release')), 0))::bigint AS reserved
 FROM stockmovements
 WHERE product_id = $1
 GROUP BY location_id
+ORDER BY location_id
 `
 
 type BalanceByLocationRow struct {
-	LocationID uuid.UUID   `json:"location_id"`
-	InStock    interface{} `json:"in_stock"`
+	LocationID uuid.UUID `json:"location_id"`
+	InStock    int64     `json:"in_stock"`
+	Reserved   int64     `json:"reserved"`
 }
 
-// LAG-01: total balance per location
+// LAG-01, LAG-02: in stock, reserved and available per location.
+// in_stock is every movement except reservation and release; reserved is the
+// negated sum of reservation and release; available = in_stock - reserved.
 func (q *Queries) BalanceByLocation(ctx context.Context, productID uuid.UUID) ([]BalanceByLocationRow, error) {
 	rows, err := q.db.Query(ctx, balanceByLocation, productID)
 	if err != nil {
@@ -112,7 +92,7 @@ func (q *Queries) BalanceByLocation(ctx context.Context, productID uuid.UUID) ([
 	var items []BalanceByLocationRow
 	for rows.Next() {
 		var i BalanceByLocationRow
-		if err := rows.Scan(&i.LocationID, &i.InStock); err != nil {
+		if err := rows.Scan(&i.LocationID, &i.InStock, &i.Reserved); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -123,30 +103,49 @@ func (q *Queries) BalanceByLocation(ctx context.Context, productID uuid.UUID) ([
 	return items, nil
 }
 
-const balanceByProduct = `-- name: BalanceByProduct :many
-SELECT product_id, location_id,
-       COALESCE(SUM(quantity), 0) AS in_stock
+const batchStock = `-- name: BatchStock :many
+SELECT batch_number,
+       MIN(manufacturing_date)::date AS manufacturing_date,
+       MIN(best_before_date)::date AS best_before_date,
+       SUM(quantity)::bigint AS in_stock
 FROM stockmovements
-GROUP BY product_id, location_id
+WHERE product_id = $1 AND location_id = $2
+  AND movement_type NOT IN ('reservation', 'release')
+GROUP BY batch_number
+HAVING SUM(quantity) > 0
+ORDER BY MIN(best_before_date) ASC NULLS LAST, MIN(manufacturing_date) ASC NULLS LAST, batch_number
 `
 
-type BalanceByProductRow struct {
-	ProductID  uuid.UUID   `json:"product_id"`
-	LocationID uuid.UUID   `json:"location_id"`
-	InStock    interface{} `json:"in_stock"`
+type BatchStockParams struct {
+	ProductID  uuid.UUID `json:"product_id"`
+	LocationID uuid.UUID `json:"location_id"`
 }
 
-// LAG-01, LAG-02: balance per product per location
-func (q *Queries) BalanceByProduct(ctx context.Context) ([]BalanceByProductRow, error) {
-	rows, err := q.db.Query(ctx, balanceByProduct)
+type BatchStockRow struct {
+	BatchNumber       string      `json:"batch_number"`
+	ManufacturingDate pgtype.Date `json:"manufacturing_date"`
+	BestBeforeDate    pgtype.Date `json:"best_before_date"`
+	InStock           int64       `json:"in_stock"`
+}
+
+// LAG-03: physical stock per batch at a location, FEFO order (earliest
+// best-before first, no date last). A sale row carries only the batch number,
+// so the batch is grouped by number and the dates come from its receipt.
+func (q *Queries) BatchStock(ctx context.Context, arg BatchStockParams) ([]BatchStockRow, error) {
+	rows, err := q.db.Query(ctx, batchStock, arg.ProductID, arg.LocationID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []BalanceByProductRow
+	var items []BatchStockRow
 	for rows.Next() {
-		var i BalanceByProductRow
-		if err := rows.Scan(&i.ProductID, &i.LocationID, &i.InStock); err != nil {
+		var i BatchStockRow
+		if err := rows.Scan(
+			&i.BatchNumber,
+			&i.ManufacturingDate,
+			&i.BestBeforeDate,
+			&i.InStock,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -159,20 +158,19 @@ func (q *Queries) BalanceByProduct(ctx context.Context) ([]BalanceByProductRow, 
 
 const createLocation = `-- name: CreateLocation :one
 INSERT INTO locations (
-    id, name, name_en, address, city, country, channel_buffer
+    id, name, name_en, address, city, country
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, name, name_en, address, city, country, channel_buffer, archived, archived_at, version, created_at, updated_at
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, name, name_en, address, city, country, archived, archived_at, version, created_at, updated_at
 `
 
 type CreateLocationParams struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	NameEn        string    `json:"name_en"`
-	Address       string    `json:"address"`
-	City          string    `json:"city"`
-	Country       string    `json:"country"`
-	ChannelBuffer int32     `json:"channel_buffer"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	NameEn  string    `json:"name_en"`
+	Address string    `json:"address"`
+	City    string    `json:"city"`
+	Country string    `json:"country"`
 }
 
 func (q *Queries) CreateLocation(ctx context.Context, arg CreateLocationParams) (Location, error) {
@@ -183,7 +181,6 @@ func (q *Queries) CreateLocation(ctx context.Context, arg CreateLocationParams) 
 		arg.Address,
 		arg.City,
 		arg.Country,
-		arg.ChannelBuffer,
 	)
 	var i Location
 	err := row.Scan(
@@ -193,7 +190,6 @@ func (q *Queries) CreateLocation(ctx context.Context, arg CreateLocationParams) 
 		&i.Address,
 		&i.City,
 		&i.Country,
-		&i.ChannelBuffer,
 		&i.Archived,
 		&i.ArchivedAt,
 		&i.Version,
@@ -263,7 +259,7 @@ func (q *Queries) CreateStockMovement(ctx context.Context, arg CreateStockMoveme
 }
 
 const getLocation = `-- name: GetLocation :one
-SELECT id, name, name_en, address, city, country, channel_buffer, archived, archived_at, version, created_at, updated_at FROM locations WHERE id = $1 AND archived = false
+SELECT id, name, name_en, address, city, country, archived, archived_at, version, created_at, updated_at FROM locations WHERE id = $1 AND archived = false
 `
 
 func (q *Queries) GetLocation(ctx context.Context, id uuid.UUID) (Location, error) {
@@ -276,7 +272,6 @@ func (q *Queries) GetLocation(ctx context.Context, id uuid.UUID) (Location, erro
 		&i.Address,
 		&i.City,
 		&i.Country,
-		&i.ChannelBuffer,
 		&i.Archived,
 		&i.ArchivedAt,
 		&i.Version,
@@ -286,29 +281,53 @@ func (q *Queries) GetLocation(ctx context.Context, id uuid.UUID) (Location, erro
 	return i, err
 }
 
+const insertOrderLineBatch = `-- name: InsertOrderLineBatch :exec
+INSERT INTO order_line_batches (order_line_id, batch_number, quantity, movement_id)
+VALUES ($1, $2, $3, $4)
+`
+
+type InsertOrderLineBatchParams struct {
+	OrderLineID uuid.UUID `json:"order_line_id"`
+	BatchNumber string    `json:"batch_number"`
+	Quantity    int32     `json:"quantity"`
+	MovementID  uuid.UUID `json:"movement_id"`
+}
+
+// LAG-03: the shipped batch is recorded for recall traceability.
+func (q *Queries) InsertOrderLineBatch(ctx context.Context, arg InsertOrderLineBatchParams) error {
+	_, err := q.db.Exec(ctx, insertOrderLineBatch,
+		arg.OrderLineID,
+		arg.BatchNumber,
+		arg.Quantity,
+		arg.MovementID,
+	)
+	return err
+}
+
 const inventoryValueByLocation = `-- name: InventoryValueByLocation :many
 SELECT sm.location_id,
        p.id AS product_id,
        p.name AS product_name,
-       COALESCE(SUM(sm.quantity), 0) AS in_stock,
-       COALESCE(SUM(sm.quantity * sp.purchase_price), 0) AS value
+       SUM(sm.quantity)::bigint AS in_stock,
+       ROUND(SUM(sm.quantity) * COALESCE(p.manufacturing_cost, 0) * 100)::bigint AS value
 FROM stockmovements sm
 JOIN products p ON p.id = sm.product_id AND p.archived = false
-LEFT JOIN supplier_products sp ON sp.product_id = p.id AND sp.archived = false
-WHERE sm.movement_type != 'reservation' AND sm.movement_type != 'release'
-GROUP BY sm.location_id, p.id, p.name
+WHERE sm.movement_type NOT IN ('reservation', 'release')
+GROUP BY sm.location_id, p.id, p.name, p.manufacturing_cost
+ORDER BY p.name, sm.location_id
 `
 
 type InventoryValueByLocationRow struct {
-	LocationID  uuid.UUID   `json:"location_id"`
-	ProductID   uuid.UUID   `json:"product_id"`
-	ProductName string      `json:"product_name"`
-	InStock     interface{} `json:"in_stock"`
-	Value       interface{} `json:"value"`
+	LocationID  uuid.UUID `json:"location_id"`
+	ProductID   uuid.UUID `json:"product_id"`
+	ProductName string    `json:"product_name"`
+	InStock     int64     `json:"in_stock"`
+	Value       int64     `json:"value"`
 }
 
-// LAG-05: inventory value = quantity * manufacturing cost per location
-// Manufacturing cost comes from the supplier_products.purchase_price
+// LAG-05: inventory value = quantity in stock x manufacturing cost, per product
+// per location, in öre. Supplier prices are not used, so several suppliers on a
+// product cannot multiply the rows. An unknown cost counts as 0.
 func (q *Queries) InventoryValueByLocation(ctx context.Context) ([]InventoryValueByLocationRow, error) {
 	rows, err := q.db.Query(ctx, inventoryValueByLocation)
 	if err != nil {
@@ -336,7 +355,7 @@ func (q *Queries) InventoryValueByLocation(ctx context.Context) ([]InventoryValu
 }
 
 const listLocations = `-- name: ListLocations :many
-SELECT id, name, name_en, address, city, country, channel_buffer, archived, archived_at, version, created_at, updated_at FROM locations WHERE archived = false ORDER BY name
+SELECT id, name, name_en, address, city, country, archived, archived_at, version, created_at, updated_at FROM locations WHERE archived = false ORDER BY name
 `
 
 func (q *Queries) ListLocations(ctx context.Context) ([]Location, error) {
@@ -355,7 +374,6 @@ func (q *Queries) ListLocations(ctx context.Context) ([]Location, error) {
 			&i.Address,
 			&i.City,
 			&i.Country,
-			&i.ChannelBuffer,
 			&i.Archived,
 			&i.ArchivedAt,
 			&i.Version,
@@ -412,59 +430,78 @@ func (q *Queries) ListStockMovements(ctx context.Context) ([]Stockmovement, erro
 	return items, nil
 }
 
-const movementsForFEFO = `-- name: MovementsForFEFO :many
-SELECT product_id, location_id, batch_number,
-       manufacturing_date, best_before_date,
-       SUM(quantity) AS in_stock
+const locationBalance = `-- name: LocationBalance :one
+SELECT COALESCE(SUM(quantity) FILTER (WHERE movement_type NOT IN ('reservation', 'release')), 0)::bigint AS in_stock,
+       (-COALESCE(SUM(quantity) FILTER (WHERE movement_type IN ('reservation', 'release')), 0))::bigint AS reserved
 FROM stockmovements
 WHERE product_id = $1 AND location_id = $2
-  AND movement_type != 'reservation'
-  AND movement_type != 'release'
-GROUP BY product_id, location_id, batch_number, manufacturing_date, best_before_date
-HAVING SUM(quantity) > 0
-ORDER BY best_before_date ASC NULLS LAST, manufacturing_date ASC NULLS LAST
 `
 
-type MovementsForFEFOParams struct {
+type LocationBalanceParams struct {
 	ProductID  uuid.UUID `json:"product_id"`
 	LocationID uuid.UUID `json:"location_id"`
 }
 
-type MovementsForFEFORow struct {
-	ProductID         uuid.UUID   `json:"product_id"`
-	LocationID        uuid.UUID   `json:"location_id"`
-	BatchNumber       string      `json:"batch_number"`
-	ManufacturingDate pgtype.Date `json:"manufacturing_date"`
-	BestBeforeDate    pgtype.Date `json:"best_before_date"`
-	InStock           int64       `json:"in_stock"`
+type LocationBalanceRow struct {
+	InStock  int64 `json:"in_stock"`
+	Reserved int64 `json:"reserved"`
 }
 
-// LAG-03: stock available for a product at a location, ordered FEFO (oldest first)
-func (q *Queries) MovementsForFEFO(ctx context.Context, arg MovementsForFEFOParams) ([]MovementsForFEFORow, error) {
-	rows, err := q.db.Query(ctx, movementsForFEFO, arg.ProductID, arg.LocationID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []MovementsForFEFORow
-	for rows.Next() {
-		var i MovementsForFEFORow
-		if err := rows.Scan(
-			&i.ProductID,
-			&i.LocationID,
-			&i.BatchNumber,
-			&i.ManufacturingDate,
-			&i.BestBeforeDate,
-			&i.InStock,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) LocationBalance(ctx context.Context, arg LocationBalanceParams) (LocationBalanceRow, error) {
+	row := q.db.QueryRow(ctx, locationBalance, arg.ProductID, arg.LocationID)
+	var i LocationBalanceRow
+	err := row.Scan(&i.InStock, &i.Reserved)
+	return i, err
+}
+
+const lockProductStock = `-- name: LockProductStock :exec
+SELECT pg_advisory_xact_lock(hashtextextended($1::uuid::text, 0))
+`
+
+// LAG-02: serialises everything that reads and then writes the balance of one
+// product. The lock is released at commit or rollback.
+func (q *Queries) LockProductStock(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, lockProductStock, productID)
+	return err
+}
+
+const productChannelBuffer = `-- name: ProductChannelBuffer :one
+SELECT channel_buffer FROM products WHERE id = $1
+`
+
+func (q *Queries) ProductChannelBuffer(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, productChannelBuffer, id)
+	var channel_buffer int32
+	err := row.Scan(&channel_buffer)
+	return channel_buffer, err
+}
+
+const reservedForReference = `-- name: ReservedForReference :one
+SELECT (-COALESCE(SUM(quantity), 0))::bigint AS reserved
+FROM stockmovements
+WHERE product_id = $1 AND location_id = $2
+  AND reference_type = $3 AND reference_id = $4
+  AND movement_type IN ('reservation', 'release')
+`
+
+type ReservedForReferenceParams struct {
+	ProductID     uuid.UUID  `json:"product_id"`
+	LocationID    uuid.UUID  `json:"location_id"`
+	ReferenceType string     `json:"reference_type"`
+	ReferenceID   *uuid.UUID `json:"reference_id"`
+}
+
+// LAG-02: what is still reserved for one reference (an order line).
+func (q *Queries) ReservedForReference(ctx context.Context, arg ReservedForReferenceParams) (int64, error) {
+	row := q.db.QueryRow(ctx, reservedForReference,
+		arg.ProductID,
+		arg.LocationID,
+		arg.ReferenceType,
+		arg.ReferenceID,
+	)
+	var reserved int64
+	err := row.Scan(&reserved)
+	return reserved, err
 }
 
 const updateLocation = `-- name: UpdateLocation :one
@@ -474,22 +511,20 @@ UPDATE locations SET
     address = COALESCE($5, address),
     city = COALESCE($6, city),
     country = COALESCE($7, country),
-    channel_buffer = COALESCE($8, channel_buffer),
     version = version + 1,
     updated_at = now()
 WHERE id = $1 AND version = $2 AND archived = false
-RETURNING id, name, name_en, address, city, country, channel_buffer, archived, archived_at, version, created_at, updated_at
+RETURNING id, name, name_en, address, city, country, archived, archived_at, version, created_at, updated_at
 `
 
 type UpdateLocationParams struct {
-	ID            uuid.UUID `json:"id"`
-	Version       int32     `json:"version"`
-	Name          string    `json:"name"`
-	NameEn        string    `json:"name_en"`
-	Address       string    `json:"address"`
-	City          string    `json:"city"`
-	Country       string    `json:"country"`
-	ChannelBuffer int32     `json:"channel_buffer"`
+	ID      uuid.UUID `json:"id"`
+	Version int32     `json:"version"`
+	Name    string    `json:"name"`
+	NameEn  string    `json:"name_en"`
+	Address string    `json:"address"`
+	City    string    `json:"city"`
+	Country string    `json:"country"`
 }
 
 func (q *Queries) UpdateLocation(ctx context.Context, arg UpdateLocationParams) (Location, error) {
@@ -501,7 +536,6 @@ func (q *Queries) UpdateLocation(ctx context.Context, arg UpdateLocationParams) 
 		arg.Address,
 		arg.City,
 		arg.Country,
-		arg.ChannelBuffer,
 	)
 	var i Location
 	err := row.Scan(
@@ -511,7 +545,6 @@ func (q *Queries) UpdateLocation(ctx context.Context, arg UpdateLocationParams) 
 		&i.Address,
 		&i.City,
 		&i.Country,
-		&i.ChannelBuffer,
 		&i.Archived,
 		&i.ArchivedAt,
 		&i.Version,

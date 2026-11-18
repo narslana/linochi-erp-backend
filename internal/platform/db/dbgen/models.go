@@ -267,18 +267,17 @@ type Lead struct {
 }
 
 type Location struct {
-	ID            uuid.UUID  `json:"id"`
-	Name          string     `json:"name"`
-	NameEn        string     `json:"name_en"`
-	Address       string     `json:"address"`
-	City          string     `json:"city"`
-	Country       string     `json:"country"`
-	ChannelBuffer int32      `json:"channel_buffer"`
-	Archived      bool       `json:"archived"`
-	ArchivedAt    *time.Time `json:"archived_at"`
-	Version       int32      `json:"version"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	NameEn     string     `json:"name_en"`
+	Address    string     `json:"address"`
+	City       string     `json:"city"`
+	Country    string     `json:"country"`
+	Archived   bool       `json:"archived"`
+	ArchivedAt *time.Time `json:"archived_at"`
+	Version    int32      `json:"version"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
 type OidcLoginAttempt struct {
@@ -347,6 +346,17 @@ type OrderLine struct {
 	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
+type OrderLineBatch struct {
+	ID          uuid.UUID `json:"id"`
+	OrderLineID uuid.UUID `json:"order_line_id"`
+	BatchNumber string    `json:"batch_number"`
+	Quantity    int32     `json:"quantity"`
+	MovementID  uuid.UUID `json:"movement_id"`
+	Version     int32     `json:"version"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 type Product struct {
 	ID                uuid.UUID       `json:"id"`
 	Name              string          `json:"name"`
@@ -366,6 +376,8 @@ type Product struct {
 	Version           int32           `json:"version"`
 	CreatedAt         time.Time       `json:"created_at"`
 	UpdatedAt         time.Time       `json:"updated_at"`
+	ManufacturingCost pgtype.Numeric  `json:"manufacturing_cost"`
+	ChannelBuffer     int32           `json:"channel_buffer"`
 }
 
 type ProductDocument struct {

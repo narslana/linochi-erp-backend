@@ -102,13 +102,13 @@ WHERE id = $1 AND version = $2
 RETURNING id, product_type_id, field_definition_id, sort_order, mandatory_override, archived, archived_at, version, created_at, updated_at;
 
 -- name: ListProducts :many
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE archived = false
 ORDER BY name;
 
 -- name: SearchProducts :many
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE archived = false AND (
     name ILIKE $1 OR
@@ -119,19 +119,19 @@ ORDER BY name
 LIMIT 50;
 
 -- name: GetProduct :one
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE id = $1;
 
 -- name: GetProductBySKU :one
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE sku = $1;
 
 -- name: CreateProduct :one
 INSERT INTO products (id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at;
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer;
 
 -- name: UpdateProduct :one
 UPDATE products
@@ -149,19 +149,19 @@ SET name = $1,
     updated_at = now(),
     version = version + 1
 WHERE id = $12 AND version = $13
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at;
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer;
 
 -- name: ArchiveProduct :one
 UPDATE products
 SET archived = true, archived_at = now(), updated_at = now(), version = version + 1
 WHERE id = $1 AND version = $2
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at;
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer;
 
 -- name: LockSKU :one
 UPDATE products
 SET sku_locked = true, updated_at = now(), version = version + 1
 WHERE id = $1 AND version = $2
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at;
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer;
 
 -- name: GetProductImage :one
 SELECT id, product_id, url, sort_order, is_main, archived, archived_at, version, created_at, updated_at

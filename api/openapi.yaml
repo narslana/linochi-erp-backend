@@ -2849,7 +2849,6 @@ paths:
                 address: { type: string }
                 city: { type: string }
                 country: { type: string }
-                channel_buffer: { type: integer }
       responses:
         "201":
           description: The new location.
@@ -2905,7 +2904,6 @@ paths:
                 address: { type: string }
                 city: { type: string }
                 country: { type: string }
-                channel_buffer: { type: integer }
                 version: { type: integer }
       responses:
         "200":
@@ -2954,7 +2952,7 @@ paths:
           schema: { type: string, format: uuid }
         - name: movement_type
           in: query
-          schema: { type: string, enum: [purchase, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
+          schema: { type: string, enum: [receipt, return, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
         - name: reference_type
           in: query
           schema: { type: string }
@@ -2990,7 +2988,7 @@ paths:
                 batch_number: { type: string }
                 manufacturing_date: { type: string, format: date }
                 best_before_date: { type: string, format: date }
-                movement_type: { type: string, enum: [purchase, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
+                movement_type: { type: string, enum: [receipt, return, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
                 quantity: { type: integer }
                 reason: { type: string }
                 reference_type: { type: string }
@@ -3006,6 +3004,8 @@ paths:
               schema: { $ref: "#/components/schemas/StockMovement" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/InsufficientStock" }
+        "422": { $ref: "#/components/responses/InvalidMovement" }
 
   /api/v1/inventory/balance/{product_id}:
     get:
@@ -3105,6 +3105,8 @@ paths:
                   status: { type: string }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/InsufficientStock" }
+        "422": { $ref: "#/components/responses/InvalidMovement" }
 
   /api/v1/inventory/release:
     post:
@@ -3136,6 +3138,8 @@ paths:
                   status: { type: string }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/InsufficientStock" }
+        "422": { $ref: "#/components/responses/InvalidMovement" }
 
   /api/v1/inventory/withdraw:
     post:
@@ -3156,6 +3160,8 @@ paths:
                 quantity: { type: integer }
                 reference_type: { type: string }
                 reference_id: { type: string, format: uuid }
+                order_line_id: { type: string, format: uuid, description: The line the shipped batches are recorded on (LAG-03). }
+                batch_number: { type: string, description: Chooses one batch manually; empty means FEFO. }
       responses:
         "200":
           description: Withdrawn.
@@ -3165,8 +3171,18 @@ paths:
                 type: object
                 properties:
                   status: { type: string }
+                  batches:
+                    type: array
+                    items:
+                      type: object
+                      required: [batch_number, quantity]
+                      properties:
+                        batch_number: { type: string }
+                        quantity: { type: integer }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/InsufficientStock" }
+        "422": { $ref: "#/components/responses/InvalidMovement" }
 
   # ── Calendar (KAL-01 to KAL-04) ─────────────────────────────────────────────
 
@@ -5726,6 +5742,20 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    InsufficientStock:
+      description: >-
+        The reservation or withdrawal would take the available or batch quantity
+        below zero (LAG-02). Nothing was written.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    InvalidMovement:
+      description: >-
+        The movement is wrong: zero or negative quantity, a movement type that
+        has its own endpoint, or a manual adjustment without a reason (LAG-04).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
     BadRequest:
       description: The request body is invalid.
       headers:
@@ -6157,7 +6187,7 @@ components:
         updated_at: { type: string, format: date-time }
     Location:
       type: object
-      required: [id, name, channel_buffer, version, created_at, updated_at]
+      required: [id, name, version, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -6165,7 +6195,6 @@ components:
         address: { type: string }
         city: { type: string }
         country: { type: string }
-        channel_buffer: { type: integer }
         archived_at: { type: string, format: date-time }
         version: { type: integer }
         created_at: { type: string, format: date-time }
@@ -6180,7 +6209,7 @@ components:
         batch_number: { type: string }
         manufacturing_date: { type: string, format: date }
         best_before_date: { type: string, format: date }
-        movement_type: { type: string, enum: [purchase, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
+        movement_type: { type: string, enum: [receipt, return, sale, adjustment_in, adjustment_out, transfer_in, transfer_out, reservation, release] }
         quantity: { type: integer }
         reason: { type: string }
         reference_type: { type: string }
@@ -6190,13 +6219,18 @@ components:
         updated_at: { type: string, format: date-time }
     Balance:
       type: object
-      required: [product_id, location_id, in_stock, reserved, available]
+      required: [product_id, location_id, in_stock, reserved, available, marketplace_quantity]
       properties:
         product_id: { type: string, format: uuid }
         location_id: { type: string, format: uuid }
         in_stock: { type: integer }
         reserved: { type: integer }
         available: { type: integer }
+        marketplace_quantity:
+          type: integer
+          description: >-
+            The product's available quantity over all locations minus its channel
+            buffer, never below zero (LAG-07). The same on every location row.
     FEFOBatch:
       type: object
       required: [product_id, location_id, batch_number, in_stock]

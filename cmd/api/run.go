@@ -201,8 +201,12 @@ func newHandlers(logger *slog.Logger, metrics *obs.Metrics, health *httpx.Health
 		logger,
 	)
 
+	inventorySvc := inventory.NewService(inventory.NewStore(pool), rec, pool)
+	if err := inventorySvc.RegisterMetrics(metrics.Registry); err != nil {
+		panic(err) // a duplicate registration is a programming error, like MustRegister
+	}
 	inventoryHandler := inventory.NewHandler(
-		inventory.NewService(inventory.NewStore(pool), rec, pool),
+		inventorySvc,
 		mw,
 		logger,
 	)

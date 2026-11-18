@@ -88,7 +88,7 @@ const archiveProduct = `-- name: ArchiveProduct :one
 UPDATE products
 SET archived = true, archived_at = now(), updated_at = now(), version = version + 1
 WHERE id = $1 AND version = $2
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 `
 
 type ArchiveProductParams struct {
@@ -118,6 +118,8 @@ func (q *Queries) ArchiveProduct(ctx context.Context, arg ArchiveProductParams) 
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ManufacturingCost,
+		&i.ChannelBuffer,
 	)
 	return i, err
 }
@@ -390,7 +392,7 @@ func (q *Queries) CreateIdsEntry(ctx context.Context, arg CreateIdsEntryParams) 
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products (id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 `
 
 type CreateProductParams struct {
@@ -443,6 +445,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ManufacturingCost,
+		&i.ChannelBuffer,
 	)
 	return i, err
 }
@@ -623,7 +627,7 @@ func (q *Queries) GetIdsEntry(ctx context.Context, id uuid.UUID) (IdsEntry, erro
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE id = $1
 `
@@ -650,12 +654,14 @@ func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error)
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ManufacturingCost,
+		&i.ChannelBuffer,
 	)
 	return i, err
 }
 
 const getProductBySKU = `-- name: GetProductBySKU :one
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE sku = $1
 `
@@ -682,6 +688,8 @@ func (q *Queries) GetProductBySKU(ctx context.Context, sku string) (Product, err
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ManufacturingCost,
+		&i.ChannelBuffer,
 	)
 	return i, err
 }
@@ -1046,7 +1054,7 @@ func (q *Queries) ListProductTypes(ctx context.Context) ([]ProductType, error) {
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE archived = false
 ORDER BY name
@@ -1080,6 +1088,8 @@ func (q *Queries) ListProducts(ctx context.Context) ([]Product, error) {
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ManufacturingCost,
+			&i.ChannelBuffer,
 		); err != nil {
 			return nil, err
 		}
@@ -1095,7 +1105,7 @@ const lockSKU = `-- name: LockSKU :one
 UPDATE products
 SET sku_locked = true, updated_at = now(), version = version + 1
 WHERE id = $1 AND version = $2
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 `
 
 type LockSKUParams struct {
@@ -1125,6 +1135,8 @@ func (q *Queries) LockSKU(ctx context.Context, arg LockSKUParams) (Product, erro
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ManufacturingCost,
+		&i.ChannelBuffer,
 	)
 	return i, err
 }
@@ -1178,7 +1190,7 @@ func (q *Queries) SearchIdsEntries(ctx context.Context, name string) ([]IdsEntry
 }
 
 const searchProducts = `-- name: SearchProducts :many
-SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+SELECT id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 FROM products
 WHERE archived = false AND (
     name ILIKE $1 OR
@@ -1217,6 +1229,8 @@ func (q *Queries) SearchProducts(ctx context.Context, name string) ([]Product, e
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ManufacturingCost,
+			&i.ChannelBuffer,
 		); err != nil {
 			return nil, err
 		}
@@ -1376,7 +1390,7 @@ SET name = $1,
     updated_at = now(),
     version = version + 1
 WHERE id = $12 AND version = $13
-RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at
+RETURNING id, name, sku, ean, product_type_id, short_description, wholesale_price_sek, wholesale_currency, msrp_sek, msrp_currency, status, attributes, sku_locked, archived, archived_at, version, created_at, updated_at, manufacturing_cost, channel_buffer
 `
 
 type UpdateProductParams struct {
@@ -1431,6 +1445,8 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ManufacturingCost,
+		&i.ChannelBuffer,
 	)
 	return i, err
 }
