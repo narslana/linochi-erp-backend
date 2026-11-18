@@ -275,14 +275,14 @@ func TestINS05_InventoryWriteAndAuditCommitTogether(t *testing.T) {
 	svc := inventory.NewService(store, e.rec, e.pool)
 
 	// Create location.
-	loc, err := svc.CreateLocation(ctx, "Test Location", "Test EN", "Street 1", "Stockholm", "SE", 0)
+	loc, err := svc.CreateLocation(ctx, "Test Location", "Test EN", "Street 1", "Stockholm", "SE")
 	if err != nil {
 		t.Fatal(err)
 	}
 	assertAuditRow(t, ctx, e.pool, "inventory", "Create", userID.String(), "")
 
 	// Update the location.
-	_, err = svc.UpdateLocation(ctx, loc.ID, ptrStr("Updated Location"), nil, nil, nil, nil, nil, loc.Version)
+	_, err = svc.UpdateLocation(ctx, loc.ID, ptrStr("Updated Location"), nil, nil, nil, nil, loc.Version)
 	if err != nil {
 		t.Fatal(err)
 	}

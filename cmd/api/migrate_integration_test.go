@@ -59,7 +59,7 @@ func TestNFK28_MigrateUpStatusDown(t *testing.T) {
 		if strings.Contains(out, "nothing to roll back") {
 			break
 		}
-		if i > 10 {
+		if i > 50 { // more than the number of migrations; raise when it is exceeded
 			t.Fatal("down never reached the start")
 		}
 	}
