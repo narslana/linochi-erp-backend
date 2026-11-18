@@ -118,6 +118,15 @@ UPDATE leads SET
 WHERE id = $1 AND version = $2
 RETURNING *;
 
+-- name: ArchiveLeadNoVersion :one
+UPDATE leads SET
+    archived = true,
+    archived_at = now(),
+    version = version + 1,
+    updated_at = now()
+WHERE id = $1
+RETURNING *;
+
 -- name: InactiveCustomers :many
 -- KUN-05: customers who have not ordered in X days
 SELECT c.id, c.name, c.type_code,

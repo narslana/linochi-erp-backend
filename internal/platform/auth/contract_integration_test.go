@@ -422,7 +422,11 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("POST", "/api/v1/customers/"+custID+"/contacts", map[string]interface{}{"customer_id": custID, "first_name": "Anna", "last_name": "Smith", "email": "anna@example.com"}, nil, &calls)
 	b.callJSON("POST", "/api/v1/customers/"+custID+"/ean-series", map[string]interface{}{"prefix": "73", "start_code": "100", "end_code": "200"}, nil, &calls)
 	// ---- dependencies: leads ----
-	b.callJSON("POST", "/api/v1/leads", map[string]interface{}{"company": "Paws Inc", "email": "info@paws.com", "status": "new"}, nil, &calls)
+	w = b.callJSON("POST", "/api/v1/leads", map[string]interface{}{"company": "Paws Inc", "email": "info@paws.com", "status": "new"}, nil, &calls)
+	mustOK(t, w, "POST /api/v1/leads")
+	var lead map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &lead)
+	leadID := lead["id"].(string)
 	// ---- dependencies: workflow steps ----
 	w = b.callJSON("POST", "/api/v1/workflow/steps", map[string]interface{}{"key": "draft", "name": "Draft", "name_en": "Draft", "is_start": true}, nil, &calls)
 	var stepDraft map[string]interface{}
@@ -654,6 +658,32 @@ func TestNFK29_ResponsesMatchOpenAPI(t *testing.T) {
 	b.callJSON("DELETE", "/api/v1/field-definitions/"+fdID, map[string]interface{}{}, nil, &calls)
 	// ---- ean-series: CRUD ----
 	b.call("GET", "/api/v1/ean-series", nil, &calls)
+	// ---- unexercised operations (T3b) ----
+	b.call("GET", "/api/v1/products/"+prodID, nil, &calls)
+	b.call("GET", "/api/v1/inventory/fefo/"+prodID+"/"+locID, nil, &calls)
+	b.callJSON("POST", "/api/v1/inventory/reserve", map[string]interface{}{"product_id": prodID, "location_id": locID, "quantity": 1, "reference_type": "order", "reference_id": ordID}, nil, &calls)
+	b.callJSON("POST", "/api/v1/inventory/release", map[string]interface{}{"product_id": prodID, "location_id": locID, "quantity": 1, "reference_type": "order", "reference_id": ordID}, nil, &calls)
+	b.callJSON("POST", "/api/v1/inventory/withdraw", map[string]interface{}{"product_id": prodID, "location_id": locID, "quantity": 1, "reference_type": "order", "reference_id": ordID}, nil, &calls)
+	b.call("GET", "/api/v1/leads", nil, &calls)
+	b.call("GET", "/api/v1/leads/"+leadID, nil, &calls)
+	b.callJSON("PUT", "/api/v1/leads/"+leadID, map[string]interface{}{"id": leadID, "version": 1, "status": "contacted"}, nil, &calls)
+	b.callJSON("DELETE", "/api/v1/leads/"+leadID, map[string]interface{}{}, nil, &calls)
+	b.callJSON("DELETE", "/api/v1/products/"+prodID+"/images/"+imgID, map[string]interface{}{}, nil, &calls)
+	b.callJSON("DELETE", "/api/v1/products/"+prodID+"/documents/"+docID, map[string]interface{}{}, nil, &calls)
+	b.callJSON("DELETE", "/api/v1/suppliers/"+supID+"/contacts/"+supContactID, map[string]interface{}{}, nil, &calls)
+	b.callJSON("DELETE", "/api/v1/purchase-orders/"+poID+"/lines/"+polID, map[string]interface{}{}, nil, &calls)
+	// separate order line for order-line operations (polID already archived above)
+	w = b.callJSON("POST", "/api/v1/orders/"+ordID+"/lines", map[string]interface{}{"product_id": prodID, "quantity": 1, "unit_price_sek": 19900}, nil, &calls)
+	var ordLine map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &ordLine)
+	ordLineID := ordLine["id"].(string)
+	b.callJSON("PUT", "/api/v1/orders/"+ordID+"/lines/"+ordLineID, map[string]interface{}{"id": ordLineID, "order_id": ordID, "version": 1, "quantity": 5}, nil, &calls)
+	b.callJSON("DELETE", "/api/v1/orders/"+ordID+"/lines/"+ordLineID, map[string]interface{}{}, nil, &calls)
+	b.call("GET", "/api/v1/workflow/steps/"+draftStepID, nil, &calls)
+	b.callJSON("POST", "/api/v1/workflow/transitions/"+transID+"/conditions", map[string]interface{}{"key": "test-condition", "config": map[string]interface{}{}}, nil, &calls)
+	b.callJSON("POST", "/api/v1/workflow/transitions/"+transID+"/effects", map[string]interface{}{"key": "test-effect", "config": map[string]interface{}{}}, nil, &calls)
+	// ---- calendar events (synced from iCal) ----
+	b.call("GET", "/api/v1/calendar/events/"+poID, nil, &calls)
 
 	for _, c := range calls {
 		validate(t, find, c.req, c.w)

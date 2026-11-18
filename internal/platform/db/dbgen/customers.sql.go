@@ -192,6 +192,40 @@ func (q *Queries) ArchiveLead(ctx context.Context, arg ArchiveLeadParams) (Lead,
 	return i, err
 }
 
+const archiveLeadNoVersion = `-- name: ArchiveLeadNoVersion :one
+UPDATE leads SET
+    archived = true,
+    archived_at = now(),
+    version = version + 1,
+    updated_at = now()
+WHERE id = $1
+RETURNING id, company, contact_name, email, phone, address, city, country, status, notes, converted_customer_id, archived, archived_at, version, created_at, updated_at
+`
+
+func (q *Queries) ArchiveLeadNoVersion(ctx context.Context, id uuid.UUID) (Lead, error) {
+	row := q.db.QueryRow(ctx, archiveLeadNoVersion, id)
+	var i Lead
+	err := row.Scan(
+		&i.ID,
+		&i.Company,
+		&i.ContactName,
+		&i.Email,
+		&i.Phone,
+		&i.Address,
+		&i.City,
+		&i.Country,
+		&i.Status,
+		&i.Notes,
+		&i.ConvertedCustomerID,
+		&i.Archived,
+		&i.ArchivedAt,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createContact = `-- name: CreateContact :one
 INSERT INTO contacts (
     id, customer_id, first_name, last_name, email, phone

@@ -316,7 +316,11 @@ func (s *Service) ArchiveLead(ctx context.Context, id uuid.UUID, version int) (L
 		if err != nil {
 			return ProblemError(err)
 		}
-		updated, err = st.ArchiveLead(ctx, id, version)
+		if version == 0 {
+			updated, err = st.ArchiveLeadNoVersion(ctx, id)
+		} else {
+			updated, err = st.ArchiveLead(ctx, id, version)
+		}
 		if err != nil {
 			return ProblemError(err)
 		}

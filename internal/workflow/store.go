@@ -3,9 +3,11 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
@@ -43,6 +45,9 @@ func (s *Store) ListWorkflowSteps(ctx context.Context) ([]Step, error) {
 func (s *Store) GetWorkflowStep(ctx context.Context, id uuid.UUID) (Step, error) {
 	row, err := s.q.GetWorkflowStep(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Step{}, newNotFound("step")
+		}
 		return Step{}, err
 	}
 	return dbRowToStep(row), nil

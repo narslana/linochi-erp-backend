@@ -2,9 +2,11 @@ package calendar
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"gitea.lab.internal/linochi/linochi-erp-backend/internal/platform/db"
@@ -119,6 +121,9 @@ func (s *Store) ListCalendarEvents(ctx context.Context, startTime, endTime time.
 func (s *Store) GetCalendarEvent(ctx context.Context, id uuid.UUID) (CalendarEvent, error) {
 	row, err := s.q.GetCalendarEvent(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return CalendarEvent{}, newNotFound("event")
+		}
 		return CalendarEvent{}, err
 	}
 	return dbRowToCalendarEvent(row), nil

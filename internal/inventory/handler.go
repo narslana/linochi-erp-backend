@@ -328,7 +328,7 @@ func (h *Handler) reserveStock(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "reserved"})
 }
 
 // ReleaseStock releases a reservation (LAG-02).
@@ -354,7 +354,7 @@ func (h *Handler) releaseStock(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "released"})
 }
 
 // WithdrawStock withdraws stock when shipped (LAG-02, LAG-03).
@@ -380,7 +380,7 @@ func (h *Handler) withdrawStock(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "withdrawn"})
 }
 
 // writeJSON encodes data as JSON and writes it to the response writer.

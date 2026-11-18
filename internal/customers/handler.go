@@ -492,10 +492,7 @@ func (h *Handler) archiveLead(w http.ResponseWriter, r *http.Request, leadId ope
 	var body struct {
 		Version int `json:"version"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		httpx.Error(w, r, err)
-		return
-	}
+	_ = json.NewDecoder(r.Body).Decode(&body) // version is optional for archive
 
 	lead, err := h.svc.ArchiveLead(r.Context(), uuid.UUID(leadId), body.Version)
 	if err != nil {

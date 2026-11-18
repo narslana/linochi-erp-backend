@@ -275,6 +275,14 @@ func (s *Store) ArchiveLead(ctx context.Context, id uuid.UUID, version int) (Lea
 	return dbRowToLead(row), nil
 }
 
+func (s *Store) ArchiveLeadNoVersion(ctx context.Context, id uuid.UUID) (Lead, error) {
+	row, err := s.q.ArchiveLeadNoVersion(ctx, id)
+	if err != nil {
+		return Lead{}, err
+	}
+	return dbRowToLead(row), nil
+}
+
 // ─── EAN Series ───────────────────────────────────────────────────────────────
 
 func (s *Store) ListEanSeries(ctx context.Context) ([]EanSeries, error) {

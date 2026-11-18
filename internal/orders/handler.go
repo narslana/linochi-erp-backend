@@ -552,7 +552,7 @@ func (h *Handler) DeleteOrderLine(w http.ResponseWriter, r *http.Request, orderI
 }
 
 func (h *Handler) deleteOrderLine(w http.ResponseWriter, r *http.Request, orderId openapi_types.UUID, orderLineId openapi_types.UUID) {
-	line, err := h.svc.DeleteOrderLine(r.Context(), uuid.UUID(orderLineId))
+	_, err := h.svc.DeleteOrderLine(r.Context(), uuid.UUID(orderLineId))
 	if err != nil {
 		if errors.Is(err, newNotFound("order line")) {
 			httpx.Error(w, r, err)
@@ -562,7 +562,7 @@ func (h *Handler) deleteOrderLine(w http.ResponseWriter, r *http.Request, orderI
 		httpx.Error(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, line)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // BatchExportOrders exports orders as CSV (ORD-13).
